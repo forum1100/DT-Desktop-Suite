@@ -1,0 +1,44 @@
+{
+  "name": "dt-desktop-suite",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local-first individually launchable DT agent programs",
+  "author": "Thomas J. Cutler / Thomas Distel",
+  "main": "apps/desktop/src/main.cjs",
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test tests/*.test.cjs",
+    "build:win": "electron-builder --win nsis portable",
+    "agent": "electron . --agent"
+  },
+  "devDependencies": {
+    "electron": "^38.1.2",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "works.distel.desktop",
+    "productName": "DT Desktop Suite",
+    "files": [
+      "apps/**/*",
+      "packages/**/*",
+      "package.json"
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  },
+  "allowScripts": {
+    "electron@38.8.6": true,
+    "electron-winstaller@5.4.0": true
+  }
+}

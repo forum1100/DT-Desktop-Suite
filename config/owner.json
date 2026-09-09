@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "displayName": "Thomas J. Cutler / Thomas Distel",
+  "githubLogin": "forum1100",
+  "roles": ["owner", "administrator"],
+  "authentication": ["dt-admin-key", "github-oauth"],
+  "credentialsIncluded": false
+}

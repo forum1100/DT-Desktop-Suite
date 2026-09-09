@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>DT Desktop Suite</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="stars"></div>
+  <header>
+    <div>
+      <p class="eyebrow">TO INFINITY AND BEYOND</p>
+      <h1>DT <span>CONTROL ROOM</span></h1>
+      <p class="sub">Consumer-owned intelligence · branch-preserving evidence · locally governed agents</p>
+    </div>
+    <div class="admin-stack">
+      <div class="status"><i></i> LOCAL HUB ONLINE <b>127.0.0.1:11740</b></div>
+      <button id="admin-open" type="button">Owner access</button>
+    </div>
+  </header>
+  <main>
+    <aside>
+      <h2>Agent Programs</h2>
+      <nav id="agents"></nav>
+    </aside>
+    <section id="workspace">
+      <div id="empty">
+        <p class="orbital">◉</p>
+        <h2>Select an agent</h2>
+        <p>Every program has its own authority, memory scope, scientific status, and failure history.</p>
+      </div>
+      <div id="agent-panel" hidden>
+        <div class="agent-head"><div><p id="agent-status"></p><h2 id="agent-name"></h2><p id="agent-purpose"></p></div><div id="agent-icon"></div></div>
+        <form id="agent-form"></form>
+        <button id="run" type="button">Run bounded analysis</button>
+        <pre id="result">Awaiting input.</pre>
+      </div>
+    </section>
+  </main>
+  <dialog id="admin-dialog">
+    <button id="admin-close" aria-label="Close">×</button>
+    <p class="eyebrow">AUTHORITY PLANE</p><h2>Owner administration</h2>
+    <p id="owner-state">Checking GitHub identity…</p>
+    <button id="owner-setup" type="button">Verify forum1100 and initialize</button>
+    <pre id="owner-output">Keys are displayed once. Store them before closing.</pre>
+  </dialog>
+  <footer><span>Truth and transparency</span><span>Failures remain part of the topology</span></footer>
+  <script src="renderer.js"></script>
+</body>
+</html>
