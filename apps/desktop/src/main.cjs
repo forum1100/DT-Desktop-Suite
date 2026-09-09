@@ -61,6 +61,7 @@ function authenticatedGithubLogin() {
 }
 
 function registerIPC(registry) {
+  ipcMain.handle('hub:status', () => ({ ...gateway.status(), port: gateway.port }));
   ipcMain.handle('agents:list', () => registry.list().map(agent => ({ ...agent, schema: schemas[agent.id] })));
   ipcMain.handle('agent:run', (_event, agentId, input) => {
     const output = runAgent(agentId, input);

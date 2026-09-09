@@ -21,6 +21,17 @@ function createGateway({ keys, vault, broker, agents, port = 11740 }) {
       res.writeHead(400); return res.end(JSON.stringify({ error: error.message }));
     }
   });
-  return { start: () => server.listen(port, '127.0.0.1'), stop: () => server.close(), port };
+  let state = { online: false, shared: false, error: null };
+  server.on('listening', () => { state = { online: true, shared: false, error: null }; });
+  server.on('error', error => {
+    state = { online: false, shared: error.code === 'EADDRINUSE', error: error.code };
+    vault.append('gateway-state', 'dt-hub', state);
+  });
+  return {
+    start: () => { server.listen(port, '127.0.0.1'); return state; },
+    stop: () => { if (server.listening) server.close(); },
+    status: () => ({ ...state }),
+    port
+  };
 }
 module.exports = { createGateway };

@@ -24,6 +24,10 @@ function choose(agent) {
 }
 
 async function boot() {
+  await new Promise(resolve => setTimeout(resolve, 150));
+  const hub = await window.dt.hubStatus();
+  const hubStatus = document.querySelector('#hub-status');
+  hubStatus.childNodes[1].textContent = hub.online ? ' LOCAL HUB ONLINE ' : hub.shared ? ' SHARED HUB DETECTED ' : ' LOCAL HUB OFFLINE ';
   const agents = await window.dt.listAgents();
   for (const agent of agents) {
     const button = document.createElement('button');

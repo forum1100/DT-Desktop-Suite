@@ -1,6 +1,7 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('dt', {
+  hubStatus: () => ipcRenderer.invoke('hub:status'),
   listAgents: () => ipcRenderer.invoke('agents:list'),
   runAgent: (agentId, input) => ipcRenderer.invoke('agent:run', agentId, input),
   listVault: () => ipcRenderer.invoke('vault:list'),
