@@ -13,6 +13,10 @@ function choose(agent) {
   document.querySelector('#agent-name').textContent = agent.name;
   document.querySelector('#agent-purpose').textContent = agent.purpose;
   document.querySelector('#agent-status').textContent = agent.status;
+  document.querySelector('#brief-thesis').textContent = agent.brief?.thesis || '';
+  document.querySelector('#brief-equation').textContent = agent.brief?.equation || '';
+  document.querySelector('#brief-observed').textContent = agent.brief?.observed || '';
+  document.querySelector('#brief-input').textContent = agent.brief?.input || '';
   document.querySelectorAll('.agent-button').forEach(button => button.classList.toggle('active', button.dataset.id === agent.id));
   form.replaceChildren(...agent.schema.map(field => {
     const label = document.createElement('label');

@@ -11,6 +11,7 @@ const { RecoveryAuthority } = require('../../../packages/auth/src/recovery.cjs')
 const { ownerBootstrap, isOwner } = require('../../../packages/auth/src/policy.cjs');
 const { agents } = require('../../../packages/tools/src/agents.cjs');
 const { schemas } = require('../../../packages/tools/src/schemas.cjs');
+const { briefs } = require('../../../packages/tools/src/briefs.cjs');
 const { runAgent } = require('../../../packages/tools/src/runner.cjs');
 
 let vault, keys, broker, gateway, recovery;
@@ -62,7 +63,11 @@ function authenticatedGithubLogin() {
 
 function registerIPC(registry) {
   ipcMain.handle('hub:status', () => ({ ...gateway.status(), port: gateway.port }));
-  ipcMain.handle('agents:list', () => registry.list().map(agent => ({ ...agent, schema: schemas[agent.id] })));
+  ipcMain.handle('agents:list', () => registry.list().map(agent => ({
+    ...agent,
+    schema: schemas[agent.id],
+    brief: briefs[agent.id]
+  })));
   ipcMain.handle('agent:run', (_event, agentId, input) => {
     const output = runAgent(agentId, input);
     const receipt = vault.append('agent-run', agentId, output);
