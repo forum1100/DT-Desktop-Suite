@@ -39,10 +39,17 @@ function credentialFile(provider) {
 }
 
 function authenticatedGithubLogin() {
+  const wingetRoot = path.join(process.env.LOCALAPPDATA || '', 'Microsoft', 'WinGet', 'Packages');
+  let wingetGh = null;
+  try {
+    const folder = fs.readdirSync(wingetRoot).find(name => name.startsWith('GitHub.cli_'));
+    if (folder) wingetGh = path.join(wingetRoot, folder, 'bin', 'gh.exe');
+  } catch {}
   const candidates = [
     'gh',
-    path.join(process.env.LOCALAPPDATA || '', 'Microsoft', 'WinGet', 'Links', 'gh.exe')
-  ];
+    path.join(process.env.LOCALAPPDATA || '', 'Microsoft', 'WinGet', 'Links', 'gh.exe'),
+    wingetGh
+  ].filter(Boolean);
   for (const executable of candidates) {
     try {
       return execFileSync(executable, ['api', 'user', '--jq', '.login'], {
