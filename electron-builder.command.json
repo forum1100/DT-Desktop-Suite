@@ -1,0 +1,22 @@
+{
+  "appId": "works.distel.commandcenter",
+  "productName": "DT Command Center",
+  "artifactName": "DT Command Center ${version}.${ext}",
+  "extraMetadata": {
+    "main": "apps/command-center/src/main.cjs"
+  },
+  "files": [
+    "apps/command-center/**/*",
+    "package.json"
+  ],
+  "directories": {
+    "output": "dist-command"
+  },
+  "win": {
+    "target": ["nsis", "portable"]
+  },
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true
+  }
+}

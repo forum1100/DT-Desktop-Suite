@@ -7,13 +7,17 @@
   "main": "apps/desktop/src/main.cjs",
   "scripts": {
     "start": "electron .",
+    "start:command": "electron apps/command-center/src/main.cjs",
     "test": "node --test tests/*.test.cjs",
     "build:win": "electron-builder --win nsis portable",
+    "build:command": "electron-builder --config electron-builder.command.json --win nsis portable",
     "agent": "electron . --agent"
   },
   "devDependencies": {
     "electron": "^38.1.2",
-    "electron-builder": "^26.0.12"
+    "electron-builder": "^26.0.12",
+    "png-to-ico": "^3.0.2",
+    "sharp": "^0.35.4"
   },
   "build": {
     "appId": "works.distel.desktop",

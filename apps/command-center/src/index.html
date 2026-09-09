@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DT Command Center</title><link rel="stylesheet" href="styles.css"></head>
+<body>
+<header><div><p>DT AUTHORITY PLANE</p><h1>COMMAND <span>CENTER</span></h1></div><div class="net">LOCAL MODE · LAN PAIRING OFF</div></header>
+<main>
+<aside>
+  <button id="new">+ New isolated session</button>
+  <div id="sessions"></div>
+</aside>
+<section>
+  <div id="welcome"><h2>No terminal selected</h2><p>Create or select a named session. Every workstream keeps its own PID, directory, owner, output, and audit history.</p></div>
+  <div id="terminal" hidden>
+    <div class="terminal-head"><div><b id="title"></b><small id="meta"></small></div><button id="close">Close session</button></div>
+    <pre id="output"></pre>
+    <form id="command"><textarea id="input" rows="2" placeholder="Enter a command for this session only"></textarea><button>Execute</button></form>
+  </div>
+</section>
+</main>
+<dialog id="create"><button id="x">×</button><h2>New isolated terminal</h2>
+<label>Session name<input id="name" placeholder="DT ingestion"></label>
+<label>Workstream owner<input id="owner" placeholder="Chat name or person"></label>
+<label>Working directory<input id="cwd" value="C:Users	homaDocumentsGitHub"></label>
+<button id="create-session">Create session</button><p id="error"></p></dialog>
+<script src="renderer.js"></script></body></html>
