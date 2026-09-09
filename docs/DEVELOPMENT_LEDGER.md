@@ -39,3 +39,9 @@ The Google Drive desktop mount listed the private folder but rejected its litera
 ### Preserved deployment branch
 
 The first installed-suite replacement failed because the existing portable DT Desktop Suite executable was open and Windows held a file lock. The release package still completed successfully. The successor deployment selected only processes whose executable path exactly matched the installed DT suite, closed that target, replaced it, reopened the main suite, and smoke-launched the new DT Evaluation Engine with `--agent=evaluation`. No unrelated command window was targeted. Release checksum verification reported zero mismatches.
+
+## 2026-09-09 — Private capability reconciliation: release and registry controls
+
+The private architecture confirmed two additional missing operational structures: the Public Release Gate and Artifact Registry. The successor release gate performs supplemental secret and prohibited-claim pattern checks without returning suspected secret text, then requires explicit provenance, confidentiality, disclosure, licensing, claim, IP, and owner-approval gates. It cannot replace manual review.
+
+The successor artifact registry validates stable identity and SHA-256 form, preserves creator, contributor, source, confidentiality, disclosure, licensing, parent, and derivative fields, and refuses overwrite semantics. These tools implement the documented architecture without copying private test catalogs or private case content into the transferable package.

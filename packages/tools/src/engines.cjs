@@ -74,6 +74,78 @@ function evaluation(input) {
   };
 }
 
+function releaseGate(input) {
+  const text = String(input.releaseText || '');
+  const findings = [];
+  const secretRules = [
+    ['PRIVATE_KEY', /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/i],
+    ['AWS_ACCESS_KEY', /\bAKIA[0-9A-Z]{16}\b/],
+    ['GITHUB_TOKEN', /\bgh[pousr]_[A-Za-z0-9_]{20,}\b/],
+    ['OPENAI_STYLE_KEY', /\bsk-[A-Za-z0-9_-]{20,}\b/],
+    ['BEARER_TOKEN', /\bBearer\s+[A-Za-z0-9._~-]{20,}\b/i]
+  ];
+  const claimRules = [
+    ['GUARANTEED_PROFIT', /\bguaranteed? profit\b/i],
+    ['SENTIENCE_PROOF', /\bproof of sentience\b/i],
+    ['UNSUPPORTED_TRAINING_CLAIM', /\btrained on DT\b/i],
+    ['UNBOUNDED_CAUSAL_CLAIM', /\bcaused (?:the|this) AI\b/i]
+  ];
+  for (const [code, pattern] of secretRules) if (pattern.test(text)) findings.push({ type: 'SECRET_PATTERN', code });
+  for (const [code, pattern] of claimRules) if (pattern.test(text)) findings.push({ type: 'PROHIBITED_PUBLIC_CLAIM', code });
+
+  const gates = {
+    confidentialityReviewed: /public|sanitized|approved/i.test(String(input.confidentiality || '')),
+    publicDisclosureExplicit: /approved|public|sanitized/i.test(String(input.publicDisclosureStatus || '')),
+    licenseResolved: /approved|licensed|owned|permitted/i.test(String(input.licenseStatus || '')),
+    provenanceRecorded: Boolean(String(input.provenanceRecord || '').trim()),
+    claimReviewed: /pass|approved|complete/i.test(String(input.claimReview || '')),
+    ipReviewed: /pass|approved|complete/i.test(String(input.ipReview || '')),
+    explicitlyApproved: /yes|approved|true/i.test(String(input.explicitApproval || ''))
+  };
+  const missingGates = Object.entries(gates).filter(([, ok]) => !ok).map(([key]) => key);
+  const decision = findings.some(f => f.type === 'SECRET_PATTERN') ? 'BLOCKED_SECRET_PATTERN'
+    : findings.length ? 'BLOCKED_CLAIM_PATTERN'
+    : missingGates.length ? 'REVIEW_REQUIRED'
+    : 'APPROVED_FOR_SANITIZED_RELEASE';
+  return {
+    findings,
+    gates,
+    missingGates,
+    decision,
+    textReturned: false,
+    scannerScope: 'SUPPLEMENTAL_PATTERN_CONTROL_MANUAL_REVIEW_REMAINS_REQUIRED'
+  };
+}
+
+function artifactRegistry(input) {
+  const required = ['artifactId', 'title', 'creator', 'version', 'confidentiality',
+    'publicDisclosureStatus', 'licenseStatus', 'contentHash'];
+  const missing = required.filter(key => !String(input[key] || '').trim());
+  const contentHash = String(input.contentHash || '').trim().toLowerCase();
+  const hashValid = /^[0-9a-f]{64}$/.test(contentHash);
+  if (!hashValid && !missing.includes('contentHash')) missing.push('validSha256');
+  return {
+    artifactId: input.artifactId || null,
+    title: input.title || null,
+    creator: input.creator || null,
+    contributors: items(input.contributors),
+    sources: items(input.sources),
+    version: input.version || null,
+    confidentiality: input.confidentiality || null,
+    publicDisclosureStatus: input.publicDisclosureStatus || null,
+    licenseStatus: input.licenseStatus || null,
+    contentHash: contentHash || null,
+    hashValid,
+    lineage: {
+      parents: items(input.parentArtifacts),
+      derivatives: items(input.derivatives)
+    },
+    registrationStatus: missing.length ? 'INCOMPLETE_REGISTRATION' : 'READY_FOR_APPEND_ONLY_REGISTRATION',
+    missing,
+    overwritePermitted: false
+  };
+}
+
 function evidence(input) {
   const sources = items(input.source || input.sources);
   const contradictions = items(input.contradiction);
@@ -166,6 +238,8 @@ function librarian(input) {
   const text = (String(input.materials || '') + ' ' + String(input.goal || '')).toLowerCase();
   const routes = [];
   if (/evaluate|evaluation|rubric|score|model test|agent test/.test(text)) routes.push('evaluation');
+  if (/publish|release|public|sanitize|secret|license/.test(text)) routes.push('release-gate');
+  if (/artifact|registry|lineage|derivative|content hash/.test(text)) routes.push('artifact-registry');
   if (/claim|source|evidence|contradict/.test(text)) routes.push('evidence');
   if (/fail|branch|retest|successor/.test(text)) routes.push('branch-retest');
   if (/equation|variable|unit|calculate/.test(text)) routes.push('equation');
@@ -273,10 +347,12 @@ function memory(input) {
 }
 
 const engines = {
-  librarian, evaluation, hallucination, evidence, branchRetest,
+  librarian, evaluation, releaseGate, artifactRegistry, hallucination, evidence, branchRetest,
   equation, prediction, prism, propulsion,
   civilization, memory, telemetry,
-  'branch-retest': branchRetest
+  'branch-retest': branchRetest,
+  'release-gate': releaseGate,
+  'artifact-registry': artifactRegistry
 };
 
 function runEngine(agentId, input) {

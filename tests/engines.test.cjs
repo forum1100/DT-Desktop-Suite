@@ -46,6 +46,41 @@ test('DT evaluation preserves invalid and inconclusive distinctions', () => {
   assert.equal(invalid.disposition, 'INVALID');
 });
 
+test('release gate blocks secrets and requires every publication gate', () => {
+  const blocked = runEngine('release-gate', {
+    releaseText: 'Authorization: Bearer abcdefghijklmnopqrstuvwxyz123456',
+    confidentiality: 'sanitized', publicDisclosureStatus: 'approved',
+    licenseStatus: 'owned', provenanceRecord: 'REC-1',
+    claimReview: 'pass', ipReview: 'pass', explicitApproval: 'yes'
+  });
+  assert.equal(blocked.decision, 'BLOCKED_SECRET_PATTERN');
+  assert.equal(blocked.textReturned, false);
+
+  const approved = runEngine('release-gate', {
+    releaseText: 'Experimental behavioral result; not independently validated.',
+    confidentiality: 'sanitized', publicDisclosureStatus: 'approved',
+    licenseStatus: 'owned', provenanceRecord: 'REC-2',
+    claimReview: 'pass', ipReview: 'pass', explicitApproval: 'yes'
+  });
+  assert.equal(approved.decision, 'APPROVED_FOR_SANITIZED_RELEASE');
+});
+
+test('artifact registry preserves lineage and rejects malformed hashes', () => {
+  const ready = runEngine('artifact-registry', {
+    artifactId: 'DT-A-1', title: 'Artifact', creator: 'TJ', version: '0.1',
+    confidentiality: 'private', publicDisclosureStatus: 'not approved',
+    licenseStatus: 'owned', contentHash: 'a'.repeat(64),
+    parentArtifacts: 'DT-P-1', derivatives: 'DT-D-1'
+  });
+  assert.equal(ready.registrationStatus, 'READY_FOR_APPEND_ONLY_REGISTRATION');
+  assert.deepEqual(ready.lineage.parents, ['DT-P-1']);
+  assert.equal(ready.overwritePermitted, false);
+
+  const bad = runEngine('artifact-registry', { ...ready, contentHash: 'not-a-hash' });
+  assert.equal(bad.registrationStatus, 'INCOMPLETE_REGISTRATION');
+  assert.ok(bad.missing.includes('validSha256'));
+});
+
 test('evidence engine preserves contradiction topology', () => {
   const out = runEngine('evidence', {
     claim: 'A',

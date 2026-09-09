@@ -11,6 +11,18 @@ const briefs = {
     observed: 'A fluent answer can look safe while confusing access with permission, dropping contrary evidence, or hiding a failed branch.',
     input: 'Pre-register the prediction and falsifier, score all eight dimensions from 0 to 4, then attach raw evidence, contrary evidence, failed branches, limitations, and any setup-invalidating condition.'
   },
+  'release-gate': {
+    thesis: 'Public material must be a deliberately sanitized derivative of private work, never an accidental mirror of it.',
+    equation: 'Release readiness = provenance * confidentiality review * claim review * IP review * explicit approval',
+    observed: 'A useful public package can still cause harm if it carries one credential, private datum, unsupported claim, or unclear license.',
+    input: 'Paste the proposed release text and declare confidentiality, disclosure, license, provenance, claim review, IP review, and explicit approval states.'
+  },
+  'artifact-registry': {
+    thesis: 'An artifact becomes governable when identity, origin, status, and lineage remain attached to it.',
+    equation: 'Artifact record = stable ID + hash + provenance + classification + license + parent/derivative links',
+    observed: 'Copies become indistinguishable from originals when their source and derivative relationships disappear.',
+    input: 'Enter the stable ID, title, creator, version, sources, SHA-256, classifications, license status, contributors, parents, and derivatives.'
+  },
   hallucination: {
     thesis: 'Confidence is not evidence. Truth risk rises when certainty outruns observable support.',
     equation: 'Risk ∝ unsupported certainty + missing sources + hidden authority',
