@@ -5,6 +5,7 @@ const common = {
 
 const agents = [
   ['librarian', 'The Librarian', 'Provenance, custody, deduplication, and routing', 'operational', '#78f7ff'],
+  ['evaluation', 'DT Evaluation Engine', 'Reproducible weighted behavioral cases with critical safety gates', 'experimental', '#00e5ff'],
   ['hallucination', 'Hallucination Inspector', 'Heuristic unsupported-certainty and evidence-risk scan', 'experimental', '#ff4fd8'],
   ['evidence', 'Evidence Mapper', 'Separate sources, claims, interpretations, and contradictions', 'operational', '#76ff9f'],
   ['branch-retest', 'Branch Retest Lab', 'Freeze and test successor evidence without erasing failure history', 'operational', '#ffbe55'],

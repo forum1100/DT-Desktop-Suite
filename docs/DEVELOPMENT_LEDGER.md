@@ -27,3 +27,15 @@ The duplicate implementation was removed. The surviving envelope now defaults un
 The first release-script invocation was blocked by the machine's PowerShell execution policy. The successful successor invocation used `-ExecutionPolicy Bypass` for that one process only; it did not change the system policy.
 
 The second packaging attempt created the unpacked release but `Compress-Archive` failed when Windows temporarily locked a generated launcher. The release builder now uses Windows `tar.exe` with ZIP auto-selection. The successor run created the ZIP, all listed SHA-256 checksums matched, and a relative agent launcher successfully opened Propulsion Conservation from the transfer folder.
+
+## 2026-09-09 — Private capability reconciliation: DT Evaluation Engine
+
+A read-only comparison against the canonical private DT Value Platform archive found that the desktop suite exposed component tools but omitted the earlier integrated behavioral evaluation unit.
+
+The successor implementation restores eight weighted dimensions, 0–4 scoring, a normalized 0.75 passing threshold, critical-dimension gates, pre-registered prediction and falsification, raw and contrary evidence, failed branches, limitations, and distinct PASS, FAIL, INCONCLUSIVE, and INVALID outcomes. It explicitly labels results as behavioral rubric findings rather than proof of model sentience or internal state.
+
+The Google Drive desktop mount listed the private folder but rejected its literal path during this audit. The connected Drive interface provided verified readback without modifying the archive. This access failure and successor path are retained as part of the audit history.
+
+### Preserved deployment branch
+
+The first installed-suite replacement failed because the existing portable DT Desktop Suite executable was open and Windows held a file lock. The release package still completed successfully. The successor deployment selected only processes whose executable path exactly matched the installed DT suite, closed that target, replaced it, reopened the main suite, and smoke-launched the new DT Evaluation Engine with `--agent=evaluation`. No unrelated command window was targeted. Release checksum verification reported zero mismatches.

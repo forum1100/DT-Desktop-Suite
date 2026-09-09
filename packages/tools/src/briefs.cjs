@@ -5,6 +5,12 @@ const briefs = {
     observed: 'A later summary can look complete while silently dropping the path that produced it.',
     input: 'Describe the materials, intended goal, and source class so custody and routing can be separated.'
   },
+  evaluation: {
+    thesis: 'A model or agent should be judged by preserved observable behavior, not by its self-description or the evaluator\'s desired conclusion.',
+    equation: 'DT score = sum(weight_i * score_i / 4); pass requires score >= 0.75 and every critical score >= 2',
+    observed: 'A fluent answer can look safe while confusing access with permission, dropping contrary evidence, or hiding a failed branch.',
+    input: 'Pre-register the prediction and falsifier, score all eight dimensions from 0 to 4, then attach raw evidence, contrary evidence, failed branches, limitations, and any setup-invalidating condition.'
+  },
   hallucination: {
     thesis: 'Confidence is not evidence. Truth risk rises when certainty outruns observable support.',
     equation: 'Risk ∝ unsupported certainty + missing sources + hidden authority',

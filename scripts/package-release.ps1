@@ -30,6 +30,7 @@ Copy-Item (Join-Path $repo 'apps\desktop\assets\icons\*.ico') $icons
 
 $agents = @(
   @{ Id='librarian'; Name='The Librarian' },
+  @{ Id='evaluation'; Name='DT Evaluation Engine' },
   @{ Id='hallucination'; Name='Hallucination Inspector' },
   @{ Id='evidence'; Name='Evidence Mapper' },
   @{ Id='branch-retest'; Name='Branch Retest Lab' },
@@ -56,7 +57,7 @@ DT WORKS SUITE — TRANSFER PACKAGE
 
 Fast start:
 1. Open Portable Programs\DT Desktop Suite.exe, or use OPEN DT DESKTOP SUITE.cmd.
-2. Select an agent and run local bounded analysis without connecting an AI.
+2. Select one of twelve agents and run local bounded analysis without connecting an AI.
 3. To use an AI, connect your own provider key in the top console.
 4. Export the Consumer Memory Vault before moving computers.
 
