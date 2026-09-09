@@ -7,6 +7,7 @@ const result = document.querySelector('#result');
 
 function choose(agent) {
   selected = agent;
+  document.title = `${agent.name} — DT Desktop Suite`;
   empty.hidden = true; panel.hidden = false;
   document.documentElement.style.setProperty('--agent', agent.color);
   document.querySelector('#agent-name').textContent = agent.name;

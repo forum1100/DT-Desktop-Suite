@@ -31,6 +31,7 @@
       "output": "dist"
     },
     "win": {
+      "icon": "apps/desktop/assets/icons/suite.ico",
       "target": [
         "nsis",
         "portable"
