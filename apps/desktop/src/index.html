@@ -33,6 +33,11 @@
         <textarea id="ai-prompt" rows="3" placeholder="Ask a question. The selected DT program and its current inputs will be included automatically."></textarea>
         <button id="ask-ai" type="button">Ask connected AI</button><pre id="ai-result" hidden></pre>
       </section>
+      <section id="operations">
+        <div class="ops-head"><div><p class="brief-label">LIVE OPERATIONS TOPOLOGY</p><h2>Agent runtime observatory</h2></div><div><button id="ops-main" type="button">Main view</button><button id="ops-agent" type="button">Selected agent</button></div></div>
+        <div id="ops-summary"></div><div id="ops-graph"></div>
+        <small>Observed local executions only · not provider billing or hidden model-token usage</small>
+      </section>
       <div id="empty">
         <p class="orbital">◉</p>
         <h2>Select an agent</h2>

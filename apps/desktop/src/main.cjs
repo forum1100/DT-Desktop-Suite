@@ -20,7 +20,36 @@ const { preflight } = require('../../../packages/safety/src/preflight.cjs');
 const { PROVIDERS, providerDefinition, requestAI } = require('../../../packages/providers/src/index.cjs');
 
 let vault, keys, broker, gateway, recovery;
+const suiteStartedAt = Date.now();
+const activeRuns = new Map();
 const ownerProfile = require('../../../packages/auth/src/owner.cjs');
+
+function operationsSnapshot() {
+  const rows = vault.all().filter(row => row.kind === 'agent-run');
+  const byAgent = {};
+  for (const row of rows) {
+    const id = row.agentId || 'unknown';
+    const metric = row.data?.runtimeMetric || {};
+    const item = byAgent[id] ||= { agentId:id, runs:0, failures:0, durationMs:0, inputBytes:0, outputBytes:0, lastRun:null };
+    item.runs += 1; item.failures += metric.success === false ? 1 : 0;
+    item.durationMs += Number(metric.durationMs || 0);
+    item.inputBytes += Number(metric.inputBytes || 0);
+    item.outputBytes += Number(metric.outputBytes || 0);
+    item.lastRun = row.createdAt;
+  }
+  const active = [...activeRuns.values()].map(run => ({...run, elapsedMs:Date.now()-run.startedMs}));
+  const agents = Object.values(byAgent).map(item => ({...item,
+    successRate:item.runs ? (item.runs-item.failures)/item.runs : 0,
+    averageMs:item.runs ? item.durationMs/item.runs : 0,
+    active:active.some(run => run.agentId === item.agentId)
+  }));
+  return { suiteUptimeMs:Date.now()-suiteStartedAt, active, agents,
+    totals:agents.reduce((a,x)=>({runs:a.runs+x.runs,failures:a.failures+x.failures,
+      durationMs:a.durationMs+x.durationMs,inputBytes:a.inputBytes+x.inputBytes,
+      outputBytes:a.outputBytes+x.outputBytes}),{runs:0,failures:0,durationMs:0,inputBytes:0,outputBytes:0}),
+    scientificStatus:'OBSERVED_LOCAL_RUNTIME_METRICS_NOT_MODEL_TOKEN_BILLING' };
+}
+
 
 function dataRoot() {
   return path.join(app.getPath('userData'), 'dt-vault');
@@ -80,10 +109,24 @@ function registerIPC(registry) {
     schema: schemas[agent.id],
     brief: briefs[agent.id]
   })));
+  ipcMain.handle('operations:snapshot', () => operationsSnapshot());
   ipcMain.handle('agent:run', (_event, agentId, input) => {
-    const output = runAgent(agentId, input);
-    const receipt = vault.append('agent-run', agentId, output);
-    return { output, receipt };
+    const runId = require('node:crypto').randomUUID();
+    const startedMs = Date.now();
+    activeRuns.set(runId, { runId, agentId, startedMs });
+    try {
+      const output = runAgent(agentId, input);
+      const metric = { durationMs:Date.now()-startedMs, success:true,
+        inputBytes:Buffer.byteLength(JSON.stringify(input || {})),
+        outputBytes:Buffer.byteLength(JSON.stringify(output || {})) };
+      const receipt = vault.append('agent-run', agentId, { ...output, runtimeMetric:metric });
+      return { output, receipt, runtimeMetric:metric };
+    } catch (error) {
+      vault.append('agent-run', agentId, { error:error.message, runtimeMetric:{
+        durationMs:Date.now()-startedMs, success:false,
+        inputBytes:Buffer.byteLength(JSON.stringify(input || {})), outputBytes:0 }});
+      throw error;
+    } finally { activeRuns.delete(runId); }
   });
   ipcMain.handle('workflow:route', (_event, request) => routeTask(request, broker, vault));
   ipcMain.handle('workflow:execute', (_event, request) => executeWorkflow(request, broker, vault));

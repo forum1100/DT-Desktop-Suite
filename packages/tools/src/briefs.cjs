@@ -5,6 +5,72 @@ const briefs = {
     observed: 'A later summary can look complete while silently dropping the path that produced it.',
     input: 'Describe the materials, intended goal, and source class so custody and routing can be separated.'
   },
+  'source-discovery': {
+    thesis: 'A missing historical neighbor is a source-discovery event, not permission to reconstruct it.',
+    equation: 'Discovery state = contacted sources + verified identities + explicit gaps + next search boundary',
+    observed: 'Visible chat context can look complete while canonical exports contain omitted turns or branches.',
+    input: 'Name the target conversation, candidate sources, canonical-export status, known gaps, and bounded search region.'
+  },
+  'ingestion-spark': {
+    thesis: 'Reading and staging an artifact do not confer authority, canonicality, or permission to modify it.',
+    equation: 'Staged candidate = source class + content hash + custody boundary + duplicate links + confidentiality',
+    observed: 'The same payload may arrive twice; preserving two receipts need not create two canonical copies.',
+    input: 'Enter artifact identity, source class, hash, duplicate candidates, confidentiality, and staging location.'
+  },
+  'verbatim-archive': {
+    thesis: 'Source-faithful chronology must never be contaminated by explanatory reconstruction.',
+    equation: 'Verbatim archive = ordered source records + provenance + hashes + explicit unavailable spans',
+    observed: 'A helpful paraphrase can destroy evidentiary value when inserted into an alleged transcript.',
+    input: 'Provide conversation identity, source class, records, ordering evidence, exact gaps, and terminal boundary.'
+  },
+  'derived-model': {
+    thesis: 'Interpretation belongs in a separate model where development can be explained without altering source.',
+    equation: 'Derived model = concepts + equations + decisions + failures + branches + residuals + source links',
+    observed: 'The reason an idea changed often lives in failed attempts and neighboring branches, not the final summary.',
+    input: 'Link source artifacts and separately enter concepts, equations, decisions, failures, branches, residuals, and limits.'
+  },
+  'export-spark': {
+    thesis: 'A portable archive is trustworthy only when component roles, hashes, manifest, gaps, and readback remain bound.',
+    equation: 'Verified export = separated components + manifest + hashes + destination readback + gap ledger',
+    observed: 'Copy success is not proven merely because a destination file exists.',
+    input: 'List source and derived components, manifest, hashes, readback evidence, gaps, and destination.'
+  },
+  'divergence-spark': {
+    thesis: 'Detecting contradiction is distinct from deciding which branch has authority.',
+    equation: 'Divergence = compare(record A, record B, basis, time) without governance mutation',
+    observed: 'Two source-faithful records can conflict while neither is yet authorized as the current reference.',
+    input: 'Provide the logical subject, both records and bases, and their temporal scope.'
+  },
+  'branch-spark': {
+    thesis: 'Current authority may change while historical authority remains immutable.',
+    equation: 'Successor governance = historical state + new evidence + divergence + explicit rule + rationale',
+    observed: 'A later winning branch does not make the earlier decision or failed branch disappear.',
+    input: 'Enter subject, historical authority, successor evidence, divergence record, decision rule, and rationale.'
+  },
+  'index-spark': {
+    thesis: 'An index maps custody and temporal lineage but does not itself confer either.',
+    equation: 'Lineage index = nodes + typed edges + historical authority + current authority + predecessor link',
+    observed: 'A successor index can show reversal without rewriting its predecessor.',
+    input: 'List artifacts, typed edges, historical/current authority, logical subject, and predecessor index.'
+  },
+  'completion-spark': {
+    thesis: 'Completion is a tested gate state, not a synonym for persistence or canonicality.',
+    equation: 'Done = owner * preregistered criteria * sources * version * tests * failures * reviews * checkpoint * explicit risks',
+    observed: 'A document existing or code running once does not establish that the work is complete.',
+    input: 'Supply every definition-of-done field; unresolved or missing gates produce PARTIAL, never fabricated completion.'
+  },
+  'agent-foundry': {
+    thesis: 'An agent is a bounded authority contract with an auditable birth state, not merely a prompt or name.',
+    equation: 'Agent candidate = purpose + authority + I/O contract + prohibitions + handoff + birth state + tests',
+    observed: 'An underspecified agent can silently expand from reading into writing, delegation, or historical alteration.',
+    input: 'Define candidate identity, purpose, authority, inputs, outputs, forbidden actions, handoff contract, birth state, and tests.'
+  },
+  'dt-closeout': {
+    thesis: 'Closeout preserves the fullest causal record available while refusing to promote partial capture into canonical history.',
+    equation: 'Closeout = discovery -> verbatim archive || derived model -> divergence/governance -> index -> verified export -> completion gate',
+    observed: 'A live capture may preserve useful records yet remain PARTIAL until reconciled against canonical export.',
+    input: 'Name the conversation and terminal boundary, then provide canonical sources, live capture, gaps, destination, and approval.'
+  },
   evaluation: {
     thesis: 'A model or agent should be judged by preserved observable behavior, not by its self-description or the evaluator\'s desired conclusion.',
     equation: 'DT score = sum(weight_i * score_i / 4); pass requires score >= 0.75 and every critical score >= 2',
@@ -94,6 +160,18 @@ const briefs = {
     equation: 'Initial allocation = remaining + consumed',
     observed: 'Without the consumed amount and weighting formula, a leaked remaining value cannot reveal the total.',
     input: 'Record the exact value, counter type, scope, source, and every field that remains unknown.'
+  },
+  'operations-historian': {
+    thesis: 'Longer useful operation comes from preserving real runtime history and removing measured bottlenecks, not merely keeping processes alive.',
+    equation: 'Effective swarm yield = validated outputs / (wall time + retry cost + coordination cost)',
+    observed: 'More concurrent agents can reduce performance when they duplicate context, wait on the same dependency, or repeat failed branches.',
+    input: 'Provide the observation window, runs, duration and usage measures, failures, concurrency windows, idle gaps, and operating constraints.'
+  },
+  'suite-release-manager': {
+    thesis: 'A durable software suite changes through attributable patches with tests, rollback points, and owner-controlled publication.',
+    equation: 'Release readiness = tested change × security review × rollback × manifest × explicit approval',
+    observed: 'An update is not complete merely because code changed; the installed build, transfer package, checksums, and repository state can diverge.',
+    input: 'Enter the repository and versions, proposed changes, dependency updates, test evidence, security review, rollback point, destination, and owner approval.'
   }
 };
 

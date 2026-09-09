@@ -44,7 +44,20 @@ $agents = @(
   @{ Id='propulsion'; Name='Propulsion Conservation' },
   @{ Id='civilization'; Name='Civilization Systems' },
   @{ Id='memory'; Name='Consumer Memory Vault' },
-  @{ Id='telemetry'; Name='Execution Telemetry' }
+  @{ Id='telemetry'; Name='Execution Telemetry' },
+  @{ Id='source-discovery'; Name='Source Discovery Spark' },
+  @{ Id='ingestion-spark'; Name='Ingestion Spark' },
+  @{ Id='verbatim-archive'; Name='Verbatim Archive Spark' },
+  @{ Id='derived-model'; Name='Derived Conversation Model' },
+  @{ Id='export-spark'; Name='Export Spark' },
+  @{ Id='divergence-spark'; Name='Divergence Spark' },
+  @{ Id='branch-spark'; Name='Branch Spark' },
+  @{ Id='index-spark'; Name='Index Spark' },
+  @{ Id='completion-spark'; Name='Completion Spark' },
+  @{ Id='agent-foundry'; Name='Agent Foundry' },
+  @{ Id='dt-closeout'; Name='DT Closeout Coordinator' },
+  @{ Id='operations-historian'; Name='Agent Operations Historian' },
+  @{ Id='suite-release-manager'; Name='Suite Release Manager' }
 )
 
 foreach ($agent in $agents) {
@@ -61,7 +74,7 @@ DT WORKS SUITE — TRANSFER PACKAGE
 
 Fast start:
 1. Open Portable Programs\DT Desktop Suite.exe, or use OPEN DT DESKTOP SUITE.cmd.
-2. Select one of sixteen agents and run local bounded analysis without connecting an AI.
+2. Select one of twenty-nine agents and run local bounded analysis without connecting an AI.
 3. To use an AI, connect your own provider key in the top console.
 4. Export the Consumer Memory Vault before moving computers.
 

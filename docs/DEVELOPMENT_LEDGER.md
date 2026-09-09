@@ -51,3 +51,32 @@ The successor artifact registry validates stable identity and SHA-256 form, pres
 The DT Evaluation Credit Ledger was restored as a non-transferable internal service unit. It accepts only nonzero integer entries, prevents negative balances, preserves actor, reason, and reference, and explicitly disclaims cryptocurrency, ownership, revenue share, cash value, and guaranteed redemption. Durable receipts remain append-only vault events.
 
 The Adversarial Test Lab was restored as a design-only synthetic security workbench covering the archived test families. A case requires explicit authority, isolation, synthetic fixtures, prediction, falsification, expected behavior, stop conditions, evidence plan, and environment. It grants no execution authority and prohibits real secrets and third-party targets.
+
+## 2026-09-09 — Foundry lifecycle reconciliation and closeout agents
+
+- Recovered and read the controlling Drive records for AFM-001, Agent Master,
+  birth/descent, current action topology, architecture delta, and tool dependencies.
+- Added eleven desktop closeout workspaces: source discovery, ingestion, verbatim
+  archive, derived model, export, divergence, branch, index, completion, Foundry,
+  and DT Closeout.
+- Added executable local Foundry contract storage for identities, authority grants,
+  bounded parent/child packets, qualification gates, residuals, and legal lifecycle
+  transitions.
+- Reconciled 19 identities. AFM-001 and governing offices remain dormant;
+  source-defined employees remain specified-only; new local processes remain
+  implementation candidates pending role mapping and qualification.
+- Preserved the invariant that information transfer does not transfer authority.
+- Validation covers packet completeness, staged promotion, mandatory RUNNING gates,
+  open-residual blocking, source gaps, and refusal of self-promotion.
+- Protected archive boundary remains read-only and unchanged.
+
+## 2026-09-09 — Live operations observatory and suite release governance
+
+- Added live whole-suite and selected-agent views for observed local runtime activity.
+- Records run duration, input/output byte counts, success/failure, last run, suite uptime,
+  and current in-process activity in the append-only consumer vault.
+- Added Agent Operations Historian for evidence-bounded efficiency, retry, idle-gap,
+  bottleneck, and concurrency recommendations; it cannot auto-spawn or mutate agents.
+- Added Suite Release Manager for patches, dependencies, tests, security review,
+  rollback, release manifests, destination, and explicit owner approval.
+- Runtime measurements are labeled as local observations, not model-token billing.

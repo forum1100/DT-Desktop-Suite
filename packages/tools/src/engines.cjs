@@ -1,3 +1,5 @@
+const { closeoutEngines } = require('./closeout-engines.cjs');
+
 function items(value) {
   if (Array.isArray(value)) return value.filter(Boolean);
   return String(value || '').split(/[\n;,]+/).map(v => v.trim()).filter(Boolean);
@@ -422,6 +424,7 @@ function memory(input) {
 }
 
 const engines = {
+  ...closeoutEngines,
   librarian, evaluation, releaseGate, artifactRegistry, creditLedger, adversarialTest, hallucination, evidence, branchRetest,
   equation, prediction, prism, propulsion,
   civilization, memory, telemetry,

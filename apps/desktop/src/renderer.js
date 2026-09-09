@@ -72,6 +72,35 @@ async function refreshInbox(agent = selected) {
   }
 }
 
+let operationsMode = 'main';
+const fmtTime = ms => ms < 1000 ? Math.round(ms) + ' ms'
+  : ms < 60000 ? (ms/1000).toFixed(1) + ' s'
+  : (ms/60000).toFixed(1) + ' min';
+async function refreshOperations() {
+  try {
+    const data = await window.dt.operationsSnapshot();
+    const rows = operationsMode === 'agent' && selected
+      ? data.agents.filter(row => row.agentId === selected.id) : data.agents;
+    document.querySelector('#ops-summary').innerHTML =
+      '<b>' + data.active.length + '</b><span>active now</span><b>' +
+      data.totals.runs + '</b><span>recorded runs</span><b>' +
+      fmtTime(data.suiteUptimeMs) + '</b><span>suite uptime</span><b>' +
+      data.totals.failures + '</b><span>failures preserved</span>';
+    const max = Math.max(1, ...rows.map(row => row.durationMs));
+    document.querySelector('#ops-graph').replaceChildren(...rows.map(row => {
+      const line=document.createElement('div'); line.className='ops-row';
+      const name=document.createElement('span'); name.textContent=row.agentId;
+      const track=document.createElement('i'); const bar=document.createElement('em');
+      bar.style.width=Math.max(2,(row.durationMs/max)*100)+'%'; track.append(bar);
+      const value=document.createElement('b');
+      value.textContent=(row.active?'LIVE · ':'')+row.runs+' runs · '+fmtTime(row.durationMs);
+      line.append(name,track,value); return line;
+    }));
+  } catch {}
+}
+document.querySelector('#ops-main').addEventListener('click', () => { operationsMode='main'; refreshOperations(); });
+document.querySelector('#ops-agent').addEventListener('click', () => { operationsMode='agent'; refreshOperations(); });
+
 async function boot() {
   await new Promise(resolve => setTimeout(resolve, 150));
   const hub = await window.dt.hubStatus();
@@ -98,6 +127,8 @@ async function boot() {
   updateProviderUI();
   const requested = new URLSearchParams(location.search).get('agent');
   if (requested) choose(agents.find(agent => agent.id === requested) || agents[0]);
+  await refreshOperations();
+  setInterval(refreshOperations, 2000);
 }
 
 document.querySelector('#run').addEventListener('click', async () => {
@@ -110,6 +141,7 @@ document.querySelector('#run').addEventListener('click', async () => {
   try {
     const response = await window.dt.runAgent(selected.id, input);
     result.textContent = JSON.stringify(response, null, 2);
+    await refreshOperations();
   } catch (error) {
     result.textContent = JSON.stringify({ error: error.message }, null, 2);
   }

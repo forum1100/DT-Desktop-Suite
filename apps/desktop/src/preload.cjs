@@ -3,6 +3,7 @@ const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('dt', {
   hubStatus: () => ipcRenderer.invoke('hub:status'),
   listAgents: () => ipcRenderer.invoke('agents:list'),
+  operationsSnapshot: () => ipcRenderer.invoke('operations:snapshot'),
   runAgent: (agentId, input) => ipcRenderer.invoke('agent:run', agentId, input),
   routeWorkflow: request => ipcRenderer.invoke('workflow:route', request),
   executeWorkflow: request => ipcRenderer.invoke('workflow:execute', request),

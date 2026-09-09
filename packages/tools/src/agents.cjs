@@ -5,6 +5,17 @@ const common = {
 
 const agents = [
   ['librarian', 'The Librarian', 'Provenance, custody, deduplication, and routing', 'operational', '#78f7ff'],
+  ['source-discovery', 'Source Discovery Spark', 'Locate canonical sources and record explicit gaps without reconstruction', 'operational', '#55d6ff'],
+  ['ingestion-spark', 'Ingestion Spark', 'Classify, hash, deduplicate, and stage source material without promotion', 'operational', '#66ffcc'],
+  ['verbatim-archive', 'Verbatim Archive Spark', 'Build source-faithful chronological records separate from derived prose', 'operational', '#f7f7ff'],
+  ['derived-model', 'Derived Conversation Model', 'Map concepts, equations, decisions, branches, failures, and residuals', 'experimental', '#b69cff'],
+  ['export-spark', 'Export Spark', 'Package source and derived components with manifests, hashes, and readback receipts', 'operational', '#4df0a7'],
+  ['divergence-spark', 'Divergence Spark', 'Detect contradictions and successor changes without deciding authority', 'operational', '#ff4fd8'],
+  ['branch-spark', 'Branch Spark', 'Govern branch authority while preserving historical states and failed branches', 'operational', '#ff9f43'],
+  ['index-spark', 'Index Spark', 'Create temporal cross-worker lineage indexes without changing custody', 'operational', '#41a7ff'],
+  ['completion-spark', 'Completion Spark', 'Evaluate definition-of-done gates without conferring canonicality', 'operational', '#ffe066'],
+  ['agent-foundry', 'Agent Foundry', 'Register bounded agent candidates, authority, birth state, and handoff contracts', 'experimental', '#ff6bb5'],
+  ['dt-closeout', 'DT Closeout Coordinator', 'Coordinate canonical-first closeout phases and preserve partial status', 'operational', '#00ffff'],
   ['evaluation', 'DT Evaluation Engine', 'Reproducible weighted behavioral cases with critical safety gates', 'experimental', '#00e5ff'],
   ['release-gate', 'Public Release Gate', 'Sanitized publication review for secrets, claims, licensing, and approval', 'operational', '#ff335f'],
   ['artifact-registry', 'Artifact Registry', 'Stable identity, provenance, confidentiality, licensing, and lineage records', 'operational', '#4dffb8'],
@@ -19,7 +30,9 @@ const agents = [
   ['propulsion', 'Propulsion Conservation', 'Momentum, energy, heat, wake, and detectability audit', 'experimental', '#f2f2f2'],
   ['civilization', 'Civilization Systems', 'Constraint-resource topology and scenario comparison', 'experimental', '#ffd166'],
   ['memory', 'Consumer Memory Vault', 'Local append-only records and portable exports', 'operational', '#63e6be'],
-  ['telemetry', 'Execution Telemetry', 'Runtime budgets, tool events, and unverifiable counters', 'experimental', '#ff8c42']
+  ['telemetry', 'Execution Telemetry', 'Runtime budgets, tool events, and unverifiable counters', 'experimental', '#ff8c42'],
+  ['operations-historian', 'Agent Operations Historian', 'Append-only runtime history and bounded swarm-efficiency recommendations', 'operational', '#32ff9a'],
+  ['suite-release-manager', 'Suite Release Manager', 'Repository, patch, upgrade, test, rollback, and release governance', 'operational', '#4f8cff']
 ].map(([id, name, purpose, status, color]) => ({ id, name, purpose, status, color, ...common }));
 
 module.exports = { agents };

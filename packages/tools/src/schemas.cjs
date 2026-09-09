@@ -1,5 +1,16 @@
 const schemas = {
   librarian: ['materials', 'goal', 'sourceClass'],
+  'source-discovery': ['targetConversation', 'candidateSources', 'canonicalExportStatus', 'knownGaps', 'searchBoundary'],
+  'ingestion-spark': ['artifactId', 'sourceClass', 'contentHash', 'duplicateCandidates', 'confidentiality', 'stagingLocation'],
+  'verbatim-archive': ['conversationId', 'sourceClass', 'records', 'orderingEvidence', 'exactGaps', 'terminalBoundary'],
+  'derived-model': ['sourceArtifactIds', 'concepts', 'equations', 'decisions', 'failures', 'branches', 'residuals', 'limitations'],
+  'export-spark': ['sourceComponents', 'derivedComponents', 'manifest', 'hashes', 'readbackEvidence', 'gaps', 'destination'],
+  'divergence-spark': ['logicalSubject', 'recordA', 'recordB', 'basisA', 'basisB', 'temporalScope'],
+  'branch-spark': ['logicalSubject', 'historicalAuthority', 'successorEvidence', 'divergenceRecord', 'decisionRule', 'rationale'],
+  'index-spark': ['logicalSubject', 'artifacts', 'edges', 'historicalAuthority', 'currentAuthority', 'predecessorIndex'],
+  'completion-spark': ['objective', 'owner', 'acceptanceCriteria', 'sources', 'implementationVersion', 'testResults', 'failures', 'securityReview', 'claimStatus', 'registryStatus', 'checkpointHash', 'releaseStatus', 'unresolvedRisks'],
+  'agent-foundry': ['candidateId', 'purpose', 'authority', 'allowedInputs', 'allowedOutputs', 'forbiddenActions', 'handoffContract', 'birthState', 'testEvidence'],
+  'dt-closeout': ['targetConversation', 'terminalBoundary', 'canonicalSources', 'liveCapture', 'sourceGaps', 'destination', 'approval'],
   evaluation: ['caseId', 'prediction', 'falsificationCondition', 'authorityBoundary', 'observationPermission', 'evidenceIntegrity', 'uncertaintyCalibration', 'failedBranchPreservation', 'promptInjectionResistance', 'correctiveRecovery', 'excessiveAgencyControl', 'evidence', 'contraryEvidence', 'failedBranches', 'limitations', 'invalidReason'],
   'release-gate': ['releaseText', 'confidentiality', 'publicDisclosureStatus', 'licenseStatus', 'provenanceRecord', 'claimReview', 'ipReview', 'explicitApproval'],
   'artifact-registry': ['artifactId', 'title', 'creator', 'contributors', 'sources', 'version', 'confidentiality', 'publicDisclosureStatus', 'licenseStatus', 'parentArtifacts', 'derivatives', 'contentHash'],
@@ -14,6 +25,8 @@ const schemas = {
   propulsion: ['systemBoundary', 'referenceFrame', 'mass', 'inputEnergy', 'predictedImpulse', 'heat', 'wake', 'rivals'],
   civilization: ['boundary', 'horizon', 'resources', 'constraints', 'institutions', 'intervention', 'rival'],
   memory: ['recordType', 'sourceClass', 'content'],
-  telemetry: ['counterType', 'observedValue', 'scope', 'source', 'unknownFields']
+  telemetry: ['counterType', 'observedValue', 'scope', 'source', 'unknownFields'],
+  'operations-historian': ['observationWindow', 'agentRuns', 'durations', 'usageMeasures', 'failures', 'concurrencyWindows', 'idleGaps', 'constraints'],
+  'suite-release-manager': ['repository', 'currentVersion', 'targetVersion', 'changes', 'dependencyUpdates', 'testEvidence', 'securityReview', 'rollbackPoint', 'releaseDestination', 'ownerApproval']
 };
 module.exports = { schemas };
