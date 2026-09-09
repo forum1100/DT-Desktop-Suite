@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, safeStorage } = require('electron');
+const { app, BrowserWindow, ipcMain, safeStorage, dialog } = require('electron');
 const path = require('node:path');
 const fs = require('node:fs');
 const { execFileSync } = require('node:child_process');
@@ -7,6 +7,7 @@ const { AgentRegistry } = require('../../../packages/core/src/registry.cjs');
 const { Broker } = require('../../../packages/core/src/broker.cjs');
 const { KeyAuthority } = require('../../../packages/core/src/keys.cjs');
 const { createGateway } = require('../../../packages/core/src/gateway.cjs');
+const { createBundle, verifyBundle } = require('../../../packages/core/src/portable.cjs');
 const { RecoveryAuthority } = require('../../../packages/auth/src/recovery.cjs');
 const { ownerBootstrap, isOwner } = require('../../../packages/auth/src/policy.cjs');
 const { agents } = require('../../../packages/tools/src/agents.cjs');
@@ -83,6 +84,47 @@ function registerIPC(registry) {
     return { output, receipt };
   });
   ipcMain.handle('vault:list', () => vault.all());
+  ipcMain.handle('vault:export', async () => {
+    const bundle = createBundle(vault.all(), { application: 'DT Desktop Suite' });
+    const chosen = await dialog.showSaveDialog({
+      title: 'Export consumer-owned DT vault',
+      defaultPath: 'DT-Consumer-Vault-' + new Date().toISOString().slice(0, 10) + '.json',
+      filters: [{ name: 'DT Vault JSON', extensions: ['json'] }]
+    });
+    if (chosen.canceled || !chosen.filePath) return { canceled: true };
+    fs.writeFileSync(chosen.filePath, JSON.stringify(bundle, null, 2), 'utf8');
+    vault.append('vault-exported', 'memory', {
+      fileName: path.basename(chosen.filePath),
+      recordCount: bundle.recordCount,
+      bundleHash: bundle.bundleHash
+    });
+    return { canceled: false, filePath: chosen.filePath, recordCount: bundle.recordCount, bundleHash: bundle.bundleHash };
+  });
+  ipcMain.handle('vault:import', async () => {
+    const chosen = await dialog.showOpenDialog({
+      title: 'Import a DT consumer vault',
+      properties: ['openFile'],
+      filters: [{ name: 'DT Vault JSON', extensions: ['json'] }]
+    });
+    if (chosen.canceled || !chosen.filePaths[0]) return { canceled: true };
+    const bundle = JSON.parse(fs.readFileSync(chosen.filePaths[0], 'utf8'));
+    const verified = verifyBundle(bundle);
+    if (!verified.valid) throw new Error('Vault rejected: ' + verified.reason);
+    const archiveRoot = path.join(dataRoot(), 'imports');
+    fs.mkdirSync(archiveRoot, { recursive: true });
+    const archiveFile = path.join(archiveRoot, verified.bundleHash + '.json');
+    const duplicateArchive = fs.existsSync(archiveFile);
+    if (!duplicateArchive) fs.writeFileSync(archiveFile, JSON.stringify(bundle, null, 2), 'utf8');
+    const receipt = vault.append('vault-imported', 'memory', {
+      sourceFileName: path.basename(chosen.filePaths[0]),
+      archiveFileName: path.basename(archiveFile),
+      recordCount: verified.recordCount,
+      originalHeadHash: verified.headHash,
+      bundleHash: verified.bundleHash,
+      duplicateArchive
+    });
+    return { canceled: false, verified, receipt };
+  });
   ipcMain.handle('key:issue', (_event, request) => {
     const issued = keys.issue(request);
     vault.append('key-issued', 'dt-hub', { id: issued.id, scopes: issued.scopes });

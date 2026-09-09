@@ -129,6 +129,32 @@ document.querySelector('#ask-ai').addEventListener('click', async () => {
   }
 });
 
+document.querySelector('#export-vault').addEventListener('click', async () => {
+  const state = document.querySelector('#vault-state');
+  state.textContent = 'Verifying chain and preparing export…';
+  try {
+    const exported = await window.dt.exportVault();
+    state.textContent = exported.canceled
+      ? 'Export canceled; local history unchanged.'
+      : 'Exported ' + exported.recordCount + ' records. Hash: ' + exported.bundleHash.slice(0, 12) + '…';
+  } catch (error) {
+    state.textContent = error.message;
+  }
+});
+
+document.querySelector('#import-vault').addEventListener('click', async () => {
+  const state = document.querySelector('#vault-state');
+  state.textContent = 'Checking imported hashes before acceptance…';
+  try {
+    const imported = await window.dt.importVault();
+    state.textContent = imported.canceled
+      ? 'Import canceled; local history unchanged.'
+      : 'Verified ' + imported.verified.recordCount + ' imported records; original chain archived.';
+  } catch (error) {
+    state.textContent = error.message;
+  }
+});
+
 boot().catch(error => { result.textContent = error.stack; });
 
 const adminDialog = document.querySelector('#admin-dialog');

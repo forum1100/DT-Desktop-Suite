@@ -5,6 +5,8 @@ contextBridge.exposeInMainWorld('dt', {
   listAgents: () => ipcRenderer.invoke('agents:list'),
   runAgent: (agentId, input) => ipcRenderer.invoke('agent:run', agentId, input),
   listVault: () => ipcRenderer.invoke('vault:list'),
+  exportVault: () => ipcRenderer.invoke('vault:export'),
+  importVault: () => ipcRenderer.invoke('vault:import'),
   issueKey: request => ipcRenderer.invoke('key:issue', request),
   ownerStatus: () => ipcRenderer.invoke('owner:status'),
   ownerSetup: () => ipcRenderer.invoke('owner:setup'),
