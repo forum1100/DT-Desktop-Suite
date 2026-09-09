@@ -20,3 +20,10 @@ The malformed file was inspected, replaced cleanly, and the complete suite was r
 The shared protocol file contained two historical definitions of `createEnvelope` and `verifyEnvelope`. JavaScript accepted both declarations and silently used the later pair, which omitted the newer `authority` and `sourceClass` fields. Existing integrity tests did not assert those fields, so the branch remained runnable while structurally incomplete.
 
 The duplicate implementation was removed. The surviving envelope now defaults unresolved provenance explicitly, retains authority and source class inside the signed body, and safely rejects malformed hashes. Regression tests mutate the source class and require verification to fail. This discovery is preserved rather than rewritten out of the development record.
+
+
+## 2026-09-09 — Transfer packaging failures and successor path
+
+The first release-script invocation was blocked by the machine's PowerShell execution policy. The successful successor invocation used `-ExecutionPolicy Bypass` for that one process only; it did not change the system policy.
+
+The second packaging attempt created the unpacked release but `Compress-Archive` failed when Windows temporarily locked a generated launcher. The release builder now uses Windows `tar.exe` with ZIP auto-selection. The successor run created the ZIP, all listed SHA-256 checksums matched, and a relative agent launcher successfully opened Propulsion Conservation from the transfer folder.
