@@ -91,6 +91,12 @@ function registerIPC(registry) {
     });
     return { verified: true, adminKey, recoveryTickets, shownOnce: true };
   });
+  ipcMain.handle('owner:recover', (_event, ticket) => {
+    const login = authenticatedGithubLogin();
+    const restored = recovery.redeem(ticket, login);
+    vault.append('owner-recovered', 'dt-hub', { githubLogin: login, adminKeyId: restored.id });
+    return { verified: true, adminKey: restored, shownOnce: true };
+  });
   ipcMain.handle('provider:store', (_event, provider, secret) => {
     if (!safeStorage.isEncryptionAvailable()) throw new Error('OS encryption unavailable');
     const file = credentialFile(provider);

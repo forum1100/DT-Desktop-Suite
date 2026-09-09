@@ -73,3 +73,16 @@ document.querySelector('#owner-setup').addEventListener('click', async () => {
     output.textContent = JSON.stringify({ error: error.message }, null, 2);
   }
 });
+
+document.querySelector('#owner-recover').addEventListener('click', async () => {
+  const output = document.querySelector('#owner-output');
+  const ticket = document.querySelector('#recovery-ticket').value.trim();
+  output.textContent = 'Verifying forum1100 and redeeming ticket…';
+  try {
+    const restored = await window.dt.ownerRecover(ticket);
+    output.textContent = JSON.stringify(restored, null, 2);
+    document.querySelector('#recovery-ticket').value = '';
+  } catch (error) {
+    output.textContent = JSON.stringify({ error: error.message }, null, 2);
+  }
+});

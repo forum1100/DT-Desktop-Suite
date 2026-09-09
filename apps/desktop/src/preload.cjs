@@ -7,5 +7,6 @@ contextBridge.exposeInMainWorld('dt', {
   issueKey: request => ipcRenderer.invoke('key:issue', request),
   ownerStatus: () => ipcRenderer.invoke('owner:status'),
   ownerSetup: () => ipcRenderer.invoke('owner:setup'),
+  ownerRecover: ticket => ipcRenderer.invoke('owner:recover', ticket),
   storeProvider: (provider, secret) => ipcRenderer.invoke('provider:store', provider, secret)
 });

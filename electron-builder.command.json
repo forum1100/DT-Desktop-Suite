@@ -13,7 +13,8 @@
     "output": "dist-command"
   },
   "win": {
-    "target": ["nsis", "portable"]
+    "target": ["nsis", "portable"],
+    "icon": "apps/desktop/assets/icons/telemetry.ico"
   },
   "nsis": {
     "oneClick": false,
