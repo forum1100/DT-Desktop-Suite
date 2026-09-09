@@ -15,6 +15,7 @@ function choose(agent) {
   document.querySelector('#agent-purpose').textContent = agent.purpose;
   document.querySelector('#agent-status').textContent = agent.status;
   document.querySelector('#route-workflow').hidden = agent.id !== 'librarian';
+  refreshInbox(agent);
   document.querySelector('#brief-thesis').textContent = agent.brief?.thesis || '';
   document.querySelector('#brief-equation').textContent = agent.brief?.equation || '';
   document.querySelector('#brief-observed').textContent = agent.brief?.observed || '';
@@ -52,6 +53,22 @@ function updateProviderUI() {
 
 function currentInput() {
   return form ? Object.fromEntries(new FormData(form)) : {};
+}
+
+async function refreshInbox(agent = selected) {
+  const button = document.querySelector('#process-inbox');
+  if (!agent || agent.id === 'librarian') {
+    button.hidden = true;
+    return;
+  }
+  try {
+    const pending = await window.dt.getInbox(agent.id);
+    button.hidden = false;
+    document.querySelector('#inbox-count').textContent = '(' + pending.length + ')';
+    button.disabled = pending.length === 0;
+  } catch {
+    button.hidden = true;
+  }
 }
 
 async function boot() {
@@ -114,6 +131,30 @@ document.querySelector('#route-workflow').addEventListener('click', async () => 
       failures: routed.failures,
       checkpoint: routed.checkpoint
     }, null, 2);
+  } catch (error) {
+    result.textContent = JSON.stringify({ error: error.message }, null, 2);
+  }
+});
+
+document.querySelector('#process-inbox').addEventListener('click', async () => {
+  if (!selected || selected.id === 'librarian') return;
+  result.textContent = 'Verifying and processing pending task envelopes…';
+  try {
+    const processed = await window.dt.processInbox(selected.id);
+    result.textContent = JSON.stringify({
+      agentId: processed.agentId,
+      received: processed.pendingBeforeRun,
+      responses: processed.processed.map(item => ({
+        taskId: item.message.id,
+        responseId: item.response.id,
+        parentId: item.response.parentId,
+        state: item.result.state,
+        requiredFields: item.result.requiredFields
+      })),
+      failures: processed.failures,
+      pending: processed.pendingAfterRun
+    }, null, 2);
+    await refreshInbox(selected);
   } catch (error) {
     result.textContent = JSON.stringify({ error: error.message }, null, 2);
   }
