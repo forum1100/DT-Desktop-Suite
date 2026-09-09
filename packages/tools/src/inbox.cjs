@@ -21,9 +21,11 @@ function inboxFor(agentId, vault) {
     );
 }
 
-function processInbox(agentId, vault, broker) {
+function processInbox(agentId, vault, broker, options = {}) {
   if (!schemas[agentId]) throw new Error('Unknown agent inbox');
-  const pending = inboxFor(agentId, vault);
+  const allowed = new Set(options.messageIds || []);
+  const allPending = inboxFor(agentId, vault);
+  const pending = allowed.size ? allPending.filter(message => allowed.has(message.id)) : allPending;
   const processed = [];
   const failures = [];
 
@@ -66,7 +68,8 @@ function processInbox(agentId, vault, broker) {
     pendingBeforeRun: pending.length,
     processed,
     failures,
-    pendingAfterRun: inboxFor(agentId, vault).length
+    pendingAfterRun: inboxFor(agentId, vault).length,
+    scopedRun: allowed.size > 0
   };
 }
 

@@ -35,3 +35,30 @@ test('Librarian routes signed provenance-preserving task envelopes', () => {
 test('unknown provenance is explicit rather than invented', () => {
   assert.equal(normalizeSourceClass('something else'), 'PROVENANCE_UNRESOLVED');
 });
+
+
+test('coordinated workflow processes only its newly routed messages', async () => {
+  const vault = new Vault(temp());
+  const registry = new AgentRegistry(agents);
+  const broker = new Broker(vault, registry);
+  const oldTask = broker.send({
+    sender: 'librarian',
+    recipient: 'evidence',
+    type: 'task',
+    payload: { goal: 'older pending task' },
+    sourceClass: 'PROVENANCE_UNRESOLVED'
+  });
+  const { executeWorkflow } = require('../packages/tools/src/workflow.cjs');
+  const completed = await executeWorkflow({
+    materials: 'new evidence source',
+    goal: 'map this claim and contradiction',
+    sourceClass: 'CANONICAL_SOURCE'
+  }, broker, vault);
+  assert.equal(completed.completion.data.state, 'COMPLETED');
+  const evidenceRun = completed.executions.find(run => run.agentId === 'evidence');
+  assert.equal(evidenceRun.scopedRun, true);
+  assert.equal(evidenceRun.processed.length, 1);
+  const { inboxFor } = require('../packages/tools/src/inbox.cjs');
+  const stillPending = inboxFor('evidence', vault);
+  assert.ok(stillPending.some(message => message.id === oldTask.id));
+});

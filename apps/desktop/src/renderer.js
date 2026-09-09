@@ -15,6 +15,7 @@ function choose(agent) {
   document.querySelector('#agent-purpose').textContent = agent.purpose;
   document.querySelector('#agent-status').textContent = agent.status;
   document.querySelector('#route-workflow').hidden = agent.id !== 'librarian';
+  document.querySelector('#execute-workflow').hidden = agent.id !== 'librarian';
   refreshInbox(agent);
   document.querySelector('#brief-thesis').textContent = agent.brief?.thesis || '';
   document.querySelector('#brief-equation').textContent = agent.brief?.equation || '';
@@ -130,6 +131,27 @@ document.querySelector('#route-workflow').addEventListener('click', async () => 
       })),
       failures: routed.failures,
       checkpoint: routed.checkpoint
+    }, null, 2);
+  } catch (error) {
+    result.textContent = JSON.stringify({ error: error.message }, null, 2);
+  }
+});
+
+document.querySelector('#execute-workflow').addEventListener('click', async () => {
+  if (selected?.id !== 'librarian') return;
+  result.textContent = 'Routing, processing, and collecting signed responses…';
+  try {
+    const completed = await window.dt.executeWorkflow(currentInput());
+    result.textContent = JSON.stringify({
+      routes: completed.routed.routes,
+      tasks: completed.routed.messages.map(message => message.id),
+      executions: completed.executions.map(run => ({
+        agentId: run.agentId,
+        processed: run.processed.length,
+        responseIds: run.processed.map(item => item.response.id),
+        failures: run.failures
+      })),
+      completion: completed.completion
     }, null, 2);
   } catch (error) {
     result.textContent = JSON.stringify({ error: error.message }, null, 2);

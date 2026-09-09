@@ -14,7 +14,7 @@ const { agents } = require('../../../packages/tools/src/agents.cjs');
 const { schemas } = require('../../../packages/tools/src/schemas.cjs');
 const { briefs } = require('../../../packages/tools/src/briefs.cjs');
 const { runAgent } = require('../../../packages/tools/src/runner.cjs');
-const { routeTask } = require('../../../packages/tools/src/workflow.cjs');
+const { routeTask, executeWorkflow } = require('../../../packages/tools/src/workflow.cjs');
 const { inboxFor, processInbox } = require('../../../packages/tools/src/inbox.cjs');
 const { preflight } = require('../../../packages/safety/src/preflight.cjs');
 const { PROVIDERS, providerDefinition, requestAI } = require('../../../packages/providers/src/index.cjs');
@@ -86,6 +86,7 @@ function registerIPC(registry) {
     return { output, receipt };
   });
   ipcMain.handle('workflow:route', (_event, request) => routeTask(request, broker, vault));
+  ipcMain.handle('workflow:execute', (_event, request) => executeWorkflow(request, broker, vault));
   ipcMain.handle('agent:inbox', (_event, agentId) => inboxFor(agentId, vault));
   ipcMain.handle('agent:process-inbox', (_event, agentId) => processInbox(agentId, vault, broker));
   ipcMain.handle('vault:list', () => vault.all());

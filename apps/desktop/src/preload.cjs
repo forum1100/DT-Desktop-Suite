@@ -5,6 +5,7 @@ contextBridge.exposeInMainWorld('dt', {
   listAgents: () => ipcRenderer.invoke('agents:list'),
   runAgent: (agentId, input) => ipcRenderer.invoke('agent:run', agentId, input),
   routeWorkflow: request => ipcRenderer.invoke('workflow:route', request),
+  executeWorkflow: request => ipcRenderer.invoke('workflow:execute', request),
   getInbox: agentId => ipcRenderer.invoke('agent:inbox', agentId),
   processInbox: agentId => ipcRenderer.invoke('agent:process-inbox', agentId),
   listVault: () => ipcRenderer.invoke('vault:list'),
