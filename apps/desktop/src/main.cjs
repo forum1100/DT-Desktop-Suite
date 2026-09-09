@@ -14,7 +14,7 @@ const { schemas } = require('../../../packages/tools/src/schemas.cjs');
 const { runAgent } = require('../../../packages/tools/src/runner.cjs');
 
 let vault, keys, broker, gateway, recovery;
-const ownerProfile = require('../../../config/owner.json');
+const ownerProfile = require('../../../packages/auth/src/owner.cjs');
 
 function dataRoot() {
   return path.join(app.getPath('userData'), 'dt-vault');
