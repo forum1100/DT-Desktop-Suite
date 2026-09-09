@@ -25,29 +25,31 @@ const activeRuns = new Map();
 const ownerProfile = require('../../../packages/auth/src/owner.cjs');
 
 function operationsSnapshot() {
-  const rows = vault.all().filter(row => row.kind === 'agent-run');
-  const byAgent = {};
-  for (const row of rows) {
-    const id = row.agentId || 'unknown';
-    const metric = row.data?.runtimeMetric || {};
-    const item = byAgent[id] ||= { agentId:id, runs:0, failures:0, durationMs:0, inputBytes:0, outputBytes:0, lastRun:null };
-    item.runs += 1; item.failures += metric.success === false ? 1 : 0;
-    item.durationMs += Number(metric.durationMs || 0);
-    item.inputBytes += Number(metric.inputBytes || 0);
-    item.outputBytes += Number(metric.outputBytes || 0);
-    item.lastRun = row.createdAt;
-  }
-  const active = [...activeRuns.values()].map(run => ({...run, elapsedMs:Date.now()-run.startedMs}));
-  const agents = Object.values(byAgent).map(item => ({...item,
-    successRate:item.runs ? (item.runs-item.failures)/item.runs : 0,
-    averageMs:item.runs ? item.durationMs/item.runs : 0,
-    active:active.some(run => run.agentId === item.agentId)
-  }));
-  return { suiteUptimeMs:Date.now()-suiteStartedAt, active, agents,
-    totals:agents.reduce((a,x)=>({runs:a.runs+x.runs,failures:a.failures+x.failures,
-      durationMs:a.durationMs+x.durationMs,inputBytes:a.inputBytes+x.inputBytes,
-      outputBytes:a.outputBytes+x.outputBytes}),{runs:0,failures:0,durationMs:0,inputBytes:0,outputBytes:0}),
-    scientificStatus:'OBSERVED_LOCAL_RUNTIME_METRICS_NOT_MODEL_TOKEN_BILLING' };
+  const rows=vault.all().filter(row=>row.kind==='agent-run'),byAgent={};
+  for(const row of rows){const id=row.agentId||'unknown',m=row.data?.runtimeMetric||{};
+    const x=byAgent[id]||={agentId:id,runs:0,failures:0,durationMs:0,inputBytes:0,outputBytes:0,lastRun:null};
+    x.runs++;x.failures+=m.success===false?1:0;x.durationMs+=Number(m.durationMs||0);
+    x.inputBytes+=Number(m.inputBytes||0);x.outputBytes+=Number(m.outputBytes||0);x.lastRun=row.createdAt}
+  const active=[...activeRuns.values()].map(run=>({...run,elapsedMs:Date.now()-run.startedMs}));
+  let agentMetrics=Object.values(byAgent).map(x=>({...x,
+    successRate:x.runs?(x.runs-x.failures)/x.runs:0,averageMs:x.runs?x.durationMs/x.runs:0,
+    active:active.some(run=>run.agentId===x.agentId)}));
+  let coordinator=null;
+  try {
+    const file=path.join(process.env.USERPROFILE||'','Documents','TJ_Local_Coordinator','state','operations_snapshot.json');
+    coordinator=JSON.parse(fs.readFileSync(file,'utf8'));
+    for(const worker of coordinator.workers||[]){if(!worker.alive)continue;
+      active.push({runId:'coordinator:'+worker.worker_id,agentId:worker.worker_id,
+        startedMs:null,elapsedMs:Number(worker.uptime_seconds||0)*1000,status:worker.status});
+      agentMetrics.push({agentId:worker.worker_id,runs:Number(worker.task_count||0),failures:0,
+        durationMs:Number(worker.uptime_seconds||0)*1000,inputBytes:0,outputBytes:0,
+        lastRun:worker.last_heartbeat,successRate:1,averageMs:0,active:true,source:'coordinator'})}
+  } catch {}
+  const totals=agentMetrics.reduce((a,x)=>({runs:a.runs+x.runs,failures:a.failures+x.failures,
+    durationMs:a.durationMs+x.durationMs,inputBytes:a.inputBytes+x.inputBytes,
+    outputBytes:a.outputBytes+x.outputBytes}),{runs:0,failures:0,durationMs:0,inputBytes:0,outputBytes:0});
+  return {suiteUptimeMs:Date.now()-suiteStartedAt,active,agents:agentMetrics,totals,coordinator,
+    scientificStatus:'OBSERVED_LOCAL_RUNTIME_METRICS_NOT_MODEL_TOKEN_BILLING'};
 }
 
 
