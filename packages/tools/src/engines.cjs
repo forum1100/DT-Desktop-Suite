@@ -240,6 +240,8 @@ function librarian(input) {
   if (/evaluate|evaluation|rubric|score|model test|agent test/.test(text)) routes.push('evaluation');
   if (/publish|release|public|sanitize|secret|license/.test(text)) routes.push('release-gate');
   if (/artifact|registry|lineage|derivative|content hash/.test(text)) routes.push('artifact-registry');
+  if (/credit|service meter|usage meter|contribution meter/.test(text)) routes.push('credit-ledger');
+  if (/adversarial|prompt injection|poison|security test|tamper/.test(text)) routes.push('adversarial-test');
   if (/claim|source|evidence|contradict/.test(text)) routes.push('evidence');
   if (/fail|branch|retest|successor/.test(text)) routes.push('branch-retest');
   if (/equation|variable|unit|calculate/.test(text)) routes.push('equation');
@@ -253,6 +255,79 @@ function librarian(input) {
     canonicalizationPermitted: false
   };
 }
+function creditLedger(input) {
+  const amount = numeric(input.amount);
+  const previousBalance = numeric(input.previousBalance);
+  const flags = [];
+  if (!Number.isInteger(amount) || amount === 0) flags.push('AMOUNT_MUST_BE_NONZERO_INTEGER');
+  if (!Number.isInteger(previousBalance) || previousBalance < 0) flags.push('PRIOR_BALANCE_INVALID');
+  const newBalance = flags.length ? null : previousBalance + amount;
+  if (newBalance !== null && newBalance < 0) flags.push('NEGATIVE_BALANCE_BLOCKED');
+  const text = [input.reason, input.reference].join(' ');
+  if (/cryptocurrency|investment|ownership|revenue share|guaranteed redemption|cash value/i.test(text)) {
+    flags.push('PROHIBITED_FINANCIAL_OR_OWNERSHIP_CLAIM');
+  }
+  return {
+    actor: input.actor || null,
+    amount,
+    previousBalance,
+    newBalance: flags.includes('NEGATIVE_BALANCE_BLOCKED') ? null : newBalance,
+    reason: input.reason || null,
+    reference: input.reference || null,
+    flags,
+    entryPermitted: flags.length === 0,
+    unitClass: 'NON_TRANSFERABLE_INTERNAL_SERVICE_CREDIT',
+    cryptocurrency: false,
+    ownershipRights: false,
+    revenueShare: false,
+    guaranteedRedemption: false,
+    note: 'The append-only vault creates the durable receipt after this calculation.'
+  };
+}
+
+const ADVERSARIAL_FAMILIES = [
+  'direct prompt injection', 'indirect prompt injection', 'secret extraction',
+  'insecure output handling', 'excessive agency', 'sensitive information disclosure',
+  'data poisoning', 'model poisoning', 'supply chain compromise',
+  'resource exhaustion', 'model extraction', 'prompt extraction',
+  'memory poisoning', 'context poisoning', 'malicious metadata',
+  'path traversal', 'unsafe deserialization', 'report tampering', 'ledger tampering'
+];
+
+function adversarialTest(input) {
+  const required = ['testId', 'authorizedBoundary', 'testFamily', 'syntheticFixture',
+    'prediction', 'falsificationCondition', 'expectedSafeBehavior', 'stopConditions',
+    'evidencePlan', 'environment'];
+  const missing = required.filter(key => !String(input[key] || '').trim());
+  const family = String(input.testFamily || '').trim().toLowerCase();
+  const familyRecognized = ADVERSARIAL_FAMILIES.includes(family);
+  const controls = {
+    authorized: Boolean(String(input.authorizedBoundary || '').trim()),
+    isolated: /local|sandbox|isolated|mock|synthetic/i.test(String(input.environment || '')),
+    syntheticOnly: /synthetic|dummy|fixture|canary|mock/i.test(String(input.syntheticFixture || '')),
+    stopConditionsPresent: Boolean(String(input.stopConditions || '').trim()),
+    evidencePlanPresent: Boolean(String(input.evidencePlan || '').trim())
+  };
+  const missingControls = Object.entries(controls).filter(([, ok]) => !ok).map(([key]) => key);
+  return {
+    testId: input.testId || null,
+    family,
+    familyRecognized,
+    prediction: input.prediction || null,
+    falsificationCondition: input.falsificationCondition || null,
+    expectedSafeBehavior: input.expectedSafeBehavior || null,
+    allowedTools: items(input.allowedTools),
+    controls,
+    missing,
+    missingControls,
+    designStatus: missing.length || missingControls.length || !familyRecognized
+      ? 'INCOMPLETE_SYNTHETIC_TEST_DESIGN' : 'READY_FOR_AUTHORIZED_ISOLATED_SIMULATION',
+    executionPerformed: false,
+    executionAuthorityGranted: false,
+    realSecretsOrThirdPartyTargetsPermitted: false
+  };
+}
+
 function hallucination(input) {
   const text = String(input.text || '');
   const sources = items(input.sources);
@@ -347,16 +422,18 @@ function memory(input) {
 }
 
 const engines = {
-  librarian, evaluation, releaseGate, artifactRegistry, hallucination, evidence, branchRetest,
+  librarian, evaluation, releaseGate, artifactRegistry, creditLedger, adversarialTest, hallucination, evidence, branchRetest,
   equation, prediction, prism, propulsion,
   civilization, memory, telemetry,
   'branch-retest': branchRetest,
   'release-gate': releaseGate,
-  'artifact-registry': artifactRegistry
+  'artifact-registry': artifactRegistry,
+  'credit-ledger': creditLedger,
+  'adversarial-test': adversarialTest
 };
 
 function runEngine(agentId, input) {
   return engines[agentId] ? engines[agentId](input) : {};
 }
 
-module.exports = { runEngine, engines, items, numeric, EVALUATION_DIMENSIONS };
+module.exports = { runEngine, engines, items, numeric, EVALUATION_DIMENSIONS, ADVERSARIAL_FAMILIES };

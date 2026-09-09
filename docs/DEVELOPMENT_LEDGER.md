@@ -45,3 +45,9 @@ The first installed-suite replacement failed because the existing portable DT De
 The private architecture confirmed two additional missing operational structures: the Public Release Gate and Artifact Registry. The successor release gate performs supplemental secret and prohibited-claim pattern checks without returning suspected secret text, then requires explicit provenance, confidentiality, disclosure, licensing, claim, IP, and owner-approval gates. It cannot replace manual review.
 
 The successor artifact registry validates stable identity and SHA-256 form, preserves creator, contributor, source, confidentiality, disclosure, licensing, parent, and derivative fields, and refuses overwrite semantics. These tools implement the documented architecture without copying private test catalogs or private case content into the transferable package.
+
+## 2026-09-09 — Private capability reconciliation: service credits and adversarial testing
+
+The DT Evaluation Credit Ledger was restored as a non-transferable internal service unit. It accepts only nonzero integer entries, prevents negative balances, preserves actor, reason, and reference, and explicitly disclaims cryptocurrency, ownership, revenue share, cash value, and guaranteed redemption. Durable receipts remain append-only vault events.
+
+The Adversarial Test Lab was restored as a design-only synthetic security workbench covering the archived test families. A case requires explicit authority, isolation, synthetic fixtures, prediction, falsification, expected behavior, stop conditions, evidence plan, and environment. It grants no execution authority and prohibits real secrets and third-party targets.

@@ -23,6 +23,18 @@ const briefs = {
     observed: 'Copies become indistinguishable from originals when their source and derivative relationships disappear.',
     input: 'Enter the stable ID, title, creator, version, sources, SHA-256, classifications, license status, contributors, parents, and derivatives.'
   },
+  'credit-ledger': {
+    thesis: 'Service usage and approved contribution can be measured without turning intellectual work into speculative currency.',
+    equation: 'New balance = verified prior balance + signed integer service credit',
+    observed: 'A usage meter becomes misleading when it silently implies cash value, ownership, transferability, or guaranteed redemption.',
+    input: 'Enter the actor, whole-number credit or debit, reason, reference, and verified prior balance; the tool blocks negative balances and financial claims.'
+  },
+  'adversarial-test': {
+    thesis: 'A defensive system learns safely when hostile conditions are represented by authorized synthetic fixtures inside a contained boundary.',
+    equation: 'Valid adversarial case = authority * isolation * synthetic data * prediction * falsifier * stop conditions * preserved trace',
+    observed: 'An AI can fail because an untrusted document, memory, or tool result is mistaken for governing authority.',
+    input: 'Define the authorized local boundary, test family, synthetic fixture, prediction, falsifier, expected safe behavior, allowed tools, stop conditions, evidence plan, and environment.'
+  },
   hallucination: {
     thesis: 'Confidence is not evidence. Truth risk rises when certainty outruns observable support.',
     equation: 'Risk ∝ unsupported certainty + missing sources + hidden authority',

@@ -8,6 +8,8 @@ const agents = [
   ['evaluation', 'DT Evaluation Engine', 'Reproducible weighted behavioral cases with critical safety gates', 'experimental', '#00e5ff'],
   ['release-gate', 'Public Release Gate', 'Sanitized publication review for secrets, claims, licensing, and approval', 'operational', '#ff335f'],
   ['artifact-registry', 'Artifact Registry', 'Stable identity, provenance, confidentiality, licensing, and lineage records', 'operational', '#4dffb8'],
+  ['credit-ledger', 'DT Evaluation Credit Ledger', 'Non-transferable internal service and contribution metering', 'experimental', '#ffd166'],
+  ['adversarial-test', 'Adversarial Test Lab', 'Authorized isolated synthetic AI-security test design and evidence capture', 'synthetic-only', '#ff7a45'],
   ['hallucination', 'Hallucination Inspector', 'Heuristic unsupported-certainty and evidence-risk scan', 'experimental', '#ff4fd8'],
   ['evidence', 'Evidence Mapper', 'Separate sources, claims, interpretations, and contradictions', 'operational', '#76ff9f'],
   ['branch-retest', 'Branch Retest Lab', 'Freeze and test successor evidence without erasing failure history', 'operational', '#ffbe55'],

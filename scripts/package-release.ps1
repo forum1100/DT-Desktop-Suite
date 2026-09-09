@@ -33,6 +33,8 @@ $agents = @(
   @{ Id='evaluation'; Name='DT Evaluation Engine' },
   @{ Id='release-gate'; Name='Public Release Gate' },
   @{ Id='artifact-registry'; Name='Artifact Registry' },
+  @{ Id='credit-ledger'; Name='DT Evaluation Credit Ledger' },
+  @{ Id='adversarial-test'; Name='Adversarial Test Lab' },
   @{ Id='hallucination'; Name='Hallucination Inspector' },
   @{ Id='evidence'; Name='Evidence Mapper' },
   @{ Id='branch-retest'; Name='Branch Retest Lab' },
@@ -59,7 +61,7 @@ DT WORKS SUITE — TRANSFER PACKAGE
 
 Fast start:
 1. Open Portable Programs\DT Desktop Suite.exe, or use OPEN DT DESKTOP SUITE.cmd.
-2. Select one of fourteen agents and run local bounded analysis without connecting an AI.
+2. Select one of sixteen agents and run local bounded analysis without connecting an AI.
 3. To use an AI, connect your own provider key in the top console.
 4. Export the Consumer Memory Vault before moving computers.
 
