@@ -1,4 +1,5 @@
 let selected = null;
+let providers = [];
 const nav = document.querySelector('#agents');
 const panel = document.querySelector('#agent-panel');
 const empty = document.querySelector('#empty');
@@ -28,6 +29,30 @@ function choose(agent) {
   result.textContent = 'Awaiting input.';
 }
 
+function updateProviderUI() {
+  const id = document.querySelector('#provider').value;
+  const current = providers.find(item => item.id === id);
+  const defaults = {
+    openai: 'gpt-5.2',
+    anthropic: 'claude-sonnet-4-5',
+    xai: 'grok-4',
+    ollama: 'llama3.2',
+    compatible: ''
+  };
+  document.querySelector('#model').value = defaults[id] || '';
+  document.querySelector('#base-url').disabled = id !== 'compatible';
+  const localOnly = id === 'ollama';
+  document.querySelector('#provider-key').disabled = localOnly;
+  document.querySelector('#save-provider').disabled = localOnly;
+  document.querySelector('#provider-state').textContent = current?.hasCredential
+    ? current.label + ' KEY STORED'
+    : current?.keyRequired ? current.label + ' NEEDS KEY' : current?.label + ' READY';
+}
+
+function currentInput() {
+  return form ? Object.fromEntries(new FormData(form)) : {};
+}
+
 async function boot() {
   await new Promise(resolve => setTimeout(resolve, 150));
   const hub = await window.dt.hubStatus();
@@ -42,6 +67,16 @@ async function boot() {
     button.addEventListener('click', () => choose(agent));
     nav.append(button);
   }
+  providers = await window.dt.listProviders();
+  const providerSelect = document.querySelector('#provider');
+  for (const provider of providers) {
+    const option = document.createElement('option');
+    option.value = provider.id;
+    option.textContent = provider.label;
+    providerSelect.append(option);
+  }
+  providerSelect.addEventListener('change', updateProviderUI);
+  updateProviderUI();
   const requested = new URLSearchParams(location.search).get('agent');
   if (requested) choose(agents.find(agent => agent.id === requested) || agents[0]);
 }
@@ -58,6 +93,39 @@ document.querySelector('#run').addEventListener('click', async () => {
     result.textContent = JSON.stringify(response, null, 2);
   } catch (error) {
     result.textContent = JSON.stringify({ error: error.message }, null, 2);
+  }
+});
+
+document.querySelector('#save-provider').addEventListener('click', async () => {
+  const id = document.querySelector('#provider').value;
+  const key = document.querySelector('#provider-key');
+  const state = document.querySelector('#provider-state');
+  try {
+    await window.dt.storeProvider(id, key.value);
+    key.value = '';
+    providers = await window.dt.listProviders();
+    updateProviderUI();
+  } catch (error) {
+    state.textContent = error.message;
+  }
+});
+
+document.querySelector('#ask-ai').addEventListener('click', async () => {
+  const output = document.querySelector('#ai-result');
+  output.hidden = false;
+  output.textContent = 'Contacting selected provider…';
+  try {
+    const response = await window.dt.askProvider({
+      provider: document.querySelector('#provider').value,
+      model: document.querySelector('#model').value.trim(),
+      baseUrl: document.querySelector('#base-url').value.trim(),
+      prompt: document.querySelector('#ai-prompt').value,
+      agentId: selected?.id || null,
+      input: currentInput()
+    });
+    output.textContent = response.text + '\n\nSafety receipt:\n' + JSON.stringify(response.safety, null, 2);
+  } catch (error) {
+    output.textContent = JSON.stringify({ error: error.message }, null, 2);
   }
 });
 

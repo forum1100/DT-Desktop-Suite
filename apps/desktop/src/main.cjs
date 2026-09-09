@@ -13,6 +13,8 @@ const { agents } = require('../../../packages/tools/src/agents.cjs');
 const { schemas } = require('../../../packages/tools/src/schemas.cjs');
 const { briefs } = require('../../../packages/tools/src/briefs.cjs');
 const { runAgent } = require('../../../packages/tools/src/runner.cjs');
+const { preflight } = require('../../../packages/safety/src/preflight.cjs');
+const { PROVIDERS, providerDefinition, requestAI } = require('../../../packages/providers/src/index.cjs');
 
 let vault, keys, broker, gateway, recovery;
 const ownerProfile = require('../../../packages/auth/src/owner.cjs');
@@ -37,6 +39,13 @@ function createWindow(agentId = null) {
 
 function credentialFile(provider) {
   return path.join(dataRoot(), 'credentials', provider + '.bin');
+}
+
+function readCredential(provider) {
+  const file = credentialFile(provider);
+  if (!fs.existsSync(file)) return null;
+  if (!safeStorage.isEncryptionAvailable()) throw new Error('OS encryption unavailable');
+  return safeStorage.decryptString(fs.readFileSync(file));
 }
 
 function authenticatedGithubLogin() {
@@ -103,13 +112,48 @@ function registerIPC(registry) {
     vault.append('owner-recovered', 'dt-hub', { githubLogin: login, adminKeyId: restored.id });
     return { verified: true, adminKey: restored, shownOnce: true };
   });
+  ipcMain.handle('provider:list', () => Object.entries(PROVIDERS).map(([id, item]) => ({
+    id,
+    label: item.label,
+    keyRequired: item.keyRequired,
+    hasCredential: fs.existsSync(credentialFile(id)),
+    connected: !item.keyRequired || fs.existsSync(credentialFile(id))
+  })));
   ipcMain.handle('provider:store', (_event, provider, secret) => {
+    if (!PROVIDERS[provider]) throw new Error('Unsupported provider');
     if (!safeStorage.isEncryptionAvailable()) throw new Error('OS encryption unavailable');
+    if (!String(secret || '').trim()) throw new Error('Credential cannot be empty');
     const file = credentialFile(provider);
     fs.mkdirSync(path.dirname(file), { recursive: true });
-    fs.writeFileSync(file, safeStorage.encryptString(secret));
+    fs.writeFileSync(file, safeStorage.encryptString(secret.trim()));
     vault.append('provider-credential-stored', 'dt-hub', { provider });
     return true;
+  });
+  ipcMain.handle('provider:ask', async (_event, request) => {
+    const { provider, model, baseUrl, prompt, agentId, input } = request;
+    if (!String(prompt || '').trim()) throw new Error('Question required');
+    const definition = providerDefinition(provider, baseUrl ? { baseUrl } : {});
+    const agent = registry.get(agentId);
+    const brief = briefs[agentId];
+    const system = [
+      'You are connected to the local DT Desktop Suite.',
+      'Preserve sources, contradictions, failed branches, uncertainty, and consumer authority.',
+      'Do not certify truth or promote experimental work as established science.',
+      agent ? 'Active program: ' + agent.name + ' (' + agent.status + ').' : 'No active program selected.',
+      brief ? 'Program thesis: ' + brief.thesis + ' Governing relation: ' + brief.equation : '',
+      'Current consumer inputs: ' + JSON.stringify(input || {})
+    ].filter(Boolean).join('\n');
+    const response = await requestAI(definition, {
+      apiKey: readCredential(provider),
+      model,
+      system,
+      messages: [{ role: 'user', content: prompt.trim() }]
+    });
+    const safety = preflight({ text: response.text, sources: [], status: 'provider-generated', authority: provider });
+    const receipt = vault.append('provider-response', agentId || 'dt-hub', {
+      provider, model, prompt: prompt.trim(), response: response.text, safety
+    });
+    return { text: response.text, safety, receipt };
   });
 }
 

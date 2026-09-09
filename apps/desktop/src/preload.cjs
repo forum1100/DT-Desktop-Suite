@@ -9,5 +9,7 @@ contextBridge.exposeInMainWorld('dt', {
   ownerStatus: () => ipcRenderer.invoke('owner:status'),
   ownerSetup: () => ipcRenderer.invoke('owner:setup'),
   ownerRecover: ticket => ipcRenderer.invoke('owner:recover', ticket),
-  storeProvider: (provider, secret) => ipcRenderer.invoke('provider:store', provider, secret)
+  listProviders: () => ipcRenderer.invoke('provider:list'),
+  storeProvider: (provider, secret) => ipcRenderer.invoke('provider:store', provider, secret),
+  askProvider: request => ipcRenderer.invoke('provider:ask', request)
 });
