@@ -112,6 +112,89 @@ function librarian(input) {
     canonicalizationPermitted: false
   };
 }
+function hallucination(input) {
+  const text = String(input.text || '');
+  const sources = items(input.sources);
+  const flags = [];
+  if (/\b(always|never|obviously|undeniably|guaranteed|proven)\b/i.test(text)) flags.push('ABSOLUTE_LANGUAGE');
+  if (/\baccording to (experts|studies|research)\b/i.test(text) && !sources.length) flags.push('VAGUE_AUTHORITY');
+  if (/\bI (know|confirmed|verified)\b/i.test(text) && !sources.length) flags.push('UNSUPPORTED_VERIFICATION');
+  if (!sources.length) flags.push('NO_SOURCE_ATTACHED');
+  return {
+    flags,
+    sourceCount: sources.length,
+    authority: input.authority || 'UNSPECIFIED',
+    submittedStatus: input.status || 'experimental',
+    truthCertified: false,
+    reviewPriority: flags.length > 1 ? 'HIGH' : flags.length ? 'MEDIUM' : 'NORMAL'
+  };
+}
+
+function branchRetest(input) {
+  const required = ['historicalBranch', 'originalFailure', 'newBasis', 'prediction', 'rival', 'failureCondition'];
+  const missing = required.filter(key => !String(input[key] || '').trim());
+  return {
+    historicalBranch: input.historicalBranch || null,
+    originalFailure: input.originalFailure || null,
+    originalFailurePreserved: true,
+    successorEvidence: input.newBasis || null,
+    frozenPrediction: input.prediction || null,
+    rivalExplanation: input.rival || null,
+    failureCondition: input.failureCondition || null,
+    state: missing.length ? 'INCOMPLETE_RETEST_DESIGN' : 'READY_FOR_EXECUTION',
+    missing
+  };
+}
+
+function equation(input) {
+  const p0 = numeric(input.p0);
+  const pf = numeric(input.pf);
+  const constraint = p0 !== null && p0 !== 0 && pf !== null ? 1 - (pf / p0) : null;
+  const variables = items(input.variables);
+  const units = items(input.units);
+  const assumptions = items(input.assumptions);
+  const auditFlags = [];
+  if (constraint === null) auditFlags.push('CONSTRAINT_NOT_CALCULABLE');
+  if (!variables.length) auditFlags.push('VARIABLES_UNDECLARED');
+  if (!units.length) auditFlags.push('UNITS_UNDECLARED');
+  if (!assumptions.length) auditFlags.push('ASSUMPTIONS_UNDECLARED');
+  return {
+    enteredEquation: input.equation || null,
+    constraint,
+    variables,
+    units,
+    assumptions,
+    auditFlags,
+    status: 'BOUNDED_CALCULATION_NOT_ESTABLISHED_PHYSICS'
+  };
+}
+
+function prediction(input) {
+  const baseline = numeric(input.baseline);
+  const target = numeric(input.target);
+  const invalidation = numeric(input.invalidation);
+  const expectedChange = baseline !== null && target !== null ? target - baseline : null;
+  const expectedChangePercent = baseline && expectedChange !== null ? (expectedChange / baseline) * 100 : null;
+  const direction = String(input.direction || '').toLowerCase();
+  const directionConflict = expectedChange !== null &&
+    ((/up|rise|increase|long/.test(direction) && expectedChange < 0) ||
+     (/down|fall|decrease|short/.test(direction) && expectedChange > 0));
+  return {
+    frozen: true,
+    frozenAt: new Date().toISOString(),
+    baseline,
+    target,
+    invalidation,
+    expectedChange,
+    expectedChangePercent,
+    directionConflict,
+    horizon: input.horizon || null,
+    confidence: input.confidence || null,
+    rivalExplanation: input.rival || null,
+    mode: 'PAPER_ONLY_UNTESTED'
+  };
+}
+
 function memory(input) {
   return {
     recordType: input.recordType || null,
@@ -122,7 +205,12 @@ function memory(input) {
   };
 }
 
-const engines = { evidence, propulsion, civilization, telemetry, prism, librarian, memory };
+const engines = {
+  librarian, hallucination, evidence, branchRetest,
+  equation, prediction, prism, propulsion,
+  civilization, memory, telemetry,
+  'branch-retest': branchRetest
+};
 
 function runEngine(agentId, input) {
   return engines[agentId] ? engines[agentId](input) : {};
