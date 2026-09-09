@@ -14,6 +14,7 @@ function choose(agent) {
   document.querySelector('#agent-name').textContent = agent.name;
   document.querySelector('#agent-purpose').textContent = agent.purpose;
   document.querySelector('#agent-status').textContent = agent.status;
+  document.querySelector('#route-workflow').hidden = agent.id !== 'librarian';
   document.querySelector('#brief-thesis').textContent = agent.brief?.thesis || '';
   document.querySelector('#brief-equation').textContent = agent.brief?.equation || '';
   document.querySelector('#brief-observed').textContent = agent.brief?.observed || '';
@@ -91,6 +92,28 @@ document.querySelector('#run').addEventListener('click', async () => {
   try {
     const response = await window.dt.runAgent(selected.id, input);
     result.textContent = JSON.stringify(response, null, 2);
+  } catch (error) {
+    result.textContent = JSON.stringify({ error: error.message }, null, 2);
+  }
+});
+
+document.querySelector('#route-workflow').addEventListener('click', async () => {
+  if (selected?.id !== 'librarian') return;
+  const input = currentInput();
+  result.textContent = 'Creating signed routing envelopes…';
+  try {
+    const routed = await window.dt.routeWorkflow(input);
+    result.textContent = JSON.stringify({
+      routes: routed.routes,
+      delivered: routed.messages.map(message => ({
+        id: message.id,
+        recipient: message.recipient,
+        sourceClass: message.sourceClass,
+        hash: message.hash
+      })),
+      failures: routed.failures,
+      checkpoint: routed.checkpoint
+    }, null, 2);
   } catch (error) {
     result.textContent = JSON.stringify({ error: error.message }, null, 2);
   }

@@ -4,6 +4,7 @@ contextBridge.exposeInMainWorld('dt', {
   hubStatus: () => ipcRenderer.invoke('hub:status'),
   listAgents: () => ipcRenderer.invoke('agents:list'),
   runAgent: (agentId, input) => ipcRenderer.invoke('agent:run', agentId, input),
+  routeWorkflow: request => ipcRenderer.invoke('workflow:route', request),
   listVault: () => ipcRenderer.invoke('vault:list'),
   exportVault: () => ipcRenderer.invoke('vault:export'),
   importVault: () => ipcRenderer.invoke('vault:import'),
