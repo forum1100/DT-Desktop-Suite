@@ -4,6 +4,7 @@ contextBridge.exposeInMainWorld('dt', {
   hubStatus: () => ipcRenderer.invoke('hub:status'),
   listAgents: () => ipcRenderer.invoke('agents:list'),
   operationsSnapshot: () => ipcRenderer.invoke('operations:snapshot'),
+  listCaptureSources: () => ipcRenderer.invoke('capture:sources'),
   startCapture: request => ipcRenderer.invoke('capture:start', request),
   appendCapture: (sessionId, chunk) => ipcRenderer.invoke('capture:append', sessionId, chunk),
   stopCapture: (sessionId, status) => ipcRenderer.invoke('capture:stop', sessionId, status),

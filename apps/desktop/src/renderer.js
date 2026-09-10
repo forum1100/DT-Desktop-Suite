@@ -101,6 +101,20 @@ let captureChunkQueue = Promise.resolve();
 let captureFinalizing = false;
 let queuedControl = null;
 
+async function loadCaptureSources() {
+  const select=document.querySelector('#capture-source');
+  const previous=select.value;
+  const sources=await window.dt.listCaptureSources();
+  select.replaceChildren(...sources.map(source=>{
+    const option=document.createElement('option'); option.value=source.id;
+    option.textContent=source.name+(source.displayId?' · display '+source.displayId:''); return option;
+  }));
+  if(previous&&sources.some(source=>source.id===previous)) select.value=previous;
+  if(!sources.length){const option=document.createElement('option');option.value='';option.textContent='No capturable sources found';select.append(option);}
+}
+
+document.querySelector('#capture-refresh').addEventListener('click',()=>loadCaptureSources().catch(error=>setCaptureUI(false,error.message)));
+
 function setCaptureUI(recording, message) {
   document.querySelector('#capture-state').textContent = message || (recording ? '● REC' : 'NOT RECORDING');
   document.querySelector('#capture-state').classList.toggle('recording', recording);
@@ -132,8 +146,13 @@ document.querySelector('#capture-start').addEventListener('click', async () => {
   const task = document.querySelector('#capture-task').value.trim();
   if (!task) { setCaptureUI(false, 'TASK DESCRIPTION REQUIRED'); return; }
   try {
-    captureStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
-    captureSession = await window.dt.startCapture({ task, agentId: selected?.id || null });
+    const sourceId=document.querySelector('#capture-source').value;
+    if(!sourceId) throw new Error('Select a screen or window to capture');
+    captureStream = await navigator.mediaDevices.getUserMedia({
+      audio: false,
+      video: { mandatory: { chromeMediaSource: 'desktop', chromeMediaSourceId: sourceId } }
+    });
+    captureSession = await window.dt.startCapture({ task, agentId: selected?.id || null, sourceId });
     const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
       ? 'video/webm;codecs=vp9' : 'video/webm';
     captureRecorder = new MediaRecorder(captureStream, { mimeType });
@@ -241,6 +260,7 @@ async function boot() {
     button.addEventListener('click', () => choose(agent));
     nav.append(button);
   }
+  await loadCaptureSources();
   providers = await window.dt.listProviders();
   const providerSelect = document.querySelector('#provider');
   for (const provider of providers) {

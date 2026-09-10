@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, safeStorage, dialog, screen, session } = require('electron');
+const { app, BrowserWindow, ipcMain, safeStorage, dialog, screen, session, desktopCapturer } = require('electron');
 const path = require('node:path');
 const fs = require('node:fs');
 const { execFileSync } = require('node:child_process');
@@ -115,6 +115,9 @@ function registerIPC(registry) {
     brief: briefs[agent.id]
   })));
   ipcMain.handle('operations:snapshot', () => operationsSnapshot());
+  ipcMain.handle('capture:sources', async () => (await desktopCapturer.getSources({
+    types: ['screen', 'window'], thumbnailSize: { width: 0, height: 0 }, fetchWindowIcons: false
+  })).map(source => ({ id: source.id, name: source.name, displayId: source.display_id || null })));
   ipcMain.handle('capture:start', (_event, request = {}) => {
     const task = String(request.task || '').trim();
     if (!task) throw new Error('Describe the authorized capture task first');
@@ -123,7 +126,8 @@ function registerIPC(registry) {
     fs.mkdirSync(root, { recursive: true });
     const manifest = {
       schema: 'dt-session-capture/1.0', sessionId, task,
-      agentId: request.agentId || null, startedAt: new Date().toISOString(),
+      agentId: request.agentId || null, captureSourceId: request.sourceId || null,
+      startedAt: new Date().toISOString(),
       consent: 'USER_INITIATED_VISIBLE_CAPTURE', status: 'RECORDING', chunks: 0,
       manager: 'SESSION_CAPTURE_MANAGER', covertCapturePermitted: false
     };
