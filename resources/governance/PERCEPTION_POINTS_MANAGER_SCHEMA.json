@@ -111,5 +111,14 @@
       "USER_CONTINUATION_ACKNOWLEDGMENT",
       "EXECUTION"
     ]
-  }
+  },
+  "causal_validation_required": true,
+  "message_graph_parentage_precedence": true,
+  "execution_narrative_separation": true,
+  "validation_evidence_precedence": [
+    "ORIGINAL_HISTORICAL_ARTIFACT_BYTES",
+    "HISTORICAL_EXECUTION_TOOL_OUTPUT",
+    "SOURCE_FAITHFUL_ENVIRONMENT_AWARE_REPLAY",
+    "ASSISTANT_NARRATIVE_SUMMARY"
+  ]
 }

@@ -96,3 +96,10 @@ The preserved lineage is:
 All three nodes remain distinct source records. The inferred continuation edge is derived metadata, not a rewrite of the user's words. This rule is especially important for simulation histories because run-to-run changes were frequently proposed in the assistant turn and accepted by a very short user reply.
 ## Causal-process reconstruction invariant
 The primary historical unit is the causal process, not the isolated turn or endpoint. Reconstruction must preserve the sequence by which observations and proposals produced user authorization, execution, result, correction, and the next state. Short continuation responses inherit actionable context from the preceding assistant proposal while remaining verbatim as user text. Simulation histories must preserve run-to-run causes, parameter/rule changes, failure modes, corrections, and downstream consequences.
+
+## Causal validation evidence rule
+Validation events receive their own perception lineage. A PASS/receipt/exit code is not authoritative without recoverable input bytes/hash, command or tool action, environment/runtime, output artifacts, readback state, and causal parentage.
+
+For conversational reconstruction, direct message-graph parentage outranks timestamp proximity. Execution/tool output and assistant narrative are separate evidence layers. Any mismatch is preserved as `NARRATIVE_REPLAY_DIVERGENCE` until higher-priority evidence resolves it.
+
+Numerical evidence precedence: original historical artifact bytes -> historical execution/tool output bound to the exact node -> source-faithful environment-aware replay -> assistant narrative/summary.
