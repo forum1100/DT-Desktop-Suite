@@ -1,0 +1,41 @@
+{
+  "simulation_id": "dt_debate_resilience_2026_05_recovered",
+  "family": "debate_simulation_candidate_resolved_as_civilization_resilience_policy_comparison",
+  "source_class": "VERBATIM_EXECUTION_CELLS_RECOVERED_FROM_CHATGPT_EXPORT",
+  "conversation_id": "6a012dda-2a50-83ea-b552-0cff43025f4c",
+  "scientific_status": "TOY_SOCIAL_SYSTEMS_RESILIENCE_MODEL_NOT_POLICY_OR_SOCIAL_PROOF",
+  "runs": [
+    {
+      "sequence": 1,
+      "node_id": "47bf96a6-743b-44b7-b07f-0dc04f724b34",
+      "run_id": "16321e3b-1e83-4b2b-9c5b-353b4a337261",
+      "historical_status": "running",
+      "code_length": 11358,
+      "code_sha256": "5c5e74ff6e90b75be013275a293204a7a6515cee1157e1cc76237be1df2ebbc6"
+    },
+    {
+      "sequence": 2,
+      "node_id": "985635c7-6eaa-4dcb-980f-c12fa509f1f9",
+      "run_id": "0edb57c1-4e0f-4a51-91d1-eee596db2bc3",
+      "historical_status": "failed_with_in_kernel_exception",
+      "code_length": 12924,
+      "code_sha256": "15621839399ac1442d18fcfd2b101461f0d4ef07d9bc502e2aa45517a4d49d3e"
+    },
+    {
+      "sequence": 3,
+      "node_id": "b2b614d7-cd80-4093-8140-5c9b486a4fa7",
+      "run_id": "c61e2c5b-00b8-4e39-95d3-fee835106449",
+      "historical_status": "success",
+      "code_length": 10542,
+      "code_sha256": "6387100fbd2b96a29b635f2aee2bcfc5d0d41dbf10c1dd9b4fa26f100b14e80c"
+    },
+    {
+      "sequence": 4,
+      "node_id": "2ddd1ac2-000b-45f5-8ced-4e4373b0dd63",
+      "run_id": "75c7c7c8-8a32-46ea-ab73-697ea73722d8",
+      "historical_status": "success",
+      "code_length": 11937,
+      "code_sha256": "51b2ec2c940bb5cacb3dbfef7b94d4b75c932cb6007cd66e39d9fa607f0eeadf"
+    }
+  ]
+}

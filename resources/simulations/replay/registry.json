@@ -129,12 +129,26 @@
       "source_locators": []
     },
     {
-      "simulation_id": "dt_debate_simulation_historical",
+      "simulation_id": "dt_debate_resilience_2026_05_recovered",
       "family": "debate_simulation",
-      "status": "DERIVED_RESULT_SOURCE_RECOVERY_REQUIRED",
-      "source_class": "HISTORICAL_CLAIM",
-      "entrypoint": null,
-      "source_locators": []
+      "status": "VERBATIM_EXECUTION_CELLS_RECOVERED_REPLAY_PARTIAL",
+      "source_class": "VERBATIM_EXECUTION_CELLS_RECOVERED_FROM_CHATGPT_EXPORT",
+      "entrypoint": "packs/dt_debate_resilience_2026_05_recovered/replay_run.py",
+      "source_locators": [
+        "historical_chatgpt_export:2026-05:conversation:6a012dda-2a50-83ea-b552-0cff43025f4c"
+      ],
+      "run_count": 4,
+      "historical_statuses": {
+        "running": 1,
+        "failed": 1,
+        "success": 2
+      },
+      "current_replay": {
+        "success": 3,
+        "timeout": 1
+      },
+      "preserves_causal_process": true,
+      "scientific_status": "TOY_SOCIAL_SYSTEMS_RESILIENCE_MODEL_NOT_POLICY_OR_SOCIAL_PROOF"
     },
     {
       "simulation_id": "dt_blackhole_recursive_learning_2026_05_recovered",

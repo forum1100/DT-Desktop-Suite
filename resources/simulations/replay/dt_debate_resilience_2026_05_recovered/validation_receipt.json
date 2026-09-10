@@ -1,0 +1,60 @@
+{
+  "status": "CAUSAL_REPLAY_VALIDATION_PARTIAL",
+  "run_count": 4,
+  "source_hash_matches": 4,
+  "current_replay_successes": 3,
+  "current_replay_timeouts": 1,
+  "historical_successes": 2,
+  "historical_failed": 1,
+  "historical_running": 1,
+  "runs": [
+    {
+      "sequence": 1,
+      "historical_status": "running",
+      "source_hash_match": true,
+      "replay_returncode": 0,
+      "replay_timeout": false,
+      "replay_artifacts": [
+        "dt_flourishing_by_seed.csv",
+        "dt_flourishing_history.csv",
+        "dt_flourishing_resilience_sim.png",
+        "dt_flourishing_summary.csv"
+      ]
+    },
+    {
+      "sequence": 2,
+      "historical_status": "failed_with_in_kernel_exception",
+      "source_hash_match": true,
+      "replay_returncode": null,
+      "replay_timeout": true,
+      "replay_artifacts": []
+    },
+    {
+      "sequence": 3,
+      "historical_status": "success",
+      "source_hash_match": true,
+      "replay_returncode": 0,
+      "replay_timeout": false,
+      "replay_artifacts": [
+        "dt_merged_by_seed.csv",
+        "dt_merged_history.csv",
+        "dt_merged_resilience_persistence.png",
+        "dt_merged_summary.csv"
+      ]
+    },
+    {
+      "sequence": 4,
+      "historical_status": "success",
+      "source_hash_match": true,
+      "replay_returncode": 0,
+      "replay_timeout": false,
+      "replay_artifacts": [
+        "dt_merged_static_by_seed.csv",
+        "dt_merged_static_history.csv",
+        "dt_merged_static_resilience.png",
+        "dt_merged_static_summary.csv"
+      ]
+    }
+  ],
+  "scientific_status": "TOY_SOCIAL_SYSTEMS_RESILIENCE_MODEL_NOT_POLICY_OR_SOCIAL_PROOF"
+}
