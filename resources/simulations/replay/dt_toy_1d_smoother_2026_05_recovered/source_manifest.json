@@ -1,0 +1,44 @@
+{
+  "simulation_id": "dt_toy_1d_smoother_2026_05_recovered",
+  "source_class": "VERBATIM_EXECUTION_CELLS_RECOVERED_FROM_CHATGPT_EXPORT",
+  "scientific_status": "TOY_MEMORY_RECONSTRUCTION_MODEL_NOT_GENERAL_PROOF",
+  "conversation_id": "6a04b0a6-08ec-83ea-a887-cb63445a9cc7",
+  "title": "Toy 1D Smoother Limitations",
+  "run_count": 3,
+  "runs": [
+    {
+      "sequence": 1,
+      "file": "run_01.py",
+      "source_file": "conversations-004.json",
+      "node_id": "6ebbed0c-b302-48f1-a52e-bc18d9500548",
+      "run_id": "fdede844-32fb-45d2-94e0-10ce34a9b4cd",
+      "status": "success",
+      "code_length": 6101,
+      "code_sha256": "6d6748502749b2e597ef1418be7180ed23f728e79a4232c8504b35535a260375"
+    },
+    {
+      "sequence": 2,
+      "file": "run_02.py",
+      "source_file": "conversations-004.json",
+      "node_id": "b299a0aa-56a9-443f-879a-ec150de7da82",
+      "run_id": "b3c1a644-533b-4303-b66c-3bac72d6ad1f",
+      "status": "success",
+      "code_length": 8340,
+      "code_sha256": "b35a884f4c5d64904b758bf9e39de64fcd2ebfa3526bf736a0ed87ec35d759f3"
+    },
+    {
+      "sequence": 3,
+      "file": "run_03.py",
+      "source_file": "conversations-004.json",
+      "node_id": "73693d49-67b2-4162-baf8-4e4261ab03eb",
+      "run_id": "cb2b7233-b254-4538-b19a-d78469f116db",
+      "status": "success",
+      "code_length": 8896,
+      "code_sha256": "e71158b7f89a49e73716b4770f3f51e947bfa9ef1a7fbdafe1244040ddaa9330"
+    }
+  ],
+  "excluded_candidate": {
+    "node_id": "23ded999-11b1-49be-9c15-88527d7f1425",
+    "reason": "false-positive term match; code is a separate 2D field/diffusion simulation, not this family"
+  }
+}

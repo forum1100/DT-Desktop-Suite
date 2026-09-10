@@ -1,0 +1,30 @@
+{
+  "status": "SOURCE_FAITHFUL_PORTABLE_REPLAY_COMPLETED",
+  "run_count": 3,
+  "source_hashes_preserved": 3,
+  "replay_successes": 3,
+  "runs": [
+    {
+      "sequence": 1,
+      "source_sha256": "6d6748502749b2e597ef1418be7180ed23f728e79a4232c8504b35535a260375",
+      "historical_status": "success",
+      "replay_returncode": 0,
+      "replay_timeout": false
+    },
+    {
+      "sequence": 2,
+      "source_sha256": "b35a884f4c5d64904b758bf9e39de64fcd2ebfa3526bf736a0ed87ec35d759f3",
+      "historical_status": "success",
+      "replay_returncode": 0,
+      "replay_timeout": false
+    },
+    {
+      "sequence": 3,
+      "source_sha256": "e71158b7f89a49e73716b4770f3f51e947bfa9ef1a7fbdafe1244040ddaa9330",
+      "historical_status": "success",
+      "replay_returncode": 0,
+      "replay_timeout": false
+    }
+  ],
+  "scientific_status": "TOY_MEMORY_RECONSTRUCTION_MODEL_NOT_GENERAL_PROOF"
+}

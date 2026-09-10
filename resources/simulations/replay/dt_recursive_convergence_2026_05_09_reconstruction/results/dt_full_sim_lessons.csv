@@ -1,0 +1,6 @@
+lesson,meaning
+Fact memory handles entry/proximity.,It gets near the answer quickly but may leave relational error.
+Topology inheritance handles refinement/coherence.,It reduces pair/triad structural error but can stagnate if used too early.
+Hybrid requires stable handoff.,"Use fact entry first, then topology refinement."
+Selective reopening is required.,Preservation without reopening causes stagnation.
+Propulsion/4D constraints are gates.,"They enforce modeled conservation, causality, detectability, wake/heat, and overlap."
