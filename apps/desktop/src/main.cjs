@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, safeStorage, dialog, screen } = require('electron');
+const { app, BrowserWindow, ipcMain, safeStorage, dialog, screen, session } = require('electron');
 const path = require('node:path');
 const fs = require('node:fs');
 const { execFileSync } = require('node:child_process');
@@ -366,6 +366,13 @@ function registerIPC(registry) {
 }
 
 app.whenReady().then(() => {
+  session.defaultSession.setPermissionRequestHandler((webContents, permission, callback) => {
+    const localWindow = webContents.getURL().startsWith('file:');
+    callback(localWindow && (permission === 'display-capture' || permission === 'media'));
+  });
+  session.defaultSession.setDisplayMediaRequestHandler((_request, callback) => {
+    callback({});
+  }, { useSystemPicker: true });
   const root = dataRoot();
   vault = new Vault(root);
   keys = new KeyAuthority(path.join(root, 'authority'));

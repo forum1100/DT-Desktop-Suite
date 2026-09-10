@@ -154,7 +154,12 @@ document.querySelector('#capture-start').addEventListener('click', async () => {
   } catch (error) {
     captureStream?.getTracks().forEach(track => track.stop());
     captureStream = null; captureSession = null; captureRecorder = null;
-    setCaptureUI(false, 'CAPTURE NOT STARTED');
+    setCaptureUI(false, 'CAPTURE NOT STARTED · ' + (error.name || 'ERROR'));
+    document.querySelector('#control-preview').textContent = JSON.stringify({
+      captureError: error.message || String(error),
+      errorName: error.name || null,
+      nextStep: 'Confirm the Windows screen-picker selection and retry.'
+    }, null, 2);
   }
 });
 
