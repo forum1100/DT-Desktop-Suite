@@ -1,0 +1,79 @@
+{
+  "schema_version": "1.0",
+  "policy": {
+    "source_before_summary": true,
+    "preserve_failed_branches": true,
+    "reconstruction_must_not_impersonate_source": true,
+    "execution_before_execution_claim": true,
+    "readback_before_persistence_claim": true
+  },
+  "simulations": [
+    {
+      "simulation_id": "dt_recursive_convergence_2026_05_09_reconstruction",
+      "family": "recursive_convergence",
+      "status": "RECONSTRUCTED_EXECUTED_VALIDATED",
+      "source_class": "LATER_RECONSTRUCTION",
+      "entrypoint": "packs/dt_recursive_convergence_2026_05_09_reconstruction/simulation.py",
+      "requirements": "packs/dt_recursive_convergence_2026_05_09_reconstruction/requirements.txt",
+      "default_args": ["--trials", "3"],
+      "source_locators": ["drive:1tRSme6ZtvUfAMSW4fwU43VsR3LFi1eNP"],
+      "includes_domain": ["black_hole", "AI_agency", "prism_defense", "biology", "institutional", "thermo_diffusion", "quantum_threshold", "lithium_BBN"]
+    },
+    {
+      "simulation_id": "dt_hawking_accessibility_historical",
+      "family": "hawking_accessibility",
+      "status": "NEEDS_EXACT_SOURCE_RECOVERY",
+      "source_class": "HISTORICAL_CLAIM",
+      "entrypoint": null,
+      "source_locators": []
+    },
+    {
+      "simulation_id": "dt_persistence_laboratory_historical",
+      "family": "persistence_laboratory",
+      "status": "NEEDS_EXACT_SOURCE_RECOVERY",
+      "source_class": "HISTORICAL_CLAIM",
+      "entrypoint": null,
+      "source_locators": []
+    },
+    {
+      "simulation_id": "dt_toy_1d_smoother_historical",
+      "family": "toy_1d_smoother",
+      "status": "NEEDS_EXACT_SOURCE_RECOVERY",
+      "source_class": "HISTORICAL_CLAIM",
+      "entrypoint": null,
+      "source_locators": []
+    },
+    {
+      "simulation_id": "dt_recursive_civilization_historical",
+      "family": "recursive_civilization",
+      "status": "NEEDS_EXACT_SOURCE_RECOVERY",
+      "source_class": "HISTORICAL_CLAIM",
+      "entrypoint": null,
+      "source_locators": []
+    },
+    {
+      "simulation_id": "dt_prism_defense_historical",
+      "family": "prism_defense",
+      "status": "NEEDS_OPERATIONAL_VALIDATION",
+      "source_class": "HISTORICAL_CLAIM",
+      "entrypoint": null,
+      "source_locators": []
+    },
+    {
+      "simulation_id": "dt_agent_foundry_synthetic",
+      "family": "agent_foundry",
+      "status": "EXECUTED_SYNTHETIC_HISTORY_EXISTS",
+      "source_class": "DERIVED_RECONSTRUCTION",
+      "entrypoint": null,
+      "source_locators": []
+    },
+    {
+      "simulation_id": "dt_debate_simulation_historical",
+      "family": "debate_simulation",
+      "status": "DERIVED_RESULT_SOURCE_RECOVERY_REQUIRED",
+      "source_class": "HISTORICAL_CLAIM",
+      "entrypoint": null,
+      "source_locators": []
+    }
+  ]
+}

@@ -8,3 +8,4 @@ config/local-*
 dt-vault/
 *.key
 *.token
+.simulation-runs/

@@ -250,6 +250,15 @@ function librarian(input) {
   if (/propulsion|thrust|impulse|energy/.test(text)) routes.push('propulsion');
   if (/civilization|institution|resource|collapse/.test(text)) routes.push('civilization');
   if (/hallucin|unsupported|certainty/.test(text)) routes.push('hallucination');
+  if (/closeout|dt_closeout|full[- ]chat|conversation capture|live capture|direct enumerator|terminal boundary/.test(text)) routes.push('dt-closeout');
+  if (/source discovery|canonical source|source gap|candidate source/.test(text)) routes.push('source-discovery');
+  if (/verbatim|source-faithful|ordered turn|chronolog|reassembl/.test(text)) routes.push('verbatim-archive');
+  if (/ingest|deduplicat|stage source|content hash/.test(text)) routes.push('ingestion-spark');
+  if (/export|package source|readback|manifest/.test(text)) routes.push('export-spark');
+  if (/divergence|contradiction|successor change/.test(text)) routes.push('divergence-spark');
+  if (/branch governance|historical authority|current authority/.test(text)) routes.push('branch-spark');
+  if (/temporal index|lineage index|predecessor index/.test(text)) routes.push('index-spark');
+  if (/completion|definition of done|acceptance criteria|closeout complete/.test(text)) routes.push('completion-spark');
   return {
     sourceClass: input.sourceClass || 'UNCLASSIFIED',
     candidateRoutes: [...new Set(routes)],

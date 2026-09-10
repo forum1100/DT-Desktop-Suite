@@ -16,6 +16,8 @@ function choose(agent) {
   document.querySelector('#agent-status').textContent = agent.status;
   document.querySelector('#route-workflow').hidden = agent.id !== 'librarian';
   document.querySelector('#execute-workflow').hidden = agent.id !== 'librarian';
+  document.querySelector('#run').hidden = agent.id === 'simulation-replay';
+  document.querySelector('#replay-simulation').hidden = agent.id !== 'simulation-replay';
   refreshInbox(agent);
   document.querySelector('#brief-thesis').textContent = agent.brief?.thesis || '';
   document.querySelector('#brief-equation').textContent = agent.brief?.equation || '';
@@ -30,6 +32,18 @@ function choose(agent) {
     label.append(input); return label;
   }));
   result.textContent = 'Awaiting input.';
+  if (agent.id === 'simulation-replay') {
+    window.dt.listSimulations().then(items => {
+      const runnable = items.filter(item => item.runnable);
+      const field = form.querySelector('[name="simulationId"]');
+      if (field && runnable[0]) field.value = runnable[0].simulationId;
+      result.textContent = JSON.stringify({
+        registry: items,
+        runnableCount: runnable.length,
+        note: 'Only registered runnable packs can execute. Unresolved historical claims remain visible and blocked.'
+      }, null, 2);
+    }).catch(error => { result.textContent = JSON.stringify({ error: error.message }, null, 2); });
+  }
 }
 
 function updateProviderUI() {
@@ -141,6 +155,22 @@ document.querySelector('#run').addEventListener('click', async () => {
   try {
     const response = await window.dt.runAgent(selected.id, input);
     result.textContent = JSON.stringify(response, null, 2);
+    await refreshOperations();
+  } catch (error) {
+    result.textContent = JSON.stringify({ error: error.message }, null, 2);
+  }
+});
+
+document.querySelector('#replay-simulation').addEventListener('click', async () => {
+  if (selected?.id !== 'simulation-replay') return;
+  const input = currentInput();
+  result.textContent = 'Running registered simulation and preserving receipt…';
+  try {
+    const replayed = await window.dt.replaySimulation({
+      ...input,
+      extraArgs: String(input.extraArgs || '').split(/\r?\n/).map(value => value.trim()).filter(Boolean)
+    });
+    result.textContent = JSON.stringify(replayed, null, 2);
     await refreshOperations();
   } catch (error) {
     result.textContent = JSON.stringify({ error: error.message }, null, 2);

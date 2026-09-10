@@ -161,6 +161,12 @@ const briefs = {
     observed: 'Without the consumed amount and weighting formula, a leaked remaining value cannot reveal the total.',
     input: 'Record the exact value, counter type, scope, source, and every field that remains unknown.'
   },
+  'simulation-replay': {
+    thesis: 'A recovered numerical claim becomes inspectable through a registered executable, frozen parameters, preserved outputs, and an attributable receipt.',
+    equation: 'Replay evidence = registered source + environment + parameters + stdout/stderr + outputs + receipt',
+    observed: 'A remembered successful simulation is not the same thing as recovered code, and reconstructed code is not the historical source.',
+    input: 'Choose a registered simulation, confirm or override the detected Python runtime, optionally set an output folder, and enter one command argument per line.'
+  },
   'operations-historian': {
     thesis: 'Longer useful operation comes from preserving real runtime history and removing measured bottlenecks, not merely keeping processes alive.',
     equation: 'Effective swarm yield = validated outputs / (wall time + retry cost + coordination cost)',

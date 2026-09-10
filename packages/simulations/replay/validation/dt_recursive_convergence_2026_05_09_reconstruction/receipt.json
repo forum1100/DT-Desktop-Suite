@@ -1,0 +1,52 @@
+{
+  "schema_version": "1.0",
+  "run_id": "20260910T011625.475246Z",
+  "simulation_id": "dt_recursive_convergence_2026_05_09_reconstruction",
+  "source_class": "LATER_RECONSTRUCTION",
+  "registry_status_at_run": "RECONSTRUCTED_PENDING_REPLAY_VALIDATION",
+  "command": [
+    "C:\\Users\\thoma\\Documents\\TJ_Local_Coordinator\\venvs\\dt-sim-replay\\Scripts\\python.exe",
+    "C:\\Users\\thoma\\Documents\\GitHub\\Distel-Theory-Research\\simulations\\replay\\packs\\dt_recursive_convergence_2026_05_09_reconstruction\\simulation.py",
+    "--out-dir",
+    "C:\\Users\\thoma\\Documents\\GitHub\\Distel-Theory-Research\\simulations\\replay\\runs\\dt_recursive_convergence_2026_05_09_reconstruction\\20260910T011625.475246Z\\outputs",
+    "--trials",
+    "3"
+  ],
+  "cwd": "C:\\Users\\thoma\\Documents\\GitHub\\Distel-Theory-Research\\simulations\\replay",
+  "started_at": "2026-09-10T01:16:25.475973+00:00",
+  "finished_at": "2026-09-10T01:16:30.786441+00:00",
+  "return_code": 0,
+  "execution_status": "EXECUTED_SUCCESS",
+  "environment": {
+    "python_executable": "C:\\Users\\thoma\\Documents\\TJ_Local_Coordinator\\venvs\\dt-sim-replay\\Scripts\\python.exe",
+    "python_version": "3.13.15",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "machine": "AMD64"
+  },
+  "entrypoint": {
+    "path": "C:\\Users\\thoma\\Documents\\GitHub\\Distel-Theory-Research\\simulations\\replay\\packs\\dt_recursive_convergence_2026_05_09_reconstruction\\simulation.py",
+    "sha256": "b3e96ae85b862e61773551f6a9a591dcb2cdc8c25acc06d256658c156d9d4c91"
+  },
+  "outputs": [
+    {
+      "path": "dt_full_sim_history.csv",
+      "bytes": 910085,
+      "sha256": "4df32a04ae451fdcae7cb812022e847a761fed641ede1e27ee9adf73cdadf13a"
+    },
+    {
+      "path": "dt_full_sim_lessons.csv",
+      "bytes": 537,
+      "sha256": "187404c38f1c45c53ca557d40ec6eaeb226922397d320245dadb344185fc599b"
+    },
+    {
+      "path": "dt_full_sim_summary.csv",
+      "bytes": 693,
+      "sha256": "4fbddc8b46ce4d8b2dfa8468a43764de06ea10aa6851eb373fda9f263479a332"
+    },
+    {
+      "path": "dt_full_sim_trials.csv",
+      "bytes": 1957,
+      "sha256": "6b820eb1465a673b97b0c676b5e3bbbf8f0ded0d25d54540c80b18610fdda9b7"
+    }
+  ]
+}

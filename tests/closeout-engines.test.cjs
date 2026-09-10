@@ -33,3 +33,20 @@ test('closeout remains partial while source gaps survive', () => {
   assert.equal(out.canonicalReconciliationRequired, true);
   assert.equal(out.overwritePriorCloseoutPermitted, false);
 });
+
+test('DT closeout is provider-export independent and requires verbatim reassembly', () => {
+  const out = runEngine('dt-closeout', {
+    targetConversation:'chat', terminalBoundary:'current terminal turn',
+    liveCapture:'current chat', approval:'yes'
+  });
+  assert.equal(out.minimumArchiveStandard, 'VERBATIM_REASSEMBLY_EQUIVALENT');
+  assert.equal(out.targetArchiveStandard, 'LIVE_CHAT_SUPERSET');
+  assert.equal(out.providerExportRequired, false);
+  assert.equal(out.providerExportRequestPermittedByDefault, false);
+  assert.equal(out.triggerPhrase, 'DT_CLOSEOUT');
+  assert.equal(out.liveCaptureSourceClass, 'LIVE_CURRENT_CONTEXT');
+  assert.equal(out.liveCaptureIsActiveSource, true);
+  assert.equal(out.summaryMaySubstituteForSource, false);
+  assert.equal(out.verbatimReassemblyAssessmentRequired, true);
+  assert.equal(out.modelContextAssumedComplete, false);
+});

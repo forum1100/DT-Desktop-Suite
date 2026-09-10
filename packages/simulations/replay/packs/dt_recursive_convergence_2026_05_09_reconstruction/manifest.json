@@ -1,0 +1,30 @@
+{
+  "simulation_id": "dt_recursive_convergence_2026_05_09_reconstruction",
+  "title": "DT Recursive Convergence Simulation Pack — repaired reconstruction",
+  "author_framework": "Thomas J. Cutler / Thomas Distel",
+  "source_class": "LATER_RECONSTRUCTION",
+  "scientific_status": "META_SIMULATION_NOT_PHYSICAL_PROOF",
+  "source": {
+    "title": "SOURCE — Gmail — Sim Code phase correction — May 9 2026.pdf",
+    "drive_id": "1tRSme6ZtvUfAMSW4fwU43VsR3LFi1eNP",
+    "observed_source_date": "2026-05-09"
+  },
+  "reconstruction": {
+    "reason": "PDF text extraction contained merged adjacent tokens/lines that were not executable as extracted.",
+    "repairs": [
+      "split 'return udef topology_update' into return and function definition",
+      "split 'last_phase = Nonehistory = []' into two statements",
+      "split strict/invalid merged assignment into two statements",
+      "restore accessibility-preservation A update from merged comment/code text",
+      "split summary_path print from lessons_path print"
+    ],
+    "byte_identical_to_historical_source": false
+  },
+  "runtime": {
+    "language": "python",
+    "entrypoint": "simulation.py",
+    "default_seed": 20260609,
+    "default_trials_historical": 50,
+    "smoke_test_trials": 3
+  }
+}

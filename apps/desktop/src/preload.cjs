@@ -4,6 +4,8 @@ contextBridge.exposeInMainWorld('dt', {
   hubStatus: () => ipcRenderer.invoke('hub:status'),
   listAgents: () => ipcRenderer.invoke('agents:list'),
   operationsSnapshot: () => ipcRenderer.invoke('operations:snapshot'),
+  listSimulations: () => ipcRenderer.invoke('simulations:list'),
+  replaySimulation: request => ipcRenderer.invoke('simulations:replay', request),
   runAgent: (agentId, input) => ipcRenderer.invoke('agent:run', agentId, input),
   routeWorkflow: request => ipcRenderer.invoke('workflow:route', request),
   executeWorkflow: request => ipcRenderer.invoke('workflow:execute', request),

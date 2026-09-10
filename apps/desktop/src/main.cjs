@@ -18,6 +18,7 @@ const { routeTask, executeWorkflow } = require('../../../packages/tools/src/work
 const { inboxFor, processInbox } = require('../../../packages/tools/src/inbox.cjs');
 const { preflight } = require('../../../packages/safety/src/preflight.cjs');
 const { PROVIDERS, providerDefinition, requestAI } = require('../../../packages/providers/src/index.cjs');
+const { listSimulations, replaySimulation } = require('../../../packages/simulations/src/replay.cjs');
 
 let vault, keys, broker, gateway, recovery;
 const suiteStartedAt = Date.now();
@@ -112,6 +113,31 @@ function registerIPC(registry) {
     brief: briefs[agent.id]
   })));
   ipcMain.handle('operations:snapshot', () => operationsSnapshot());
+  ipcMain.handle('simulations:list', () => listSimulations());
+  ipcMain.handle('simulations:replay', (_event, request = {}) => {
+    let pythonPath = String(request.pythonPath || '').trim();
+    if (!pythonPath) {
+      try {
+        pythonPath = execFileSync('py', ['-3', '-c', 'import sys;print(sys.executable)'], {
+          encoding: 'utf8', windowsHide: true
+        }).trim();
+      } catch {
+        throw new Error('Python 3 was not detected. Enter the full Python executable path.');
+      }
+    }
+    const receipt = replaySimulation({
+      simulationId: request.simulationId,
+      pythonPath,
+      outputRoot: String(request.outputRoot || '').trim() || path.join(dataRoot(), 'simulation-runs'),
+      extraArgs: Array.isArray(request.extraArgs) ? request.extraArgs : []
+    });
+    const vaultReceipt = vault.append('simulation-replay', 'simulation-replay', {
+      ...receipt,
+      historicalSourceClaimed: false,
+      scientificStatus: 'EXECUTED_REPLAY_NOT_PHYSICAL_VALIDATION'
+    });
+    return { receipt, vaultReceipt };
+  });
   ipcMain.handle('agent:run', (_event, agentId, input) => {
     const runId = require('node:crypto').randomUUID();
     const startedMs = Date.now();

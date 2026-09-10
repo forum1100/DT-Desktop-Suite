@@ -45,6 +45,7 @@ $agents = @(
   @{ Id='civilization'; Name='Civilization Systems' },
   @{ Id='memory'; Name='Consumer Memory Vault' },
   @{ Id='telemetry'; Name='Execution Telemetry' },
+  @{ Id='simulation-replay'; Name='Simulation Replay Lab' },
   @{ Id='source-discovery'; Name='Source Discovery Spark' },
   @{ Id='ingestion-spark'; Name='Ingestion Spark' },
   @{ Id='verbatim-archive'; Name='Verbatim Archive Spark' },
@@ -74,7 +75,7 @@ DT WORKS SUITE — TRANSFER PACKAGE
 
 Fast start:
 1. Open Portable Programs\DT Desktop Suite.exe, or use OPEN DT DESKTOP SUITE.cmd.
-2. Select one of twenty-nine agents and run local bounded analysis without connecting an AI.
+2. Select one of thirty programs and run local bounded analysis or a registered simulation replay without connecting an AI.
 3. To use an AI, connect your own provider key in the top console.
 4. Export the Consumer Memory Vault before moving computers.
 

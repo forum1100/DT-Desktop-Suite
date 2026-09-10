@@ -62,3 +62,20 @@ test('coordinated workflow processes only its newly routed messages', async () =
   const stillPending = inboxFor('evidence', vault);
   assert.ok(stillPending.some(message => message.id === oldTask.id));
 });
+
+test('Librarian routes DT_CLOSEOUT custody work to the closeout chain', () => {
+  const vault = new Vault(temp());
+  const registry = new AgentRegistry(agents);
+  const broker = new Broker(vault, registry);
+  const routed = routeTask({
+    materials: 'DT_CLOSEOUT direct full-chat enumerator with source discovery, ordered turns, verbatim reassembly, ingestion, export manifest, divergence review, branch governance, temporal index, and completion gates',
+    goal: 'Complete live capture under Librarian custody without self-canonicalization',
+    sourceClass: 'CURRENT_VALIDATED_STATE'
+  }, broker, vault);
+  for (const agentId of [
+    'dt-closeout', 'source-discovery', 'verbatim-archive', 'ingestion-spark',
+    'export-spark', 'divergence-spark', 'branch-spark', 'index-spark', 'completion-spark'
+  ]) assert.ok(routed.routes.includes(agentId), `missing route ${agentId}`);
+  assert.equal(routed.failures.length, 0);
+  assert.equal(routed.librarian.engine.canonicalizationPermitted, false);
+});
