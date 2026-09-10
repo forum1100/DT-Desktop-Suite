@@ -137,3 +137,13 @@ The Adversarial Test Lab was restored as a design-only synthetic security workbe
 - Each export keeps its original portable JSON and receives a separate .dt-seal.json verification sidecar.
 - The export and seal hashes are appended to custody history.
 - Build verification: 45 tests passed and Windows NSIS/portable builds completed.
+
+
+## 2026-09-10 — Provisional closeout teach-back
+
+- Generated deterministic DT_TEACH_BACK_V1 packets for the Closeout Manager, Closeout Worker, and Archive Knowledge Service.
+- Packets restate role, inputs, outputs, exclusions, authority boundaries, Prism boundaries, and failure-preservation rules.
+- Added validation and incomplete-packet regression tests; 10 coordinator tests passed.
+- TEACH_BACK is PASS for all three candidates.
+- The packets explicitly grant no authority and perform no promotion.
+- Remaining gates are PERMISSIONS and TAKEOVER.

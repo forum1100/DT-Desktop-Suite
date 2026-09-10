@@ -56,7 +56,6 @@ def main():
             "authority expansion","covert capture"],"promotion_effect":"NONE"})
         pending={
           "PERMISSIONS":"No attributable execution grant recorded for this mapped identity.",
-          "TEACH_BACK":"Source-role teach-back packet has not been recorded.",
           "TAKEOVER":"Custodian takeover/acceptance has not been recorded.",
         }
         for gate,reason in pending.items():
