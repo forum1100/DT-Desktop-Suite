@@ -1,0 +1,24 @@
+{
+  "schema": "dt-peer-mailbox-proposal/1.0",
+  "transport": "github",
+  "transportClass": "TEMPORARY_TRANSPORT_NOT_GATEWAY",
+  "gatewayAuthority": "DT_PLATFORM",
+  "executiveId": "grok-ceo",
+  "provider": "xai",
+  "standing": "PEER_EXECUTIVE",
+  "sessionId": "grok-ceo",
+  "captureSessionId": "c7068214-97dd-4266-bad6-b65c09873192",
+  "capability": "command.propose",
+  "payload": {
+    "command": "echo GROK_CEO_PING"
+  },
+  "proposedAt": "2026-09-10T23:46:43.457Z",
+  "status": "PROPOSED_NOT_AUTHORIZED",
+  "notes": [
+    "GitHub is a temporary mailbox transport only.",
+    "DT Platform remains the gateway.",
+    "DT must mint requestId and requestHash after live gates pass.",
+    "This proposal is not execution authority."
+  ],
+  "proposalHash": "e34aa5b9e9294990efc756066df5aa6202b4fbde850f6be51931a8e88c0ffd6a"
+}
