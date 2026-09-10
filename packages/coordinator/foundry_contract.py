@@ -124,15 +124,17 @@ def promote_agent(agent_id, target, evidence=None):
     current=row["lifecycle"]
     if target not in PROMOTIONS.get(current,set()):
         raise ValueError(f"illegal transition {current} -> {target}")
-    failed=c.execute("""SELECT COUNT(*) FROM qualification_gates
-      WHERE agent_id=? AND status IN ('FAIL','PENDING')""",(agent_id,)).fetchone()[0]
+    latest={}
+    for gate_type,status in c.execute("""SELECT gate_type,status FROM qualification_gates
+      WHERE agent_id=? ORDER BY checked_at DESC,rowid DESC""",(agent_id,)):
+        latest.setdefault(gate_type,status)
+    failed=sum(status in {"FAIL","PENDING"} for status in latest.values())
     blockers=c.execute("""SELECT COUNT(*) FROM residuals
       WHERE agent_id=? AND blocking=1 AND status='OPEN'""",(agent_id,)).fetchone()[0]
     if target in {"VALIDATED","RUNNING"} and (failed or blockers):
-        raise ValueError("promotion blocked by gates or residuals")
+        raise ValueError("promotion blocked by current gates or residuals")
     if target == "RUNNING":
-        passed={r[0] for r in c.execute("""SELECT gate_type FROM qualification_gates
-          WHERE agent_id=? AND status='PASS'""",(agent_id,))}
+        passed={gate_type for gate_type,status in latest.items() if status=="PASS"}
         required={"SOURCE_RECONCILIATION","PERMISSIONS","PRISM_SECURITY",
                   "TEACH_BACK","TAKEOVER","RUNTIME_TEST"}
         missing=sorted(required-passed)

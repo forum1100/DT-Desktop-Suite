@@ -95,3 +95,12 @@ The Adversarial Test Lab was restored as a design-only synthetic security workbe
 - Required gates are permissions, Prism security, teach-back, custodian takeover, and runtime testing; missing, failed, pending, or malformed gates block qualification.
 - Qualification completion does not start a process, transfer authority, or permit self-promotion. An attributable lifecycle transition remains separately required.
 - The three provisional local coordinator processes remain implementation candidates until evaluated against this gate with source-specific evidence.
+
+## 2026-09-10 — Provisional coordinator qualification run
+
+- Corrected Foundry gate evaluation so append-only historical PENDING/FAIL records remain preserved while the latest status per gate governs current eligibility.
+- Evaluated LOCAL-CLOSEOUT-MANAGER, LOCAL-CLOSEOUT-WORKER, and LOCAL-ARCHIVE-KNOWLEDGE individually.
+- Source reconciliation and runtime-test gates passed for all three using recorded source-role mappings and code hashes.
+- Permissions, Prism-security integration, teach-back, and custodian-takeover gates remain PENDING for all three.
+- No lifecycle promotion, identity merge, authority transfer, or process start occurred.
+- Primary mappings: manager to HCC-001; worker to ATB-001; archive knowledge to HIS-001. Supporting-office relationships remain explicit and non-collapsing.

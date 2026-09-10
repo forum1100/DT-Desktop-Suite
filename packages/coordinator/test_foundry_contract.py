@@ -28,6 +28,13 @@ def run():
         states={x["agent_id"]:x["lifecycle"] for x in snap["agents"]}
         assert states["AFM-001"]=="DORMANT_SPEC"
         assert states["TEST-CHILD"]=="RUNNING"
+        fc.register_agent("SUCCESSOR-GATE","Successor gate test","IMPLEMENTATION_CANDIDATE")
+        fc.record_gate("SUCCESSOR-GATE","SOURCE_RECONCILIATION","PENDING")
+        fc.record_gate("SUCCESSOR-GATE","SOURCE_RECONCILIATION","PASS")
+        fc.promote_agent("SUCCESSOR-GATE","IMPLEMENTED_UNVALIDATED")
+        fc.promote_agent("SUCCESSOR-GATE","VALIDATED")
+        states={x["agent_id"]:x["lifecycle"] for x in fc.snapshot()["agents"]}
+        assert states["SUCCESSOR-GATE"]=="VALIDATED"
         print("foundry contract tests: PASS")
 
 if __name__=="__main__":
