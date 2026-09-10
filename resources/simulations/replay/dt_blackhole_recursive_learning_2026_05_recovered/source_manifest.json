@@ -1,169 +1,255 @@
 {
-  "source_class": "VERBATIM_EXECUTION_CELLS_RECOVERED_FROM_CHATGPT_EXPORT",
+  "source_class": "VERBATIM_EXECUTED_CODE_RECOVERED_FROM_CHATGPT_EXPORT",
   "conversation_id": "69fce2ba-2dc8-83ea-8656-df7842cf038b",
   "source_file": "conversations-004.json",
   "runs": [
     {
       "sequence": 1,
       "file": "run_01.py",
-      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sha256": "98445a4c0fdd375487ca7ebf4b9bb02efe560da4b52cf061c8bf96157ac31028",
+      "code_length": 9573,
       "historical_run_id": "9b5eed79-99e2-46ea-87d8-69dd249e25e9",
       "historical_status": "success",
       "reasoning_title": null,
-      "exception_name": null
+      "exception": null,
+      "node_id": "e440896d-b286-4f3c-aa4f-2c75e8bce2f0",
+      "historical_output": null
     },
     {
       "sequence": 2,
       "file": "run_02.py",
-      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sha256": "71346c0a0df9525c84dd634ce94e223934eebe4abbefd1484bd2ed02ed36fecb",
+      "code_length": 10590,
       "historical_run_id": "e60a206a-ba1a-4ca8-ac63-7550dd03715f",
       "historical_status": "success",
       "reasoning_title": null,
-      "exception_name": null
+      "exception": null,
+      "node_id": "05005917-a5ce-4ea3-b5c1-8195c08b76a0",
+      "historical_output": null
     },
     {
       "sequence": 3,
       "file": "run_03.py",
-      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sha256": "2b742aae592601fbf378d1bf54651364a9152b0176ae492c8e23626d9f44c448",
+      "code_length": 9134,
       "historical_run_id": "f9e5aab4-3088-467c-9b85-01e75634acc8",
       "historical_status": "success",
       "reasoning_title": null,
-      "exception_name": null
+      "exception": null,
+      "node_id": "60341eba-9d37-4b27-843d-d9b1d1e0708b",
+      "historical_output": null
     },
     {
       "sequence": 4,
       "file": "run_04.py",
-      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sha256": "38cfa4e0e61ed8604490fe6097ae351fd54492a6ce82169b018b56cbf0c7de22",
+      "code_length": 9654,
       "historical_run_id": "aab183fd-a227-4e23-a117-cd6c7d1ec68c",
       "historical_status": "success",
       "reasoning_title": null,
-      "exception_name": null
+      "exception": null,
+      "node_id": "b15def1c-da99-43da-a90e-3ea5af60cf19",
+      "historical_output": null
     },
     {
       "sequence": 5,
       "file": "run_05.py",
-      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sha256": "780d3b385145bb1c4d4c986aac8cd425b980416772054d21ce905ffda13adbec",
+      "code_length": 15661,
       "historical_run_id": "a673d433-48ae-4ffc-9974-c30bd7e7e39c",
       "historical_status": "success",
       "reasoning_title": null,
-      "exception_name": null
+      "exception": null,
+      "node_id": "b457f90c-7800-4611-a878-0c6c5eb9faae",
+      "historical_output": null
     },
     {
       "sequence": 6,
       "file": "run_06.py",
-      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sha256": "05485a89749f46c89510e64a4ce1fc9cac06235a8c4c7b48d07f17060aaa8462",
+      "code_length": 12709,
       "historical_run_id": "f128f1d5-e4e7-4a81-99d3-27af56d4f46a",
       "historical_status": "success",
       "reasoning_title": null,
-      "exception_name": null
+      "exception": null,
+      "node_id": "c4decfc2-0112-47eb-8288-41e2c7d3a507",
+      "historical_output": null
     },
     {
       "sequence": 7,
       "file": "run_07.py",
-      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sha256": "5ab9ef2a04d4aed43d3add25bb6c144b3319036354da3ae929eaa479948694c1",
+      "code_length": 10279,
       "historical_run_id": "145c5da7-6670-439b-a932-b6e0a98b6cc6",
       "historical_status": "success",
       "reasoning_title": null,
-      "exception_name": null
+      "exception": null,
+      "node_id": "b2348a1c-8094-4174-965d-800d567f61cf",
+      "historical_output": null
     },
     {
       "sequence": 8,
       "file": "run_08.py",
-      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sha256": "781767b13a834504f53dd9554fa7493523f912e8dfcbf3861ba6f603264b5658",
+      "code_length": 7639,
       "historical_run_id": "2f31b35a-0029-43b1-a44d-fde4907bef5e",
       "historical_status": "success",
       "reasoning_title": null,
-      "exception_name": null
+      "exception": null,
+      "node_id": "cf96613a-532b-448c-8a2f-2391683fc4f9",
+      "historical_output": null
     },
     {
       "sequence": 9,
       "file": "run_09.py",
-      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sha256": "ba2d23e2d62040bcc97d6267db102df277b0c733368e7dec274c1ddee1b425ef",
+      "code_length": 9431,
       "historical_run_id": "4a7c6f21-4d66-4765-a982-dc44fd4e8856",
       "historical_status": "success",
       "reasoning_title": null,
-      "exception_name": null
+      "exception": null,
+      "node_id": "cf39694d-aa02-4311-a012-7e1cdd0c8f9f",
+      "historical_output": null
     },
     {
       "sequence": 10,
       "file": "run_10.py",
-      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sha256": "aa11444a8c26ed3a03c3254454226cb3c4025a0ca0ed11b454256f6679f3fb0c",
+      "code_length": 9569,
       "historical_run_id": "bf345fc2-e34d-43db-bd5e-b926fa8872cd",
       "historical_status": "success",
       "reasoning_title": null,
-      "exception_name": null
+      "exception": null,
+      "node_id": "681b1666-039e-4de7-bd4c-49fe40a1f6ec",
+      "historical_output": null
     },
     {
       "sequence": 11,
       "file": "run_11.py",
-      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sha256": "066b06392485c42f0e3256ced1c2f5889f6fecb6704e8b28d02d1847bc04435d",
+      "code_length": 10190,
       "historical_run_id": "d5a7fa51-aaaf-491f-a54a-f336566df9f2",
       "historical_status": "success",
       "reasoning_title": null,
-      "exception_name": null
+      "exception": null,
+      "node_id": "d07b2804-3161-4d90-91c5-f018f22ff616",
+      "historical_output": null
     },
     {
       "sequence": 12,
       "file": "run_12.py",
-      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sha256": "74f198c9828e2067b6c8eb4cb862c9d9a6150b28b784b1c2a1fc4c3be8c26c72",
+      "code_length": 14568,
       "historical_run_id": "4056eafe-5244-4ed5-8c7f-63480cdd4ee5",
       "historical_status": "success",
       "reasoning_title": null,
-      "exception_name": null
+      "exception": null,
+      "node_id": "83d271ca-c278-473d-83e7-28a7ba97052b",
+      "historical_output": null
     },
     {
       "sequence": 13,
       "file": "run_13.py",
-      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sha256": "0c17200e4a29ef2f81af8a7c9f77098036306323573f8bf58e959dddb56323e8",
+      "code_length": 12097,
       "historical_run_id": "95efb2f7-dd76-451a-a757-e84f75906ba1",
       "historical_status": "failed_with_in_kernel_exception",
       "reasoning_title": null,
-      "exception_name": "KeyboardInterrupt"
+      "exception": {
+        "args": [
+          ""
+        ],
+        "name": "KeyboardInterrupt",
+        "notes": [],
+        "traceback": [
+          "---------------------------------------------------------------------------\n",
+          "KeyboardInterrupt                         Traceback (most recent call last)\n",
+          "Cell In[23], line 226\n    222         final_states.append(state.assign(trial=trial+1, prism_from_start=prism_from_start))\n    223 \n    224     return pd.DataFrame(rows), pd.concat(final_states, ignore_index=True)\n    225 \n--> 226 base_df, base_states = run(False, 20)\n    227 prism_df, prism_states = run(True, 20)\n    228 all_df=pd.concat([base_df,prism_df], ignore_index=True)\n    229 all_states=pd.concat([base_states,prism_states], ignore_index=True)\n\n",
+          "Cell In[23], line 121, in run(prism_from_start, trials)\n    117 \n    118         # inject adversarial distortion/noise attempts periodically\n    119         for t in range(1200):\n    120             old=state.copy()\n--> 121             old_m=metrics(state)\n    122             cur=state[features].to_numpy()\n    123             err_vec=target_mat-cur\n    124             err=branch_error(state)\n\n",
+          "Cell In[23], line 91, in metrics(s)\n     89 def metrics(s):\n     90     err=branch_error(s)\n---> 91     spread=np.std(s[features].to_numpy(),axis=0).mean()\n     92     access=s[\"A\"].mean()*0.55+s[\"V\"].mean()*0.45\n     93     return {\n     94         \"mean_error\":float(err.mean()),\n\n",
+          "File /opt/pyvenv/lib/python3.13/site-packages/pandas/core/frame.py:4117, in DataFrame.__getitem__(self, key)\n   4113 \n   4114         if isinstance(indexer, slice):\n   4115             return self._slice(indexer, axis=1)\n   4116 \n-> 4117         data = self._take_with_is_copy(indexer, axis=1)\n   4118 \n   4119         if is_single_key:\n   4120             # What does looking for a single key in a non-unique index return?\n\n",
+          "File /opt/pyvenv/lib/python3.13/site-packages/pandas/core/generic.py:4142, in NDFrame._take_with_is_copy(self, indices, axis)\n-> 4142     @final\n   4143     def _take_with_is_copy(self, indices, axis: Axis = 0) -> Self:\n   4144         \"\"\"\n   4145         Internal version of the `take` method that sets the `_is_copy`\n\n",
+          "KeyboardInterrupt: \n"
+        ]
+      },
+      "node_id": "23bcc018-e989-44a5-86f8-7ca4d5bf9ae1",
+      "historical_output": null
     },
     {
       "sequence": 14,
       "file": "run_14.py",
-      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sha256": "5edf66706ec9d2b398c5ae194f46410068c5bd0e55e205d829db92a82670a0ac",
+      "code_length": 6487,
       "historical_run_id": "9ab96fc6-15d2-478e-a44a-1ef58967e7f3",
       "historical_status": "success",
       "reasoning_title": null,
-      "exception_name": null
+      "exception": null,
+      "node_id": "afb6c199-c696-4c37-9db8-6814f6891640",
+      "historical_output": null
     },
     {
       "sequence": 15,
       "file": "run_15.py",
-      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sha256": "b61fc5275f0746363ffda11e596ca2f0c8eda1c749acd7c7d4c4357d5449498c",
+      "code_length": 9360,
       "historical_run_id": "4c7c9c59-8455-4f4d-9373-09ef0e95befa",
       "historical_status": "failed_with_in_kernel_exception",
       "reasoning_title": null,
-      "exception_name": "KeyboardInterrupt"
+      "exception": {
+        "args": [
+          ""
+        ],
+        "name": "KeyboardInterrupt",
+        "notes": [],
+        "traceback": [
+          "---------------------------------------------------------------------------\n",
+          "KeyboardInterrupt                         Traceback (most recent call last)\n",
+          "Cell In[25], line 197\n    193         })\n    194     return pd.DataFrame(rows)\n    195 \n    196 phases = [\"never\", \"immediate\", \"coarse\", \"tight\", \"ultra\", \"singular\"]\n--> 197 df = pd.concat([run(p) for p in phases], ignore_index=True)\n    198 \n    199 summary = df.groupby(\"inject_phase\").agg(\n    200     avg_inject_cycle=(\"inject_cycle\", lambda s: np.mean([v for v in s if v >= 0]) if any(s >= 0) else -1),\n\n",
+          "Cell In[25], line 158, in run(inject_phase, trials, max_cycles)\n    154             # accessibility floor\n    155             update[:,5] += np.maximum(0,0.62-x[:,5]) * 0.001\n    156             update[:,3] += np.maximum(0,0.52-x[:,3]) * 0.001\n    157 \n--> 158             proposal = np.clip(x + update + rng.normal(0,0.00015*(0.99**t),(N,F)),0,1)\n    159             x = proposal\n    160             new_m = met(x)\n    161 \n\n",
+          "File /opt/pyvenv/lib/python3.13/site-packages/numpy/_core/fromnumeric.py:2330, in clip(a, a_min, a_max, out, min, max, **kwargs)\n   2326 elif min is not np._NoValue or max is not np._NoValue:\n   2327     raise ValueError(\"Passing `min` or `max` keyword argument when \"\n   2328                      \"`a_min` and `a_max` are provided is forbidden.\")\n-> 2330 return _wrapfunc(a, 'clip', a_min, a_max, out=out, **kwargs)\n\n",
+          "File /opt/pyvenv/lib/python3.13/site-packages/numpy/_core/fromnumeric.py:57, in _wrapfunc(obj, method, *args, **kwds)\n     54     return _wrapit(obj, method, *args, **kwds)\n     56 try:\n---> 57     return bound(*args, **kwds)\n     58 except TypeError:\n     59     # A TypeError occurs if the object does have such a method in its\n     60     # class, but its signature is not identical to that of NumPy's. This\n   (...)     64     # Call _wrapit from within the except clause to ensure a potential\n     65     # exception has a traceback chain.\n     66     return _wrapit(obj, method, *args, **kwds)\n\n",
+          "File /opt/pyvenv/lib/python3.13/site-packages/numpy/_core/_methods.py:98, in _clip(a, min, max, out, **kwargs)\n     94         items = umr_sum(broadcast_to(where, arr.shape), axis, nt.intp, None,\n     95                         keepdims)\n     96     return items\n---> 98 def _clip(a, min=None, max=None, out=None, **kwargs):\n     99     if a.dtype.kind in \"iu\":\n    100         # If min/max is a Python integer, deal with out-of-bound values here.\n    101         # (This enforces NEP 50 rules as no value based promotion is done.)\n    102         if type(min) is int and min <= np.iinfo(a.dtype).min:\n\n",
+          "KeyboardInterrupt: \n"
+        ]
+      },
+      "node_id": "ce5382e8-9d45-4b50-88d9-5c9dd0b111be",
+      "historical_output": null
     },
     {
       "sequence": 16,
       "file": "run_16.py",
-      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sha256": "47532d2b1286adefe07991e9916327f1db39df4ccaf7892ad147202a97ca3277",
+      "code_length": 6862,
       "historical_run_id": "2b301a35-8f8b-41a2-892e-1008d5e08b7f",
       "historical_status": "success",
       "reasoning_title": null,
-      "exception_name": null
+      "exception": null,
+      "node_id": "7ae5983d-9c5e-4527-aa5e-2269ca492dd8",
+      "historical_output": null
     },
     {
       "sequence": 17,
       "file": "run_17.py",
-      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sha256": "6e817470d666a64e0568e23869b9ee45ef5bbdec4eea16efbf27a3d54e4be12c",
+      "code_length": 9025,
       "historical_run_id": "867ea5d3-e178-46ef-af2f-9710b7bae0ee",
       "historical_status": "success",
       "reasoning_title": null,
-      "exception_name": null
+      "exception": null,
+      "node_id": "1fb9e1f3-458c-476b-ac10-5e9a19244e79",
+      "historical_output": null
     },
     {
       "sequence": 18,
       "file": "run_18.py",
-      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sha256": "93809cbe4e9c46ae23873cce9c8ac4f54fe4bcae4f2e06b6cefae1f33721ed6a",
+      "code_length": 12120,
       "historical_run_id": "9d11e10c-e1f1-4ca5-9c70-6779adf34a18",
       "historical_status": "success",
       "reasoning_title": null,
-      "exception_name": null
+      "exception": null,
+      "node_id": "fb40b6d8-bb41-48a2-a1b9-6b2f95492cf8",
+      "historical_output": null
     }
   ]
 }

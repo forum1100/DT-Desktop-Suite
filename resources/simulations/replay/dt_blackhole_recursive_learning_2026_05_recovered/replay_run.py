@@ -11,7 +11,7 @@ def run_one(sequence: int, timeout: int = 45):
     outdir = ROOT / 'replay_outputs' / f'run_{sequence:02d}'
     outdir.mkdir(parents=True, exist_ok=True)
     # Derived portability shim only. The recovered source file itself is never modified.
-    portable = source.replace('/mnt/data/', outdir.as_posix() + '/')
+    portable = source.replace('/mnt/data/', outdir.as_posix() + '/').replace('/mnt/data', outdir.as_posix())
     script = outdir / 'portable_replay.py'
     script.write_text(portable, encoding='utf-8')
     try:

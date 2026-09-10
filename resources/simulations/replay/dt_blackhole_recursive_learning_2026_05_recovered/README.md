@@ -15,3 +15,8 @@ python replay_run.py --run 8
 ```
 
 Scientific status: these are toy/proxy/meta-simulations. Replayability validates preservation of the historical computation path; it does not validate the physical claims.
+## Replay integrity correction
+
+The initial replay-package build accidentally wrote zero-byte run files and therefore produced a false-positive execution receipt. That receipt is explicitly superseded. See `REPLAY_CORRECTION_2026_09_10.md` and `aggregate_replay_receipt_v2.json`.
+
+The corrected pack re-extracts all 18 cells from the May export by historical execution node ID and verifies each recovered code hash against the private causal-history ledger. Sixteen runs currently replay successfully with regenerated artifact families; historical failure runs 13 and 15 remain bounded timeout/failure branches rather than being rewritten as successes.

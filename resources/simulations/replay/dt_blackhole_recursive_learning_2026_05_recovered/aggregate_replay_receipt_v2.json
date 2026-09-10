@@ -1,0 +1,254 @@
+{
+  "status": "CORRECTED_PORTABLE_REPLAY_PARTIAL_CERTIFICATION",
+  "supersedes": "aggregate_replay_receipt.json",
+  "run_count": 18,
+  "portable_success_count": 16,
+  "historical_failure_sequences": [
+    13,
+    15
+  ],
+  "runs": [
+    {
+      "sequence": 1,
+      "historical_status": "success",
+      "replay_returncode": 0,
+      "replay_timeout": false,
+      "artifact_count": 2,
+      "artifacts": [
+        "dt_black_hole_prediction_proxy_summary.csv",
+        "dt_black_hole_prediction_proxy_tests.csv"
+      ]
+    },
+    {
+      "sequence": 2,
+      "historical_status": "success",
+      "replay_returncode": 0,
+      "replay_timeout": false,
+      "artifact_count": 7,
+      "artifacts": [
+        "dt_recursive_cross_domain_branch_lessons.csv",
+        "dt_recursive_cross_domain_corrections.csv",
+        "dt_recursive_cross_domain_final_branches.csv",
+        "dt_recursive_cross_domain_history.csv",
+        "dt_recursive_cross_domain_lessons.csv",
+        "dt_recursive_cross_domain_snapshots.csv",
+        "dt_recursive_cross_domain_summary.csv"
+      ]
+    },
+    {
+      "sequence": 3,
+      "historical_status": "success",
+      "replay_returncode": 0,
+      "replay_timeout": false,
+      "artifact_count": 6,
+      "artifacts": [
+        "dt_recursive_cross_domain_v2_corrections.csv",
+        "dt_recursive_cross_domain_v2_final_branches.csv",
+        "dt_recursive_cross_domain_v2_history.csv",
+        "dt_recursive_cross_domain_v2_lessons.csv",
+        "dt_recursive_cross_domain_v2_snapshots.csv",
+        "dt_recursive_cross_domain_v2_summary.csv"
+      ]
+    },
+    {
+      "sequence": 4,
+      "historical_status": "success",
+      "replay_returncode": 0,
+      "replay_timeout": false,
+      "artifact_count": 5,
+      "artifacts": [
+        "dt_singularity_attempt_corrections.csv",
+        "dt_singularity_attempt_final_branches.csv",
+        "dt_singularity_attempt_history.csv",
+        "dt_singularity_attempt_lessons.csv",
+        "dt_singularity_attempt_summary.csv"
+      ]
+    },
+    {
+      "sequence": 5,
+      "historical_status": "success",
+      "replay_returncode": 0,
+      "replay_timeout": false,
+      "artifact_count": 6,
+      "artifacts": [
+        "dt_self_realization_best_state.csv",
+        "dt_self_realization_cycles.csv",
+        "dt_self_realization_final_state.csv",
+        "dt_self_realization_realizations.csv",
+        "dt_self_realization_summary.csv",
+        "dt_self_realization_unique_realizations.csv"
+      ]
+    },
+    {
+      "sequence": 6,
+      "historical_status": "success",
+      "replay_returncode": 0,
+      "replay_timeout": false,
+      "artifact_count": 6,
+      "artifacts": [
+        "dt_restart_learned_v3_best_state.csv",
+        "dt_restart_learned_v3_corrections.csv",
+        "dt_restart_learned_v3_final_state.csv",
+        "dt_restart_learned_v3_history.csv",
+        "dt_restart_learned_v3_lessons.csv",
+        "dt_restart_learned_v3_summary.csv"
+      ]
+    },
+    {
+      "sequence": 7,
+      "historical_status": "success",
+      "replay_returncode": 0,
+      "replay_timeout": false,
+      "artifact_count": 6,
+      "artifacts": [
+        "dt_selective_reopening_v4_best_state.csv",
+        "dt_selective_reopening_v4_corrections.csv",
+        "dt_selective_reopening_v4_final_state.csv",
+        "dt_selective_reopening_v4_history.csv",
+        "dt_selective_reopening_v4_lessons.csv",
+        "dt_selective_reopening_v4_summary.csv"
+      ]
+    },
+    {
+      "sequence": 8,
+      "historical_status": "success",
+      "replay_returncode": 0,
+      "replay_timeout": false,
+      "artifact_count": 6,
+      "artifacts": [
+        "dt_refinement_v5_best_state.csv",
+        "dt_refinement_v5_corrections.csv",
+        "dt_refinement_v5_final_state.csv",
+        "dt_refinement_v5_history.csv",
+        "dt_refinement_v5_lessons.csv",
+        "dt_refinement_v5_summary.csv"
+      ]
+    },
+    {
+      "sequence": 9,
+      "historical_status": "success",
+      "replay_returncode": 0,
+      "replay_timeout": false,
+      "artifact_count": 6,
+      "artifacts": [
+        "dt_microstructure_v6_best_state.csv",
+        "dt_microstructure_v6_corrections.csv",
+        "dt_microstructure_v6_final_state.csv",
+        "dt_microstructure_v6_history.csv",
+        "dt_microstructure_v6_lessons.csv",
+        "dt_microstructure_v6_summary.csv"
+      ]
+    },
+    {
+      "sequence": 10,
+      "historical_status": "success",
+      "replay_returncode": 0,
+      "replay_timeout": false,
+      "artifact_count": 6,
+      "artifacts": [
+        "dt_equation_locking_v7_best_state.csv",
+        "dt_equation_locking_v7_corrections.csv",
+        "dt_equation_locking_v7_final_state.csv",
+        "dt_equation_locking_v7_history.csv",
+        "dt_equation_locking_v7_lessons.csv",
+        "dt_equation_locking_v7_summary.csv"
+      ]
+    },
+    {
+      "sequence": 11,
+      "historical_status": "success",
+      "replay_returncode": 0,
+      "replay_timeout": false,
+      "artifact_count": 6,
+      "artifacts": [
+        "dt_covariance_v8_best_state.csv",
+        "dt_covariance_v8_corrections.csv",
+        "dt_covariance_v8_final_state.csv",
+        "dt_covariance_v8_history.csv",
+        "dt_covariance_v8_lessons.csv",
+        "dt_covariance_v8_summary.csv"
+      ]
+    },
+    {
+      "sequence": 12,
+      "historical_status": "success",
+      "replay_returncode": 0,
+      "replay_timeout": false,
+      "artifact_count": 6,
+      "artifacts": [
+        "dt_autonomous_v9_best_state.csv",
+        "dt_autonomous_v9_final_state.csv",
+        "dt_autonomous_v9_history.csv",
+        "dt_autonomous_v9_lessons.csv",
+        "dt_autonomous_v9_realizations.csv",
+        "dt_autonomous_v9_summary.csv"
+      ]
+    },
+    {
+      "sequence": 13,
+      "historical_status": "failed_with_in_kernel_exception",
+      "replay_returncode": null,
+      "replay_timeout": true,
+      "artifact_count": 0,
+      "artifacts": []
+    },
+    {
+      "sequence": 14,
+      "historical_status": "success",
+      "replay_returncode": 0,
+      "replay_timeout": false,
+      "artifact_count": 4,
+      "artifacts": [
+        "dt_prism_from_start_v11b_comparison.csv",
+        "dt_prism_from_start_v11b_lessons.csv",
+        "dt_prism_from_start_v11b_summary.csv",
+        "dt_prism_from_start_v11b_trials.csv"
+      ]
+    },
+    {
+      "sequence": 15,
+      "historical_status": "failed_with_in_kernel_exception",
+      "replay_returncode": null,
+      "replay_timeout": true,
+      "artifact_count": 0,
+      "artifacts": []
+    },
+    {
+      "sequence": 16,
+      "historical_status": "success",
+      "replay_returncode": 0,
+      "replay_timeout": false,
+      "artifact_count": 3,
+      "artifacts": [
+        "dt_prism_injection_fast_lessons.csv",
+        "dt_prism_injection_fast_summary.csv",
+        "dt_prism_injection_fast_trials.csv"
+      ]
+    },
+    {
+      "sequence": 17,
+      "historical_status": "success",
+      "replay_returncode": 0,
+      "replay_timeout": false,
+      "artifact_count": 3,
+      "artifacts": [
+        "dt_propulsion_4d_gate_v13_lessons.csv",
+        "dt_propulsion_4d_gate_v13_summary.csv",
+        "dt_propulsion_4d_gate_v13_trials.csv"
+      ]
+    },
+    {
+      "sequence": 18,
+      "historical_status": "success",
+      "replay_returncode": 0,
+      "replay_timeout": false,
+      "artifact_count": 4,
+      "artifacts": [
+        "dt_convergence_inheritance_v14_comparison.csv",
+        "dt_convergence_inheritance_v14_lessons.csv",
+        "dt_convergence_inheritance_v14_summary.csv",
+        "dt_convergence_inheritance_v14_trials.csv"
+      ]
+    }
+  ]
+}
