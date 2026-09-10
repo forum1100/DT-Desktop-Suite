@@ -33,6 +33,11 @@
         <textarea id="ai-prompt" rows="3" placeholder="Ask a question. The selected DT program and its current inputs will be included automatically."></textarea>
         <button id="ask-ai" type="button">Ask connected AI</button><pre id="ai-result" hidden></pre>
       </section>
+      <section id="capture-manager">
+        <div class="ai-title"><div><p class="brief-label">SESSION CAPTURE MANAGER</p><h2>Task-bound screen evidence</h2></div><span id="capture-state">NOT RECORDING</span></div>
+        <div class="provider-row"><input id="capture-task" placeholder="Describe the authorized task being recorded"><button id="capture-start" type="button">Start authorized capture</button><button id="capture-stop" type="button" disabled>Stop & preserve</button></div>
+        <small>Local recording only · visible consent indicator · no covert background capture · manager manifest preserves task, timing, agent, and failures</small>
+      </section>
       <section id="operations">
         <div class="ops-head"><div><p class="brief-label">LIVE OPERATIONS TOPOLOGY</p><h2>Agent runtime observatory</h2></div><div><button id="ops-main" type="button">Main view</button><button id="ops-agent" type="button">Selected agent</button></div></div>
         <div id="ops-summary"></div><div id="ops-graph"></div>

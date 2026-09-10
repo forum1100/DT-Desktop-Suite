@@ -86,6 +86,71 @@ async function refreshInbox(agent = selected) {
   }
 }
 
+let captureRecorder = null;
+let captureStream = null;
+let captureSession = null;
+let captureChunkQueue = Promise.resolve();
+let captureFinalizing = false;
+
+function setCaptureUI(recording, message) {
+  document.querySelector('#capture-state').textContent = message || (recording ? '● REC' : 'NOT RECORDING');
+  document.querySelector('#capture-state').classList.toggle('recording', recording);
+  document.querySelector('#capture-start').disabled = recording;
+  document.querySelector('#capture-stop').disabled = !recording;
+  document.querySelector('#capture-task').disabled = recording;
+}
+
+async function finalizeCapture(status = 'COMPLETED') {
+  if (!captureSession || captureFinalizing) return;
+  captureFinalizing = true;
+  const sessionId = captureSession.sessionId;
+  try {
+    await captureChunkQueue;
+    const closed = await window.dt.stopCapture(sessionId, status);
+    setCaptureUI(false, 'PRESERVED · ' + closed.manifest.videoBytes + ' BYTES');
+  } catch (error) {
+    setCaptureUI(false, 'CAPTURE FAILURE PRESERVED');
+  } finally {
+    captureStream?.getTracks().forEach(track => track.stop());
+    captureRecorder = null; captureStream = null; captureSession = null;
+    captureChunkQueue = Promise.resolve(); captureFinalizing = false;
+  }
+}
+
+document.querySelector('#capture-start').addEventListener('click', async () => {
+  const task = document.querySelector('#capture-task').value.trim();
+  if (!task) { setCaptureUI(false, 'TASK DESCRIPTION REQUIRED'); return; }
+  try {
+    captureStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
+    captureSession = await window.dt.startCapture({ task, agentId: selected?.id || null });
+    const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
+      ? 'video/webm;codecs=vp9' : 'video/webm';
+    captureRecorder = new MediaRecorder(captureStream, { mimeType });
+    captureRecorder.ondataavailable = event => {
+      if (!event.data.size || !captureSession) return;
+      const sessionId = captureSession.sessionId;
+      captureChunkQueue = captureChunkQueue.then(async () => {
+        const bytes = new Uint8Array(await event.data.arrayBuffer());
+        await window.dt.appendCapture(sessionId, bytes);
+      });
+    };
+    captureRecorder.onstop = () => finalizeCapture('COMPLETED');
+    captureStream.getVideoTracks()[0].addEventListener('ended', () => {
+      if (captureRecorder?.state === 'recording') captureRecorder.stop();
+    });
+    captureRecorder.start(1500);
+    setCaptureUI(true, '● REC · TASK BOUND');
+  } catch (error) {
+    captureStream?.getTracks().forEach(track => track.stop());
+    captureStream = null; captureSession = null; captureRecorder = null;
+    setCaptureUI(false, 'CAPTURE NOT STARTED');
+  }
+});
+
+document.querySelector('#capture-stop').addEventListener('click', () => {
+  if (captureRecorder?.state === 'recording') captureRecorder.stop();
+});
+
 let operationsMode = 'main';
 const fmtTime = ms => ms < 1000 ? Math.round(ms) + ' ms'
   : ms < 60000 ? (ms/1000).toFixed(1) + ' s'
@@ -261,7 +326,11 @@ document.querySelector('#save-provider').addEventListener('click', async () => {
 document.querySelector('#ask-ai').addEventListener('click', async () => {
   const output = document.querySelector('#ai-result');
   output.hidden = false;
-  output.textContent = 'Contacting selected provider…';
+  if (!captureSession || captureRecorder?.state !== 'recording') {
+    output.textContent = JSON.stringify({ error: 'Start an authorized task capture before using a connected AI.' }, null, 2);
+    return;
+  }
+  output.textContent = 'Contacting selected provider under active task capture…';
   try {
     const response = await window.dt.askProvider({
       provider: document.querySelector('#provider').value,

@@ -113,6 +113,50 @@ function registerIPC(registry) {
     brief: briefs[agent.id]
   })));
   ipcMain.handle('operations:snapshot', () => operationsSnapshot());
+  ipcMain.handle('capture:start', (_event, request = {}) => {
+    const task = String(request.task || '').trim();
+    if (!task) throw new Error('Describe the authorized capture task first');
+    const sessionId = require('node:crypto').randomUUID();
+    const root = path.join(dataRoot(), 'screen-captures', sessionId);
+    fs.mkdirSync(root, { recursive: true });
+    const manifest = {
+      schema: 'dt-session-capture/1.0', sessionId, task,
+      agentId: request.agentId || null, startedAt: new Date().toISOString(),
+      consent: 'USER_INITIATED_VISIBLE_CAPTURE', status: 'RECORDING', chunks: 0,
+      manager: 'SESSION_CAPTURE_MANAGER', covertCapturePermitted: false
+    };
+    fs.writeFileSync(path.join(root, 'manifest.json'), JSON.stringify(manifest, null, 2));
+    vault.append('capture-started', 'session-capture-manager', manifest);
+    return { sessionId, startedAt: manifest.startedAt };
+  });
+  ipcMain.handle('capture:append', (_event, sessionId, chunk) => {
+    if (!/^[0-9a-f-]{36}$/i.test(String(sessionId || ''))) throw new Error('Invalid capture session');
+    const root = path.join(dataRoot(), 'screen-captures', sessionId);
+    const manifestPath = path.join(root, 'manifest.json');
+    if (!fs.existsSync(manifestPath)) throw new Error('Unknown capture session');
+    const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+    if (manifest.status !== 'RECORDING') throw new Error('Capture session is closed');
+    fs.appendFileSync(path.join(root, 'screen.webm'), Buffer.from(chunk));
+    manifest.chunks += 1;
+    fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
+    return { chunks: manifest.chunks };
+  });
+  ipcMain.handle('capture:stop', (_event, sessionId, status = 'COMPLETED') => {
+    if (!/^[0-9a-f-]{36}$/i.test(String(sessionId || ''))) throw new Error('Invalid capture session');
+    const root = path.join(dataRoot(), 'screen-captures', sessionId);
+    const manifestPath = path.join(root, 'manifest.json');
+    if (!fs.existsSync(manifestPath)) throw new Error('Unknown capture session');
+    const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+    manifest.stoppedAt = new Date().toISOString();
+    manifest.status = status === 'FAILED' ? 'FAILED_PRESERVED' : 'COMPLETED';
+    const videoPath = path.join(root, 'screen.webm');
+    manifest.videoBytes = fs.existsSync(videoPath) ? fs.statSync(videoPath).size : 0;
+    manifest.videoSha256 = fs.existsSync(videoPath)
+      ? require('node:crypto').createHash('sha256').update(fs.readFileSync(videoPath)).digest('hex') : null;
+    fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
+    const receipt = vault.append('capture-stopped', 'session-capture-manager', manifest);
+    return { manifest, receipt };
+  });
   ipcMain.handle('simulations:list', () => listSimulations());
   ipcMain.handle('simulations:replay', (_event, request = {}) => {
     let pythonPath = String(request.pythonPath || '').trim();
