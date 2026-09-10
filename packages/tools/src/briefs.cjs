@@ -65,6 +65,12 @@ const briefs = {
     observed: 'An underspecified agent can silently expand from reading into writing, delegation, or historical alteration.',
     input: 'Define candidate identity, purpose, authority, inputs, outputs, forbidden actions, handoff contract, birth state, and tests.'
   },
+  'qualification-manager': {
+    thesis: 'Implementation identity, architecture identity, and execution authority remain distinct until evidence passes every required gate.',
+    equation: 'Qualified candidate = role map × source evidence × permissions × Prism × teach-back × takeover × runtime test × no blockers',
+    observed: 'A named or coded agent can appear complete while its lineage, authority, or runtime behavior remains unverified.',
+    input: 'Identify the source identity and desktop role, declare lifecycle state, supply evidence, mark each gate PASS/FAIL/PENDING, and preserve blocking residuals.'
+  },
   'dt-closeout': {
     thesis: 'Closeout preserves the fullest causal record available while refusing to promote partial capture into canonical history.',
     equation: 'Closeout = discovery -> verbatim archive || derived model -> divergence/governance -> index -> verified export -> completion gate',

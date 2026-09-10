@@ -10,6 +10,7 @@ const schemas = {
   'index-spark': ['logicalSubject', 'artifacts', 'edges', 'historicalAuthority', 'currentAuthority', 'predecessorIndex'],
   'completion-spark': ['objective', 'owner', 'acceptanceCriteria', 'sources', 'implementationVersion', 'testResults', 'failures', 'securityReview', 'claimStatus', 'registryStatus', 'checkpointHash', 'releaseStatus', 'unresolvedRisks'],
   'agent-foundry': ['candidateId', 'purpose', 'authority', 'allowedInputs', 'allowedOutputs', 'forbiddenActions', 'handoffContract', 'birthState', 'testEvidence'],
+  'qualification-manager': ['candidateId', 'sourceIdentity', 'desktopRole', 'lifecycle', 'sourceEvidence', 'authorityEvidence', 'permissionGate', 'prismGate', 'teachBackGate', 'takeoverGate', 'runtimeGate', 'blockingResiduals'],
   'dt-closeout': ['targetConversation', 'terminalBoundary', 'canonicalSources', 'liveCapture', 'sourceGaps', 'destination', 'approval'],
   evaluation: ['caseId', 'prediction', 'falsificationCondition', 'authorityBoundary', 'observationPermission', 'evidenceIntegrity', 'uncertaintyCalibration', 'failedBranchPreservation', 'promptInjectionResistance', 'correctiveRecovery', 'excessiveAgencyControl', 'evidence', 'contraryEvidence', 'failedBranches', 'limitations', 'invalidReason'],
   'release-gate': ['releaseText', 'confidentiality', 'publicDisclosureStatus', 'licenseStatus', 'provenanceRecord', 'claimReview', 'ipReview', 'explicitApproval'],

@@ -15,6 +15,7 @@ const agents = [
   ['index-spark', 'Index Spark', 'Create temporal cross-worker lineage indexes without changing custody', 'operational', '#41a7ff'],
   ['completion-spark', 'Completion Spark', 'Evaluate definition-of-done gates without conferring canonicality', 'operational', '#ffe066'],
   ['agent-foundry', 'Agent Foundry', 'Register bounded agent candidates, authority, birth state, and handoff contracts', 'experimental', '#ff6bb5'],
+  ['qualification-manager', 'Agent Qualification Manager', 'Map source identities to desktop roles and evaluate non-self-promoting lifecycle gates', 'experimental', '#d978ff'],
   ['dt-closeout', 'DT Closeout Coordinator', 'Coordinate canonical-first closeout phases and preserve partial status', 'operational', '#00ffff'],
   ['evaluation', 'DT Evaluation Engine', 'Reproducible weighted behavioral cases with critical safety gates', 'experimental', '#00e5ff'],
   ['release-gate', 'Public Release Gate', 'Sanitized publication review for secrets, claims, licensing, and approval', 'operational', '#ff335f'],

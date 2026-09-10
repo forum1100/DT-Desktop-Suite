@@ -185,6 +185,29 @@ function agentFoundry(input) {
   };
 }
 
+function qualificationManager(input) {
+  const lifecycle=String(input.lifecycle||'UNKNOWN').trim().toUpperCase();
+  const allowedLifecycles=['SPECIFIED_ONLY','DORMANT_SPEC','IMPLEMENTATION_CANDIDATE',
+    'IMPLEMENTED_UNVALIDATED','VALIDATED','RUNNING','RETIRED','SUPERSEDED','UNKNOWN'];
+  const gateNames=['permissionGate','prismGate','teachBackGate','takeoverGate','runtimeGate'];
+  const gates=Object.fromEntries(gateNames.map(name=>[name,String(input[name]||'PENDING').trim().toUpperCase()]));
+  const invalidGates=Object.entries(gates).filter(([,value])=>!['PASS','FAIL','PENDING','NOT_APPLICABLE'].includes(value));
+  const residuals=list(input.blockingResiduals);
+  const mappingComplete=present(input.candidateId)&&present(input.sourceIdentity)&&present(input.desktopRole);
+  const evidenceComplete=present(input.sourceEvidence)&&present(input.authorityEvidence);
+  const allPassed=Object.values(gates).every(value=>value==='PASS'||value==='NOT_APPLICABLE');
+  const eligible=mappingComplete&&evidenceComplete&&allowedLifecycles.includes(lifecycle)&&!invalidGates.length&&allPassed&&!residuals.length;
+  return {
+    candidateId:input.candidateId||null,sourceIdentity:input.sourceIdentity||null,
+    desktopRole:input.desktopRole||null,lifecycle,gates,blockingResiduals:residuals,
+    mappingComplete,evidenceComplete,qualificationComplete:eligible,
+    state:eligible?'QUALIFICATION_COMPLETE_AWAITING_AUTHORIZED_PROMOTION':'QUALIFICATION_BLOCKED',
+    invalidGates:invalidGates.map(([name,value])=>({name,value})),
+    selfPromotionPermitted:false,authorityTransferred:false,processStarted:false,
+    nextAction:eligible?'Request an attributable lifecycle transition.':'Resolve missing evidence, failed or pending gates, and blocking residuals.'
+  };
+}
+
 const CLOSEOUT_PHASES = Object.freeze([
   'SOURCE_DISCOVERY', 'VERBATIM_ARCHIVE', 'DERIVED_MODEL',
   'DIVERGENCE_REVIEW', 'BRANCH_GOVERNANCE', 'TEMPORAL_INDEX',
@@ -307,6 +330,7 @@ const closeoutEngines = {
   'index-spark': indexSpark,
   'completion-spark': completionSpark,
   'agent-foundry': agentFoundry,
+  'qualification-manager': qualificationManager,
   'dt-closeout': dtCloseout,
   'desktop-control': desktopControl,
   'agent-supervisor': agentSupervisor,

@@ -5,7 +5,7 @@ const { runEngine, engines } = require('../packages/tools/src/engines.cjs');
 test('closeout agents are executable implementation candidates', () => {
   for (const id of ['source-discovery','ingestion-spark','verbatim-archive',
     'derived-model','export-spark','divergence-spark','branch-spark',
-    'index-spark','completion-spark','agent-foundry','dt-closeout']) {
+    'index-spark','completion-spark','agent-foundry','qualification-manager','dt-closeout']) {
     assert.equal(typeof engines[id], 'function', id);
   }
 });
@@ -73,4 +73,30 @@ test('agent supervisor proposes idle duplicates without terminating them', () =>
   assert.equal(out.consolidationCandidates[0].workerId, 'b');
   assert.equal(out.autoTerminationPermitted, false);
   assert.equal(out.historyDeletionPermitted, false);
+});
+
+test('qualification manager blocks incomplete candidates without transferring authority', () => {
+  const out = runEngine('qualification-manager', {
+    candidateId:'LOCAL-CLOSEOUT-WORKER', sourceIdentity:'ATB-001',
+    desktopRole:'closeout worker', lifecycle:'IMPLEMENTATION_CANDIDATE',
+    sourceEvidence:'code path verified', authorityEvidence:'read-only task packets',
+    permissionGate:'PASS', prismGate:'PASS', teachBackGate:'PENDING',
+    takeoverGate:'PENDING', runtimeGate:'PASS', blockingResiduals:'source mapping incomplete'
+  });
+  assert.equal(out.state, 'QUALIFICATION_BLOCKED');
+  assert.equal(out.authorityTransferred, false);
+  assert.equal(out.processStarted, false);
+});
+
+test('qualification completion still requires attributable promotion', () => {
+  const out = runEngine('qualification-manager', {
+    candidateId:'LOCAL-CLOSEOUT-WORKER', sourceIdentity:'ATB-001',
+    desktopRole:'closeout worker', lifecycle:'IMPLEMENTED_UNVALIDATED',
+    sourceEvidence:'source ids and code hash', authorityEvidence:'bounded packet grant',
+    permissionGate:'PASS', prismGate:'PASS', teachBackGate:'PASS',
+    takeoverGate:'PASS', runtimeGate:'PASS', blockingResiduals:''
+  });
+  assert.equal(out.state, 'QUALIFICATION_COMPLETE_AWAITING_AUTHORIZED_PROMOTION');
+  assert.equal(out.qualificationComplete, true);
+  assert.equal(out.selfPromotionPermitted, false);
 });

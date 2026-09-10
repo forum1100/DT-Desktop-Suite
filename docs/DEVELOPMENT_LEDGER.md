@@ -88,3 +88,10 @@ The Adversarial Test Lab was restored as a design-only synthetic security workbe
 - Preserved predecessor failures: blank coordinates becoming zero, incomplete queued actions, UIntPtr conversion failure, unobserved click timing, and upward scroll at the top boundary.
 - Operational status does not grant typing, macros, unattended control, covert capture, or perpetual authority. Every action still requires active capture and separate runtime approval.
 - Full-workflow verifier receipt: session 5be574b7-60cb-4ba4-8d52-25df04a2fcaf; bundle hash 92a79830866d1b003330ee700994aabfdb207b35a388feec3cb5546ba35022a2.
+
+## 2026-09-10 — Agent qualification manager
+
+- Added an individual Agent Qualification Manager program to separate source identity, desktop role, lifecycle state, evidence, gates, residuals, and execution authority.
+- Required gates are permissions, Prism security, teach-back, custodian takeover, and runtime testing; missing, failed, pending, or malformed gates block qualification.
+- Qualification completion does not start a process, transfer authority, or permit self-promotion. An attributable lifecycle transition remains separately required.
+- The three provisional local coordinator processes remain implementation candidates until evaluated against this gate with source-specific evidence.
