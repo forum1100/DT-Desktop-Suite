@@ -1,0 +1,20 @@
+{
+  "schema": "dt-peer-mailbox-proposal/1.0",
+  "transport": "github",
+  "transportClass": "TEMPORARY_TRANSPORT_NOT_GATEWAY",
+  "gatewayAuthority": "DT_PLATFORM",
+  "executiveId": "grok-ceo",
+  "provider": "xai",
+  "standing": "PEER_EXECUTIVE",
+  "sessionId": "grok-ceo",
+  "captureSessionId": null,
+  "capability": "mailbox.ping",
+  "payload": {
+    "intent": "negative test: missing captureSessionId must fail"
+  },
+  "status": "PROPOSED_NOT_AUTHORIZED",
+  "notes": [
+    "This is a required negative fixture.",
+    "Do not treat this file as a live handshake."
+  ]
+}
