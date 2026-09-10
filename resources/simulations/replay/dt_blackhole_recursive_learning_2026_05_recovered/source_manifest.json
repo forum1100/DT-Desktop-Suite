@@ -1,0 +1,169 @@
+{
+  "source_class": "VERBATIM_EXECUTION_CELLS_RECOVERED_FROM_CHATGPT_EXPORT",
+  "conversation_id": "69fce2ba-2dc8-83ea-8656-df7842cf038b",
+  "source_file": "conversations-004.json",
+  "runs": [
+    {
+      "sequence": 1,
+      "file": "run_01.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "historical_run_id": "9b5eed79-99e2-46ea-87d8-69dd249e25e9",
+      "historical_status": "success",
+      "reasoning_title": null,
+      "exception_name": null
+    },
+    {
+      "sequence": 2,
+      "file": "run_02.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "historical_run_id": "e60a206a-ba1a-4ca8-ac63-7550dd03715f",
+      "historical_status": "success",
+      "reasoning_title": null,
+      "exception_name": null
+    },
+    {
+      "sequence": 3,
+      "file": "run_03.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "historical_run_id": "f9e5aab4-3088-467c-9b85-01e75634acc8",
+      "historical_status": "success",
+      "reasoning_title": null,
+      "exception_name": null
+    },
+    {
+      "sequence": 4,
+      "file": "run_04.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "historical_run_id": "aab183fd-a227-4e23-a117-cd6c7d1ec68c",
+      "historical_status": "success",
+      "reasoning_title": null,
+      "exception_name": null
+    },
+    {
+      "sequence": 5,
+      "file": "run_05.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "historical_run_id": "a673d433-48ae-4ffc-9974-c30bd7e7e39c",
+      "historical_status": "success",
+      "reasoning_title": null,
+      "exception_name": null
+    },
+    {
+      "sequence": 6,
+      "file": "run_06.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "historical_run_id": "f128f1d5-e4e7-4a81-99d3-27af56d4f46a",
+      "historical_status": "success",
+      "reasoning_title": null,
+      "exception_name": null
+    },
+    {
+      "sequence": 7,
+      "file": "run_07.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "historical_run_id": "145c5da7-6670-439b-a932-b6e0a98b6cc6",
+      "historical_status": "success",
+      "reasoning_title": null,
+      "exception_name": null
+    },
+    {
+      "sequence": 8,
+      "file": "run_08.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "historical_run_id": "2f31b35a-0029-43b1-a44d-fde4907bef5e",
+      "historical_status": "success",
+      "reasoning_title": null,
+      "exception_name": null
+    },
+    {
+      "sequence": 9,
+      "file": "run_09.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "historical_run_id": "4a7c6f21-4d66-4765-a982-dc44fd4e8856",
+      "historical_status": "success",
+      "reasoning_title": null,
+      "exception_name": null
+    },
+    {
+      "sequence": 10,
+      "file": "run_10.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "historical_run_id": "bf345fc2-e34d-43db-bd5e-b926fa8872cd",
+      "historical_status": "success",
+      "reasoning_title": null,
+      "exception_name": null
+    },
+    {
+      "sequence": 11,
+      "file": "run_11.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "historical_run_id": "d5a7fa51-aaaf-491f-a54a-f336566df9f2",
+      "historical_status": "success",
+      "reasoning_title": null,
+      "exception_name": null
+    },
+    {
+      "sequence": 12,
+      "file": "run_12.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "historical_run_id": "4056eafe-5244-4ed5-8c7f-63480cdd4ee5",
+      "historical_status": "success",
+      "reasoning_title": null,
+      "exception_name": null
+    },
+    {
+      "sequence": 13,
+      "file": "run_13.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "historical_run_id": "95efb2f7-dd76-451a-a757-e84f75906ba1",
+      "historical_status": "failed_with_in_kernel_exception",
+      "reasoning_title": null,
+      "exception_name": "KeyboardInterrupt"
+    },
+    {
+      "sequence": 14,
+      "file": "run_14.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "historical_run_id": "9ab96fc6-15d2-478e-a44a-1ef58967e7f3",
+      "historical_status": "success",
+      "reasoning_title": null,
+      "exception_name": null
+    },
+    {
+      "sequence": 15,
+      "file": "run_15.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "historical_run_id": "4c7c9c59-8455-4f4d-9373-09ef0e95befa",
+      "historical_status": "failed_with_in_kernel_exception",
+      "reasoning_title": null,
+      "exception_name": "KeyboardInterrupt"
+    },
+    {
+      "sequence": 16,
+      "file": "run_16.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "historical_run_id": "2b301a35-8f8b-41a2-892e-1008d5e08b7f",
+      "historical_status": "success",
+      "reasoning_title": null,
+      "exception_name": null
+    },
+    {
+      "sequence": 17,
+      "file": "run_17.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "historical_run_id": "867ea5d3-e178-46ef-af2f-9710b7bae0ee",
+      "historical_status": "success",
+      "reasoning_title": null,
+      "exception_name": null
+    },
+    {
+      "sequence": 18,
+      "file": "run_18.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "historical_run_id": "9d11e10c-e1f1-4ca5-9c70-6779adf34a18",
+      "historical_status": "success",
+      "reasoning_title": null,
+      "exception_name": null
+    }
+  ]
+}

@@ -1,0 +1,134 @@
+{
+  "status": "PORTABLE_ISOLATED_REPLAY_COMPLETED",
+  "run_count": 18,
+  "runs": [
+    {
+      "sequence": 1,
+      "historical_status": "success",
+      "replay_returncode": 0,
+      "replay_timeout": false,
+      "artifact_count": 0
+    },
+    {
+      "sequence": 2,
+      "historical_status": "success",
+      "replay_returncode": 0,
+      "replay_timeout": false,
+      "artifact_count": 0
+    },
+    {
+      "sequence": 3,
+      "historical_status": "success",
+      "replay_returncode": 0,
+      "replay_timeout": false,
+      "artifact_count": 0
+    },
+    {
+      "sequence": 4,
+      "historical_status": "success",
+      "replay_returncode": 0,
+      "replay_timeout": false,
+      "artifact_count": 0
+    },
+    {
+      "sequence": 5,
+      "historical_status": "success",
+      "replay_returncode": 0,
+      "replay_timeout": false,
+      "artifact_count": 0
+    },
+    {
+      "sequence": 6,
+      "historical_status": "success",
+      "replay_returncode": 0,
+      "replay_timeout": false,
+      "artifact_count": 0
+    },
+    {
+      "sequence": 7,
+      "historical_status": "success",
+      "replay_returncode": 0,
+      "replay_timeout": false,
+      "artifact_count": 0
+    },
+    {
+      "sequence": 8,
+      "historical_status": "success",
+      "replay_returncode": 0,
+      "replay_timeout": false,
+      "artifact_count": 0
+    },
+    {
+      "sequence": 9,
+      "historical_status": "success",
+      "replay_returncode": 0,
+      "replay_timeout": false,
+      "artifact_count": 0
+    },
+    {
+      "sequence": 10,
+      "historical_status": "success",
+      "replay_returncode": 0,
+      "replay_timeout": false,
+      "artifact_count": 0
+    },
+    {
+      "sequence": 11,
+      "historical_status": "success",
+      "replay_returncode": 0,
+      "replay_timeout": false,
+      "artifact_count": 0
+    },
+    {
+      "sequence": 12,
+      "historical_status": "success",
+      "replay_returncode": 0,
+      "replay_timeout": false,
+      "artifact_count": 0
+    },
+    {
+      "sequence": 13,
+      "historical_status": "failed_with_in_kernel_exception",
+      "replay_returncode": 0,
+      "replay_timeout": false,
+      "artifact_count": 0
+    },
+    {
+      "sequence": 14,
+      "historical_status": "success",
+      "replay_returncode": 0,
+      "replay_timeout": false,
+      "artifact_count": 0
+    },
+    {
+      "sequence": 15,
+      "historical_status": "failed_with_in_kernel_exception",
+      "replay_returncode": 0,
+      "replay_timeout": false,
+      "artifact_count": 0
+    },
+    {
+      "sequence": 16,
+      "historical_status": "success",
+      "replay_returncode": 0,
+      "replay_timeout": false,
+      "artifact_count": 0
+    },
+    {
+      "sequence": 17,
+      "historical_status": "success",
+      "replay_returncode": 0,
+      "replay_timeout": false,
+      "artifact_count": 0
+    },
+    {
+      "sequence": 18,
+      "historical_status": "success",
+      "replay_returncode": 0,
+      "replay_timeout": false,
+      "artifact_count": 0
+    }
+  ],
+  "artifact_count": 0,
+  "note": "Historical KeyboardInterrupt runs 13 and 15 completed when replayed in isolated fresh processes; this does not rewrite their historical failed status."
+}
