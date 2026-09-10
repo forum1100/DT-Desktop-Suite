@@ -1,6 +1,7 @@
 const { app, BrowserWindow, ipcMain, safeStorage, dialog, screen, session, desktopCapturer } = require('electron');
 const path = require('node:path');
 const fs = require('node:fs');
+const crypto = require('node:crypto');
 const { execFileSync } = require('node:child_process');
 const { Vault } = require('../../../packages/core/src/vault.cjs');
 const { AgentRegistry } = require('../../../packages/core/src/registry.cjs');
@@ -8,6 +9,7 @@ const { Broker } = require('../../../packages/core/src/broker.cjs');
 const { KeyAuthority } = require('../../../packages/core/src/keys.cjs');
 const { createGateway } = require('../../../packages/core/src/gateway.cjs');
 const { createBundle, verifyBundle } = require('../../../packages/core/src/portable.cjs');
+const { appendSeal, createSeal } = require('../../../packages/core/src/provenance.cjs');
 const { RecoveryAuthority } = require('../../../packages/auth/src/recovery.cjs');
 const { ownerBootstrap, isOwner } = require('../../../packages/auth/src/policy.cjs');
 const { agents } = require('../../../packages/tools/src/agents.cjs');
@@ -83,6 +85,25 @@ function readCredential(provider) {
   if (!fs.existsSync(file)) return null;
   if (!safeStorage.isEncryptionAvailable()) throw new Error('OS encryption unavailable');
   return safeStorage.decryptString(fs.readFileSync(file));
+}
+
+function provenanceKeys() {
+  if (!safeStorage.isEncryptionAvailable()) throw new Error('OS encryption unavailable for provenance key');
+  const root = path.join(dataRoot(), 'credentials');
+  const privateFile = path.join(root, 'dt-provenance-private.bin');
+  const publicFile = path.join(root, 'dt-provenance-public.pem');
+  fs.mkdirSync(root, { recursive: true });
+  if (!fs.existsSync(privateFile) || !fs.existsSync(publicFile)) {
+    const pair = crypto.generateKeyPairSync('ed25519');
+    const privateKey = pair.privateKey.export({ type: 'pkcs8', format: 'pem' });
+    const publicKey = pair.publicKey.export({ type: 'spki', format: 'pem' });
+    fs.writeFileSync(privateFile, safeStorage.encryptString(privateKey));
+    fs.writeFileSync(publicFile, publicKey, 'utf8');
+    vault.append('provenance-key-created', 'dt-provenance-sealer', {
+      algorithm: 'Ed25519', publicKeySha256: crypto.createHash('sha256').update(publicKey).digest('hex') });
+  }
+  return { privateKey: safeStorage.decryptString(fs.readFileSync(privateFile)),
+    publicKey: fs.readFileSync(publicFile, 'utf8') };
 }
 
 function authenticatedGithubLogin() {
@@ -296,13 +317,21 @@ function registerIPC(registry) {
       filters: [{ name: 'DT Vault JSON', extensions: ['json'] }]
     });
     if (chosen.canceled || !chosen.filePath) return { canceled: true };
-    fs.writeFileSync(chosen.filePath, JSON.stringify(bundle, null, 2), 'utf8');
+    const serialized = JSON.stringify(bundle, null, 2);
+    fs.writeFileSync(chosen.filePath, serialized, 'utf8');
+    const signing = provenanceKeys();
+    const seal = createSeal({ bytes: Buffer.from(serialized),
+      owner: 'Thomas “TJ” Cutler', disclosure: 'Human-directed DT work; AI assistance disclosed by owner as appropriate.',
+      sourceClass: 'CONSUMER_OWNED_DT_VAULT_EXPORT', ...signing });
+    const sealPath = chosen.filePath + '.dt-seal.json';
+    fs.writeFileSync(sealPath, JSON.stringify(seal, null, 2), 'utf8');
+    appendSeal(vault, seal);
     vault.append('vault-exported', 'memory', {
-      fileName: path.basename(chosen.filePath),
-      recordCount: bundle.recordCount,
-      bundleHash: bundle.bundleHash
+      fileName: path.basename(chosen.filePath), sealFileName: path.basename(sealPath),
+      recordCount: bundle.recordCount, bundleHash: bundle.bundleHash, sealHash: seal.sealHash
     });
-    return { canceled: false, filePath: chosen.filePath, recordCount: bundle.recordCount, bundleHash: bundle.bundleHash };
+    return { canceled: false, filePath: chosen.filePath, sealPath,
+      recordCount: bundle.recordCount, bundleHash: bundle.bundleHash, sealHash: seal.sealHash };
   });
   ipcMain.handle('vault:import', async () => {
     const chosen = await dialog.showOpenDialog({

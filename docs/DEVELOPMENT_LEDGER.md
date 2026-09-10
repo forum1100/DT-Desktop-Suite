@@ -127,3 +127,13 @@ The Adversarial Test Lab was restored as a design-only synthetic security workbe
 - Added append-only custody recording without storing the private signing key.
 - Historical source files remain untouched; this is the foundation for future-export sealing.
 - The mark is identified as DT Provenance Seal(TM), not as a registered mark.
+
+
+## 2026-09-10 — Automatic sealing of DT vault exports
+
+- Wired future DT consumer-vault exports to the DT Provenance Seal.
+- The desktop generates an Ed25519 signing identity on first sealed export.
+- The private signing key is encrypted through Electron safeStorage and is never written into the seal or custody log.
+- Each export keeps its original portable JSON and receives a separate .dt-seal.json verification sidecar.
+- The export and seal hashes are appended to custody history.
+- Build verification: 45 tests passed and Windows NSIS/portable builds completed.
