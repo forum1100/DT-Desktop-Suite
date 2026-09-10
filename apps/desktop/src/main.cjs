@@ -11,7 +11,7 @@ const { createGateway } = require('../../../packages/core/src/gateway.cjs');
 const { createBundle, verifyBundle } = require('../../../packages/core/src/portable.cjs');
 const { appendSeal, createSeal } = require('../../../packages/core/src/provenance.cjs');
 const { createReceipt } = require('../../../packages/core/src/peer-mailbox.cjs');
-const { prepareGrokHandshake } = require('../../../packages/core/src/grok-handshake.cjs');
+const { prepareGrokHandshake, proposalWasConsumed } = require('../../../packages/core/src/grok-handshake.cjs');
 const { RecoveryAuthority } = require('../../../packages/auth/src/recovery.cjs');
 const { ownerBootstrap, isOwner } = require('../../../packages/auth/src/policy.cjs');
 const { agents } = require('../../../packages/tools/src/agents.cjs');
@@ -263,6 +263,10 @@ function registerIPC(registry) {
     const found = findGrokProposalForCapture(captureSessionId);
     if (!found) return { status: 'WAITING_FOR_GROK_PROPOSAL', connectionStatus: 'NOT_CONNECTED', captureSessionId };
     const proposal = found.proposal;
+    if (proposalWasConsumed(vault.all(), proposal.proposalHash)) {
+      return { status: 'REPLAY_BLOCKED_ALREADY_CONSUMED', connectionStatus: 'LIVE_PROOF_PENDING_GROK_ACK',
+        proposalHash: proposal.proposalHash, captureSessionId };
+    }
     const confirmation = await dialog.showMessageBox({
       type: 'warning',
       title: 'Authorize one Grok handshake',
@@ -281,6 +285,14 @@ function registerIPC(registry) {
       vault.append('grok-peer-handshake-refused', 'dt-hub', { ...refused, published });
       return { status: 'REFUSED', connectionStatus: 'NOT_CONNECTED', receipt: refused, published };
     }
+    if (proposalWasConsumed(vault.all(), proposal.proposalHash)) {
+      return { status: 'REPLAY_BLOCKED_ALREADY_CONSUMED', connectionStatus: 'LIVE_PROOF_PENDING_GROK_ACK',
+        proposalHash: proposal.proposalHash, captureSessionId };
+    }
+    vault.append('grok-peer-handshake-consumed', 'dt-hub', {
+      proposalFile: found.fileName, proposalHash: proposal.proposalHash, captureSessionId,
+      consumedAt: new Date().toISOString(), rule: 'SINGLE_USE_OWNER_AUTHORIZATION'
+    });
     const execution = runGrokHandshakeCommand(prepared.envelope.payload.command);
     const result = execution.result;
     const resultHash = crypto.createHash('sha256').update(JSON.stringify(result)).digest('hex');

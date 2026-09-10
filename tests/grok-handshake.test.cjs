@@ -36,3 +36,16 @@ test('live handshake needs owner approval, DT auth, and active capture', () => {
   assert.equal(allowed.envelope.payload.command, HANDSHAKE_COMMAND);
   assert.equal(allowed.connectionStatus, 'NOT_CONNECTED');
 });
+
+
+test('consumed proposal hashes cannot be authorized twice', () => {
+  const { proposalWasConsumed } = require('../packages/core/src/grok-handshake.cjs');
+  const p = proposal();
+  assert.equal(proposalWasConsumed([], p.proposalHash), false);
+  assert.equal(proposalWasConsumed([
+    { kind: 'grok-peer-handshake-consumed', data: { proposalHash: p.proposalHash } }
+  ], p.proposalHash), true);
+  assert.equal(proposalWasConsumed([
+    { kind: 'grok-peer-handshake-executed', data: { proposalHash: p.proposalHash } }
+  ], p.proposalHash), false);
+});

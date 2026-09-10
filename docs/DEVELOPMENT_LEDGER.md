@@ -196,3 +196,15 @@ The Adversarial Test Lab was restored as a design-only synthetic security workbe
 - Mouse authority remains separate and is not granted by the peer handshake.
 - Validation after successor changes: 55 DT Desktop Suite tests passed, 0 failed.
 - Source-edit/test work in this development turn was tool-logged but did not have an active DT video capture; no screen-recording claim is made for it. The first live peer execution remains blocked until visible DT capture is active.
+
+
+## 2026-09-10 — First live Grok handshake exposed replay defect
+
+- Live capture `965406cb-3263-4c17-a441-07ff47f2cdbb` recorded the first Grok peer handshake attempt.
+- Grok proposal `894fd90586f775bec2d40ce778ba05d99cc56cd5b1bd59b46db102dc772b57c4` was accepted and the bounded `echo GROK_CEO_PING` command returned exit 0 with exact stdout.
+- DT published receipt commit `2bf356b` with `resultValidated=true` and status `LIVE_PROOF_PENDING_GROK_ACK`.
+- Audit then found the same proposal caused a second `grok-ceo` bridge execution. The first request was `1789080453709-c1bdabb0e368`; the second was `1789080485175-eb17ab3f1646`.
+- Because owner authorization was defined as single-use, this duplicate execution is preserved as a governance failure. The first attempt is not promoted to a clean CONNECTED state.
+- Successor fix adds durable proposal-consumption state before execution and checks it both before and after the owner dialog. A consumed proposal hash cannot execute again, including after restart or receipt-publication failure.
+- Added regression coverage for replay refusal. Validation after the fix: 56 tests passed, 0 failed.
+- Root trigger for the second invocation is not asserted without additional evidence; the security defect was the absence of idempotent replay prevention.

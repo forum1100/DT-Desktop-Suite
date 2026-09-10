@@ -20,6 +20,12 @@ function prismHandshakeDecision(proposal) {
   }
   return { allowed: true, code: 'PRISM_PASS', reason: 'BOUNDED_GROK_HANDSHAKE_ONLY' };
 }
+function proposalWasConsumed(vaultRows = [], proposalHash) {
+  if (!proposalHash) return false;
+  return vaultRows.some(row => row && row.kind === 'grok-peer-handshake-consumed' &&
+    row.data && row.data.proposalHash === proposalHash);
+}
+
 function prepareGrokHandshake(proposal, context = {}) {
   const prism = prismHandshakeDecision(proposal);
   if (context.ownerApproved !== true) {
@@ -44,4 +50,4 @@ function prepareGrokHandshake(proposal, context = {}) {
     connectionStatus: 'NOT_CONNECTED', prism, envelope };
 }
 
-module.exports = { HANDSHAKE_COMMAND, prismHandshakeDecision, prepareGrokHandshake };
+module.exports = { HANDSHAKE_COMMAND, prismHandshakeDecision, proposalWasConsumed, prepareGrokHandshake };
