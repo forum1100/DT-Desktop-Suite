@@ -206,10 +206,20 @@ function registerIPC(registry) {
     const operation=queued.action==='MOVE'
       ? '[Cursor]::SetCursorPos('+queued.x+','+queued.y+') | Out-Null'
       : queued.action==='SCROLL'
-        ? '[Cursor]::SetCursorPos('+queued.x+','+queued.y+') | Out-Null; [Cursor]::mouse_event(2048,0,0,'+queued.scrollAmount+',0)'
-        : '[Cursor]::SetCursorPos('+queued.x+','+queued.y+') | Out-Null; [Cursor]::mouse_event('+flags[0]+',0,0,0,0); [Cursor]::mouse_event('+flags[1]+',0,0,0,0)';
+        ? '[Cursor]::SetCursorPos('+queued.x+','+queued.y+') | Out-Null; [Cursor]::mouse_event(2048,0,0,'+queued.scrollAmount+',[UIntPtr]::Zero)'
+        : '[Cursor]::SetCursorPos('+queued.x+','+queued.y+') | Out-Null; [Cursor]::mouse_event('+flags[0]+',0,0,0,[UIntPtr]::Zero); [Cursor]::mouse_event('+flags[1]+',0,0,0,[UIntPtr]::Zero)';
     const ps='Add-Type -TypeDefinition @"\nusing System; using System.Runtime.InteropServices; public static class Cursor { [DllImport("user32.dll")] public static extern bool SetCursorPos(int X,int Y); [DllImport("user32.dll")] public static extern void mouse_event(uint f,uint dx,uint dy,int data,UIntPtr extra); }\n"@; '+operation;
-    execFileSync('powershell.exe',['-NoProfile','-NonInteractive','-Command',ps],{windowsHide:true,timeout:5000});
+    try {
+      execFileSync('powershell.exe',['-NoProfile','-NonInteractive','-Command',ps],{windowsHide:true,timeout:5000});
+    } catch (error) {
+      const failure={sessionId:queued.sessionId,action:queued.action,x:queued.x,y:queued.y,
+        scrollAmount:queued.scrollAmount,failedAt:new Date().toISOString(),result:'NATIVE_EXECUTION_FAILED',
+        errorName:error.name||'Error',errorMessage:String(error.message||error).slice(0,2000)};
+      const failureFile=path.join(dataRoot(),'screen-captures',queued.sessionId,'control-events.jsonl');
+      fs.appendFileSync(failureFile,JSON.stringify({type:'CURSOR_EXECUTION_FAILURE',...failure})+'\n','utf8');
+      vault.append('cursor-action-failed','desktop-control',failure);
+      throw new Error('Native cursor execution failed; failure evidence was preserved.');
+    }
     const event={sessionId:queued.sessionId,action:queued.action,x:queued.x,y:queued.y,
       scrollAmount:queued.scrollAmount,executedAt:new Date().toISOString(),result:'EXECUTED_NOT_OUTCOME_VERIFIED'};
     const eventFile=path.join(dataRoot(),'screen-captures',queued.sessionId,'control-events.jsonl');
