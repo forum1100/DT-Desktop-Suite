@@ -147,3 +147,15 @@ The Adversarial Test Lab was restored as a design-only synthetic security workbe
 - TEACH_BACK is PASS for all three candidates.
 - The packets explicitly grant no authority and perform no promotion.
 - Remaining gates are PERMISSIONS and TAKEOVER.
+
+
+## 2026-09-10 — Bounded owner-acceptance transaction prepared
+
+- Added an exact owner-acceptance packet for the three provisional closeout roles.
+- Requires authenticated GitHub identity forum1100 and an exact acknowledgment.
+- Grants only enumerated local closeout capabilities.
+- Subdelegation, self-promotion, arbitrary commands, covert capture, unattended session starts, and perpetual execution remain prohibited.
+- Acceptance does not start a process or promote an agent.
+- Twelve coordinator tests and 45 desktop tests passed.
+- A deliberately incorrect acknowledgment was rejected as expected.
+- Live PERMISSIONS and TAKEOVER gates remain pending; no live acceptance was applied.
