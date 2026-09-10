@@ -75,16 +75,31 @@
       "run_count": 3
     },
     {
-      "simulation_id": "dt_recursive_civilization_historical",
+      "simulation_id": "dt_recursive_civilization_2026_05_recovered",
       "family": "recursive_civilization",
-      "status": "EXECUTION_CODE_CANDIDATES_FOUND_RECONCILIATION_REQUIRED",
-      "source_class": "HISTORICAL_EXPORT_CANDIDATES",
-      "entrypoint": null,
-      "source_locators": [
-        "historical_chatgpt_export:2026-05:18_code_nodes_broad_match"
+      "status": "VERBATIM_EXECUTION_CELLS_RECOVERED_CAUSAL_REPLAY_PARTIAL",
+      "source_class": "VERBATIM_EXECUTION_CELLS_RECOVERED_FROM_CHATGPT_EXPORT",
+      "entrypoint": "packs/dt_recursive_civilization_2026_05_recovered/replay_run.py",
+      "requirements": "packs/dt_recursive_civilization_2026_05_recovered/requirements.txt",
+      "default_args": [
+        "--run",
+        "2"
       ],
-      "candidate_code_nodes": 18,
-      "promotion_block": "family_deduplication_parentage_and_execution_role_classification"
+      "source_locators": [
+        "historical_chatgpt_export:2026-05:conversation:69fce2ba-2dc8-83ea-8656-df7842cf038b"
+      ],
+      "run_count": 8,
+      "historical_failure_runs": [
+        1,
+        7
+      ],
+      "replay_successes": 6,
+      "replay_timeouts": [
+        1,
+        7
+      ],
+      "preserves_historical_failures": true,
+      "preserves_causal_process": true
     },
     {
       "simulation_id": "dt_prism_defense_historical",

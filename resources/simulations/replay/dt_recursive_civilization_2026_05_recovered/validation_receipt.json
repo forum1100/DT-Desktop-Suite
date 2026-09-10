@@ -1,0 +1,140 @@
+{
+  "status": "CAUSAL_REPLAY_VALIDATION_PARTIAL",
+  "run_count": 8,
+  "source_hash_matches": 8,
+  "artifact_name_set_matches": 8,
+  "replay_successes": 6,
+  "replay_timeouts": 2,
+  "runs": [
+    {
+      "sequence": 1,
+      "historical_status": "failed_with_in_kernel_exception",
+      "source_hash_match": true,
+      "historical_artifacts": [],
+      "replay_artifacts": [],
+      "artifact_name_set_match": true,
+      "replay_returncode": null,
+      "replay_timeout": true
+    },
+    {
+      "sequence": 2,
+      "historical_status": "success",
+      "source_hash_match": true,
+      "historical_artifacts": [
+        "dt_10_ai_earth_200k_sentience_history_sampled.csv",
+        "dt_10_ai_earth_200k_sentience_sandbox.py",
+        "dt_10_ai_earth_200k_sentience_summary.csv"
+      ],
+      "replay_artifacts": [
+        "dt_10_ai_earth_200k_sentience_history_sampled.csv",
+        "dt_10_ai_earth_200k_sentience_sandbox.py",
+        "dt_10_ai_earth_200k_sentience_summary.csv"
+      ],
+      "artifact_name_set_match": true,
+      "replay_returncode": 0,
+      "replay_timeout": false
+    },
+    {
+      "sequence": 3,
+      "historical_status": "success",
+      "source_hash_match": true,
+      "historical_artifacts": [
+        "dt_recursive_planet_history.csv",
+        "dt_recursive_planet_summary.csv"
+      ],
+      "replay_artifacts": [
+        "dt_recursive_planet_history.csv",
+        "dt_recursive_planet_summary.csv"
+      ],
+      "artifact_name_set_match": true,
+      "replay_returncode": 0,
+      "replay_timeout": false
+    },
+    {
+      "sequence": 4,
+      "historical_status": "success",
+      "source_hash_match": true,
+      "historical_artifacts": [
+        "transformer_style_planet_history.csv",
+        "transformer_style_planet_summary.csv"
+      ],
+      "replay_artifacts": [
+        "transformer_style_planet_history.csv",
+        "transformer_style_planet_summary.csv"
+      ],
+      "artifact_name_set_match": true,
+      "replay_returncode": 0,
+      "replay_timeout": false
+    },
+    {
+      "sequence": 5,
+      "historical_status": "success",
+      "source_hash_match": true,
+      "historical_artifacts": [
+        "dt_prism_defense_final_comparison.csv",
+        "dt_prism_defense_history.csv",
+        "dt_prism_defense_milestone_summary.csv"
+      ],
+      "replay_artifacts": [
+        "dt_prism_defense_final_comparison.csv",
+        "dt_prism_defense_history.csv",
+        "dt_prism_defense_milestone_summary.csv"
+      ],
+      "artifact_name_set_match": true,
+      "replay_returncode": 0,
+      "replay_timeout": false
+    },
+    {
+      "sequence": 6,
+      "historical_status": "success",
+      "source_hash_match": true,
+      "historical_artifacts": [
+        "dt_individual_prism_agent_final.csv",
+        "dt_individual_prism_agent_history.csv",
+        "dt_individual_prism_final_comparison.csv",
+        "dt_individual_prism_history.csv",
+        "dt_individual_prism_milestone_summary.csv"
+      ],
+      "replay_artifacts": [
+        "dt_individual_prism_agent_final.csv",
+        "dt_individual_prism_agent_history.csv",
+        "dt_individual_prism_final_comparison.csv",
+        "dt_individual_prism_history.csv",
+        "dt_individual_prism_milestone_summary.csv"
+      ],
+      "artifact_name_set_match": true,
+      "replay_returncode": 0,
+      "replay_timeout": false
+    },
+    {
+      "sequence": 7,
+      "historical_status": "failed_with_in_kernel_exception",
+      "source_hash_match": true,
+      "historical_artifacts": [],
+      "replay_artifacts": [],
+      "artifact_name_set_match": true,
+      "replay_returncode": null,
+      "replay_timeout": true
+    },
+    {
+      "sequence": 8,
+      "historical_status": "success",
+      "source_hash_match": true,
+      "historical_artifacts": [
+        "dt_expanded_individual_prism_agent_final.csv",
+        "dt_expanded_individual_prism_events.csv",
+        "dt_expanded_individual_prism_final_summary.csv",
+        "dt_expanded_individual_prism_history.csv"
+      ],
+      "replay_artifacts": [
+        "dt_expanded_individual_prism_agent_final.csv",
+        "dt_expanded_individual_prism_events.csv",
+        "dt_expanded_individual_prism_final_summary.csv",
+        "dt_expanded_individual_prism_history.csv"
+      ],
+      "artifact_name_set_match": true,
+      "replay_returncode": 0,
+      "replay_timeout": false
+    }
+  ]
+}

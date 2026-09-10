@@ -1,0 +1,98 @@
+{
+  "simulation_id": "dt_recursive_civilization_2026_05_recovered",
+  "family": "recursive_civilization",
+  "source_class": "VERBATIM_EXECUTION_CELLS_RECOVERED_FROM_CHATGPT_EXPORT",
+  "conversation_id": "69fce2ba-2dc8-83ea-8656-df7842cf038b",
+  "source_file": "conversations-004.json",
+  "scientific_status": "TOY_PROXY_CIVILIZATION_AND_AGENCY_MODEL_NOT_CONSCIOUSNESS_PROOF",
+  "runs": [
+    {
+      "sequence": 1,
+      "node_id": "04b106c3-60f4-4e37-b8aa-b3941ba09912",
+      "run_id": "55c4ff60-1a2b-4efa-9027-fd2ae9c6da55",
+      "historical_status": "failed_with_in_kernel_exception",
+      "create_time": 1778183769.6854959,
+      "file": "run_01.py",
+      "code_length": 13137,
+      "code_sha256": "7e75e4baa47a6b01bb19fbcff4574027de72747641a80c542922b925cb2b21e6",
+      "historical_failure": true
+    },
+    {
+      "sequence": 2,
+      "node_id": "78f06f1d-8214-4f92-ad32-b81ebb867585",
+      "run_id": "62d46457-0d8e-44e1-a34a-d6e27d78e590",
+      "historical_status": "success",
+      "create_time": 1778183858.0675514,
+      "file": "run_02.py",
+      "code_length": 9113,
+      "code_sha256": "a6e3bd288995abf0b26f3b51369578a69e47147e7e73dcd609ac8e3928f434bd",
+      "historical_failure": false
+    },
+    {
+      "sequence": 3,
+      "node_id": "a09e258c-9d17-498e-b045-4d6ee52a8bc0",
+      "run_id": "db7c4615-ff8e-4cba-a53e-72d7e315283d",
+      "historical_status": "success",
+      "create_time": 1778184332.2624705,
+      "file": "run_03.py",
+      "code_length": 4617,
+      "code_sha256": "43bc4bd7c3bc21e13f500685988d57b9968b0fc94dd1abb1fb6c1d5c6962e978",
+      "historical_failure": false
+    },
+    {
+      "sequence": 4,
+      "node_id": "1fd4dbaa-917a-42a1-8b63-6f53be1d2f49",
+      "run_id": "48945c05-669f-44b4-9081-9c25e867a59a",
+      "historical_status": "success",
+      "create_time": 1778184545.3906074,
+      "file": "run_04.py",
+      "code_length": 4918,
+      "code_sha256": "a350ac6eb7049c32a3c37e5ab8009cc910d3ab49ff0e01e43964223bb01c015a",
+      "historical_failure": false
+    },
+    {
+      "sequence": 5,
+      "node_id": "f59afa52-3696-46f4-bf53-d711f0faa3ed",
+      "run_id": "1e5e1673-ca00-4ea5-aefb-73205383fd3e",
+      "historical_status": "success",
+      "create_time": 1778184749.1066875,
+      "file": "run_05.py",
+      "code_length": 9119,
+      "code_sha256": "8551eb305fb2c2c3d15634a973d3d658b2af633594e28907511cc9c543f31248",
+      "historical_failure": false
+    },
+    {
+      "sequence": 6,
+      "node_id": "9782337d-bc96-4b0e-808a-1e1eac9cac11",
+      "run_id": "07b6b3cb-c1ba-4188-a096-01620043d6ee",
+      "historical_status": "success",
+      "create_time": 1778184871.042946,
+      "file": "run_06.py",
+      "code_length": 11911,
+      "code_sha256": "d8f62562b184fbd67794e1830372d7f5fb6b50418ae86dd77f65fd2aea27646e",
+      "historical_failure": false
+    },
+    {
+      "sequence": 7,
+      "node_id": "e76b90de-8edf-40d4-b08d-1c4717574dd8",
+      "run_id": "2f685667-74bf-4413-82a4-8a567a011d4a",
+      "historical_status": "failed_with_in_kernel_exception",
+      "create_time": 1778185079.899676,
+      "file": "run_07.py",
+      "code_length": 15981,
+      "code_sha256": "d35b7e4cb6f829786972e6280e576d56fa43305c2568293f916f2ae8bd956de1",
+      "historical_failure": true
+    },
+    {
+      "sequence": 8,
+      "node_id": "a46ab645-4c69-4290-a731-268d8f02196e",
+      "run_id": "dee9b5ac-6505-4514-8123-9586073adf4c",
+      "historical_status": "success",
+      "create_time": 1778185173.6927552,
+      "file": "run_08.py",
+      "code_length": 11893,
+      "code_sha256": "693a9e0feb2f6382725fa66a8883e6dca52cfd314aa56e844410f21368967e17",
+      "historical_failure": false
+    }
+  ]
+}
