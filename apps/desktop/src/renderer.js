@@ -190,11 +190,14 @@ document.querySelector('#control-queue').addEventListener('click', async () => {
   const preview=document.querySelector('#control-preview');
   if(!captureSession){preview.textContent='Active authorized screen capture required.';return;}
   try{
+    const xValue=document.querySelector('#control-x').value.trim();
+    const yValue=document.querySelector('#control-y').value.trim();
+    if(xValue===''||yValue==='') throw new Error('Enter both Screen X and Screen Y; blanks cannot become zero.');
     queuedControl=await window.dt.queueControl({
       sessionId:captureSession.sessionId,
       action:document.querySelector('#control-action').value,
-      x:Number(document.querySelector('#control-x').value),
-      y:Number(document.querySelector('#control-y').value),
+      x:Number(xValue),
+      y:Number(yValue),
       scrollAmount:Number(document.querySelector('#control-scroll').value||0)
     });
     preview.textContent=JSON.stringify({action:queuedControl.action,x:queuedControl.x,y:queuedControl.y,
