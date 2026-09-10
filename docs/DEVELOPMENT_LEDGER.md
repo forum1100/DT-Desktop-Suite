@@ -117,3 +117,13 @@ The Adversarial Test Lab was restored as a design-only synthetic security workbe
 - Qualification result: PRISM_SECURITY PASS for the three mapped implementation candidates.
 - No promotion, authority transfer, custodian takeover, or process activation occurred.
 - Remaining gates: PERMISSIONS, TEACH_BACK, and TAKEOVER.
+
+
+## 2026-09-10 — DT Provenance Seal foundation
+
+- Added an Ed25519-signed DT provenance manifest for exact artifact bytes.
+- Seal fields include artifact/version IDs, owner, disclosure, source class, SHA-256, timestamp, predecessor seal, public key, signature, and seal hash.
+- Added verification that fails if artifact bytes or the seal statement change.
+- Added append-only custody recording without storing the private signing key.
+- Historical source files remain untouched; this is the foundation for future-export sealing.
+- The mark is identified as DT Provenance Seal(TM), not as a registered mark.
