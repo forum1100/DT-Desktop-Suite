@@ -206,8 +206,8 @@ function registerIPC(registry) {
     const operation=queued.action==='MOVE'
       ? '[Cursor]::SetCursorPos('+queued.x+','+queued.y+') | Out-Null'
       : queued.action==='SCROLL'
-        ? '[Cursor]::SetCursorPos('+queued.x+','+queued.y+') | Out-Null; [Cursor]::mouse_event(2048,0,0,'+queued.scrollAmount+',[UIntPtr]::Zero)'
-        : '[Cursor]::SetCursorPos('+queued.x+','+queued.y+') | Out-Null; [Cursor]::mouse_event('+flags[0]+',0,0,0,[UIntPtr]::Zero); [Cursor]::mouse_event('+flags[1]+',0,0,0,[UIntPtr]::Zero)';
+        ? '[Cursor]::SetCursorPos('+queued.x+','+queued.y+') | Out-Null; Start-Sleep -Milliseconds 120; [Cursor]::mouse_event(2048,0,0,'+queued.scrollAmount+',[UIntPtr]::Zero)'
+        : '[Cursor]::SetCursorPos('+queued.x+','+queued.y+') | Out-Null; Start-Sleep -Milliseconds 120; [Cursor]::mouse_event('+flags[0]+',0,0,0,[UIntPtr]::Zero); Start-Sleep -Milliseconds 80; [Cursor]::mouse_event('+flags[1]+',0,0,0,[UIntPtr]::Zero)';
     const ps='Add-Type -TypeDefinition @"\nusing System; using System.Runtime.InteropServices; public static class Cursor { [DllImport("user32.dll")] public static extern bool SetCursorPos(int X,int Y); [DllImport("user32.dll")] public static extern void mouse_event(uint f,uint dx,uint dy,int data,UIntPtr extra); }\n"@; '+operation;
     try {
       execFileSync('powershell.exe',['-NoProfile','-NonInteractive','-Command',ps],{windowsHide:true,timeout:5000});
