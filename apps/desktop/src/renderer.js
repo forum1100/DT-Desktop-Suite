@@ -228,7 +228,8 @@ document.querySelector('#control-prepare-test').addEventListener('click',()=>{
   const chromeTop=Math.max(0,window.outerHeight-window.innerHeight);
   const x=Math.round(window.screenX+rect.left+rect.width/2);
   const y=Math.round(window.screenY+chromeTop+rect.top+Math.min(rect.height/2,36));
-  const scrollAmount=action==='SCROLL'?240:0;
+  if(action==='SCROLL') scrollPad.scrollTop=0;
+  const scrollAmount=action==='SCROLL'?-240:0;
   document.querySelector('#control-x').value=x;
   document.querySelector('#control-y').value=y;
   document.querySelector('#control-scroll').value=scrollAmount;
