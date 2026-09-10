@@ -1,0 +1,14 @@
+{
+  "status": "PASS_WITH_NUMERICAL_REPLAY_TOLERANCE",
+  "tolerance": 1e-12,
+  "max_abs_diff": 2.914335439641036e-16,
+  "historical_run_id": "4d5501e1-d8f0-4692-9a36-30dfc4f3331e",
+  "final_record_count": 4,
+  "source_cell_hashes": [
+    "62d93da693d074248a17688d428cdbed6d965be64f3afba3724a0fd2effed663",
+    "3a10d72f6e4b3488afb7d6e5847a1e4f71d91a73c9b6ddaa9a16d4668ba54b75",
+    "df3b61268d1dea2c62edc06492c33a5fa8c9986215971a3e62b7f3eba8597c7c",
+    "be3db2feab10fabd69a2b66d0323adcb8df44cf8e7374e105245d127d8cff292",
+    "241ce55cd6eb17bbe83053f1c6fe1141a57765bf968ebe2c0eedfa1718d6809a"
+  ]
+}

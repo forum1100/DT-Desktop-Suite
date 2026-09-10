@@ -1,0 +1,46 @@
+{
+  "source_class": "VERBATIM_EXECUTED_CODE_RECOVERED_FROM_CHATGPT_EXPORT",
+  "historical_date": "2026-05-07",
+  "cells": [
+    {
+      "sequence": 1,
+      "file": "cell_01.py",
+      "sha256": "62d93da693d074248a17688d428cdbed6d965be64f3afba3724a0fd2effed663",
+      "historical_run_id": "91ffca24-4e9b-4674-8a58-5b5d804b131b",
+      "historical_status": "success",
+      "historical_output": "                                              metric      value\n0                  final escaped positive flux proxy   1.532662\n1          final absorbed/inside negative flux proxy   0.385666\n2              final outside mean persistence memory   5.000000\n3  fraction of outside grid retaining persistent ...   1.000000\n4                            peak escaped flux proxy   1.564541\n5                          time of peak escaped flux  68.000000"
+    },
+    {
+      "sequence": 2,
+      "file": "cell_02.py",
+      "sha256": "3a10d72f6e4b3488afb7d6e5847a1e4f71d91a73c9b6ddaa9a16d4668ba54b75",
+      "historical_run_id": "c11600f4-705a-4b98-a20d-f1cc7248ae6a",
+      "historical_status": "success",
+      "historical_output": "                 model  ...  total absorbed inner flux\n0              Full DT  ...               10401.378941\n1         No void term  ...                   0.000000\n2  No threshold gamma0  ...               20074.355156\n3  No S+V transparency  ...               10253.431212\n\n[4 rows x 8 columns]"
+    },
+    {
+      "sequence": 3,
+      "file": "cell_03.py",
+      "sha256": "df3b61268d1dea2c62edc06492c33a5fa8c9986215971a3e62b7f3eba8597c7c",
+      "historical_run_id": "513567df-3194-4627-adfc-2433a2690bdc",
+      "historical_status": "success",
+      "historical_output": "                 model  ...  total absorbed inner flux\n0              Full DT  ...                 10401.3789\n1         No void term  ...                     0.0000\n2  No threshold gamma0  ...                 20074.3552\n3  No S+V transparency  ...                 10253.4312\n\n[4 rows x 8 columns]"
+    },
+    {
+      "sequence": 4,
+      "file": "cell_04.py",
+      "sha256": "be3db2feab10fabd69a2b66d0323adcb8df44cf8e7374e105245d127d8cff292",
+      "historical_run_id": "b6c20fe8-3ad4-4efa-9e17-4a8321ca4c37",
+      "historical_status": "success",
+      "historical_output": "[{'model': 'Full DT',\n  'final escaped flux': 8.438803464275243e-08,\n  'peak escaped flux': 0.18301033226015956,\n  'total emitted horizon events': 0.0,\n  'final outside persistence mass': 1.6767078100410603e-05,\n  'mean horizon |grad(S-V)|': 2.748034756363403e-05,\n  'final transparency error': 0.6716522538508415,\n  'total absorbed inner flux': 0.11945895952809193,\n  'final horizon persistence': 1.2344433089516214e-05},\n {'model': 'No void term',\n  'final escaped flux': 2.2620079755134113e-10,\n  'peak escaped flux': 0.18301218219324875,\n  'total emitted horizon events': 0.0,\n  'final outside persistence mass': 5.432221499986712e-10,\n  'mean horizon |grad(S-V)|': 1.0835234432367415e-05,\n  'final transparency error': 0.9999999999978175,\n  'total absorbed inner flux': 0.0,\n  'final horizon persistence': 2.109245662287105e-10},\n {'model': 'No threshold gamma0',\n  'final escaped flux': 63.350000000000016,\n  'peak escaped flux': 63.350000000000016,\n  'total emitted horizon events': 3.446537500736344,\n  'final outside persistence mass': 76.81961396771611,\n  'mean horizon |grad(S-V)|': 0.00038812849633950423,\n  'final transparency error': 0.518308005649982,\n  'total absorbed inner flux': 0.1606616068512345,\n  'final horizon persistence': 0.013173771212146454},\n {'model': 'No S+V transparency',\n  'final escaped flux': 4.1056375743233266e-08,\n  'peak escaped flux': 0.1796673071289645,\n  'total emitted horizon events': 0.0,\n  'final outside persistence mass': 1.0516897220706179e-05,\n  'mean horizon |grad(S-V)|': 2.465386803143944e-05,\n  'final transparency error': 0.6716522928248222,\n  'total absorbed inner flux': 0.1171545756619108,\n  'final horizon persistence': 9.046475767834225e-06}]"
+    },
+    {
+      "sequence": 5,
+      "file": "cell_05.py",
+      "sha256": "241ce55cd6eb17bbe83053f1c6fe1141a57765bf968ebe2c0eedfa1718d6809a",
+      "historical_run_id": "4d5501e1-d8f0-4692-9a36-30dfc4f3331e",
+      "historical_status": "success",
+      "historical_output": "[{'model': 'Full DT',\n  'final escaped flux': 5.7878717643655575,\n  'peak escaped flux': 5.7878717643655575,\n  'total emitted horizon events': 715.7729445380576,\n  'final outside persistence mass': 29.93787176436556,\n  'mean horizon |grad(S-V)|': 0.0033370301493497903,\n  'final transparency error': 0.5811445509832902,\n  'total absorbed inner flux': 0.11945895952809193,\n  'final horizon persistence': 5.949999999999999},\n {'model': 'No void term',\n  'final escaped flux': 8.253094468445349,\n  'peak escaped flux': 8.253094468445349,\n  'total emitted horizon events': 773.8081230239293,\n  'final outside persistence mass': 32.40309446844536,\n  'mean horizon |grad(S-V)|': 0.0008108177442146045,\n  'final transparency error': 0.8693573741546233,\n  'total absorbed inner flux': 0.0,\n  'final horizon persistence': 5.949999999999999},\n {'model': 'No threshold gamma0',\n  'final escaped flux': 63.350000000000016,\n  'peak escaped flux': 63.350000000000016,\n  'total emitted horizon events': 6.0475554890509144,\n  'final outside persistence mass': 76.8412388980501,\n  'mean horizon |grad(S-V)|': 0.0006830331886765831,\n  'final transparency error': 0.5182556975177148,\n  'total absorbed inner flux': 0.1607165478716492,\n  'final horizon persistence': 0.023453631318084915},\n {'model': 'No S+V transparency',\n  'final escaped flux': 0.0828601796228211,\n  'peak escaped flux': 0.1796673071289645,\n  'total emitted horizon events': 629.0355003577552,\n  'final outside persistence mass': 24.148196910985266,\n  'mean horizon |grad(S-V)|': 0.003898250640783123,\n  'final transparency error': 0.6027361435126084,\n  'total absorbed inner flux': 0.1171545756619108,\n  'final horizon persistence': 5.949999999999999}]"
+    }
+  ]
+}

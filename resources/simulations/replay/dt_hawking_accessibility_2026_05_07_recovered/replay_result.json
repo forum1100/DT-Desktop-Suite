@@ -1,0 +1,71 @@
+{
+  "source_class": "REPLAY_OF_VERBATIM_HISTORICAL_EXECUTED_CELLS",
+  "executed_cells": [
+    {
+      "file": "cell_01.py",
+      "sha256": "62d93da693d074248a17688d428cdbed6d965be64f3afba3724a0fd2effed663"
+    },
+    {
+      "file": "cell_02.py",
+      "sha256": "3a10d72f6e4b3488afb7d6e5847a1e4f71d91a73c9b6ddaa9a16d4668ba54b75"
+    },
+    {
+      "file": "cell_03.py",
+      "sha256": "df3b61268d1dea2c62edc06492c33a5fa8c9986215971a3e62b7f3eba8597c7c"
+    },
+    {
+      "file": "cell_04.py",
+      "sha256": "be3db2feab10fabd69a2b66d0323adcb8df44cf8e7374e105245d127d8cff292"
+    },
+    {
+      "file": "cell_05.py",
+      "sha256": "241ce55cd6eb17bbe83053f1c6fe1141a57765bf968ebe2c0eedfa1718d6809a"
+    }
+  ],
+  "final_records": [
+    {
+      "model": "Full DT",
+      "final escaped flux": 5.7878717643655575,
+      "peak escaped flux": 5.7878717643655575,
+      "total emitted horizon events": 715.7729445380576,
+      "final outside persistence mass": 29.93787176436556,
+      "mean horizon |grad(S-V)|": 0.0033370301493497903,
+      "final transparency error": 0.5811445509832902,
+      "total absorbed inner flux": 0.11945895952809193,
+      "final horizon persistence": 5.949999999999999
+    },
+    {
+      "model": "No void term",
+      "final escaped flux": 8.253094468445349,
+      "peak escaped flux": 8.253094468445349,
+      "total emitted horizon events": 773.8081230239293,
+      "final outside persistence mass": 32.40309446844536,
+      "mean horizon |grad(S-V)|": 0.0008108177442146041,
+      "final transparency error": 0.8693573741546233,
+      "total absorbed inner flux": 0.0,
+      "final horizon persistence": 5.949999999999999
+    },
+    {
+      "model": "No threshold gamma0",
+      "final escaped flux": 63.350000000000016,
+      "peak escaped flux": 63.350000000000016,
+      "total emitted horizon events": 6.0475554890509144,
+      "final outside persistence mass": 76.8412388980501,
+      "mean horizon |grad(S-V)|": 0.0006830331886765831,
+      "final transparency error": 0.5182556975177148,
+      "total absorbed inner flux": 0.1607165478716492,
+      "final horizon persistence": 0.023453631318084915
+    },
+    {
+      "model": "No S+V transparency",
+      "final escaped flux": 0.0828601796228214,
+      "peak escaped flux": 0.1796673071289645,
+      "total emitted horizon events": 629.0355003577552,
+      "final outside persistence mass": 24.148196910985266,
+      "mean horizon |grad(S-V)|": 0.003898250640783124,
+      "final transparency error": 0.6027361435126084,
+      "total absorbed inner flux": 0.1171545756619108,
+      "final horizon persistence": 5.949999999999999
+    }
+  ]
+}
