@@ -182,3 +182,17 @@ The Adversarial Test Lab was restored as a design-only synthetic security workbe
 - Observed the installed Grok Bot desktop process launching `dist/local-exec-daemon/main.cjs`; process inspection showed outbound HTTPS connections and no inbound listening TCP socket for the inspected daemon PID.
 - This observation does not establish Grok runtime attachment or authority. Grok remains NOT CONNECTED until the full DT handshake/execution/receipt test passes.
 - Validation: 47 tests passed, 0 failed.
+
+## 2026-09-10 — Grok live-handshake successor gate
+
+- Pulled and preserved Grok peer mailbox commit `7806d5b` as predecessor work; GitHub remains temporary transport only.
+- Corrected mailbox evaluation to recompute and verify `proposalHash` before any live gate can pass.
+- Added a dedicated Prism handshake policy that permits only `command.propose` with exact payload `echo GROK_CEO_PING`.
+- Added `prepareGrokHandshake` requiring active capture, verified DT/owner identity, and explicit one-time owner approval.
+- Added DT UI display of the active capture UUID and a capture-bound Grok mailbox handshake control.
+- Added main-process mailbox polling through authenticated GitHub CLI, with no public listener on TJ Command Bridge.
+- Successful bounded execution must occur under bridge session `grok-ceo`, return exit code 0 and exact stdout `GROK_CEO_PING`, and produce an official DT request ID/hash plus result hash.
+- Outbound receipt status remains `LIVE_PROOF_PENDING_GROK_ACK` until Grok independently reads and acknowledges the receipt; otherwise connection status remains `NOT_CONNECTED`.
+- Mouse authority remains separate and is not granted by the peer handshake.
+- Validation after successor changes: 55 DT Desktop Suite tests passed, 0 failed.
+- Source-edit/test work in this development turn was tool-logged but did not have an active DT video capture; no screen-recording claim is made for it. The first live peer execution remains blocked until visible DT capture is active.

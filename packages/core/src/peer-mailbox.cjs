@@ -80,6 +80,10 @@ function evaluateProposal(proposal, context = {}) {
   if (!proposal || proposal.schema !== 'dt-peer-mailbox-proposal/1.0') {
     return refuse('INVALID_PROPOSAL_SCHEMA');
   }
+  const { proposalHash, ...proposalBody } = proposal;
+  if (typeof proposalHash !== 'string' || proposalHash !== stableHash(proposalBody)) {
+    return refuse('PROPOSAL_INTEGRITY_FAILURE');
+  }
   if (proposal.transportClass !== 'TEMPORARY_TRANSPORT_NOT_GATEWAY') {
     return refuse('TRANSPORT_MISCLASSIFIED_AS_GATEWAY');
   }
@@ -139,7 +143,15 @@ function createReceipt(proposal, evaluation, extras = {}) {
     accepted: Boolean(evaluation?.accepted),
     reason: evaluation?.reason || 'UNKNOWN',
     executed: Boolean(extras.executed),
-    connectionStatus: extras.executed ? 'LIVE_PROOF_PENDING_RESULT_RETURN' : 'NOT_CONNECTED',
+    officialRequestId: extras.officialRequestId || null,
+    officialRequestHash: extras.officialRequestHash || null,
+    bridgeRequestId: extras.bridgeRequestId || null,
+    exitCode: Number.isInteger(extras.exitCode) ? extras.exitCode : null,
+    stdout: typeof extras.stdout === 'string' ? extras.stdout : null,
+    stderr: typeof extras.stderr === 'string' ? extras.stderr : null,
+    resultHash: extras.resultHash || null,
+    resultValidated: extras.resultValidated === true,
+    connectionStatus: extras.executed && extras.resultValidated === true ? 'LIVE_PROOF_PENDING_GROK_ACK' : 'NOT_CONNECTED',
     createdAt: new Date().toISOString()
   };
   return Object.freeze({ ...body, receiptHash: stableHash(body) });

@@ -2,7 +2,7 @@ const { app, BrowserWindow, ipcMain, safeStorage, dialog, screen, session, deskt
 const path = require('node:path');
 const fs = require('node:fs');
 const crypto = require('node:crypto');
-const { execFileSync } = require('node:child_process');
+const { execFileSync, spawnSync } = require('node:child_process');
 const { Vault } = require('../../../packages/core/src/vault.cjs');
 const { AgentRegistry } = require('../../../packages/core/src/registry.cjs');
 const { Broker } = require('../../../packages/core/src/broker.cjs');
@@ -10,6 +10,8 @@ const { KeyAuthority } = require('../../../packages/core/src/keys.cjs');
 const { createGateway } = require('../../../packages/core/src/gateway.cjs');
 const { createBundle, verifyBundle } = require('../../../packages/core/src/portable.cjs');
 const { appendSeal, createSeal } = require('../../../packages/core/src/provenance.cjs');
+const { createReceipt } = require('../../../packages/core/src/peer-mailbox.cjs');
+const { prepareGrokHandshake } = require('../../../packages/core/src/grok-handshake.cjs');
 const { RecoveryAuthority } = require('../../../packages/auth/src/recovery.cjs');
 const { ownerBootstrap, isOwner } = require('../../../packages/auth/src/policy.cjs');
 const { agents } = require('../../../packages/tools/src/agents.cjs');
@@ -106,26 +108,92 @@ function provenanceKeys() {
     publicKey: fs.readFileSync(publicFile, 'utf8') };
 }
 
-function authenticatedGithubLogin() {
+function githubCliExecutable() {
   const wingetRoot = path.join(process.env.LOCALAPPDATA || '', 'Microsoft', 'WinGet', 'Packages');
   let wingetGh = null;
   try {
     const folder = fs.readdirSync(wingetRoot).find(name => name.startsWith('GitHub.cli_'));
     if (folder) wingetGh = path.join(wingetRoot, folder, 'bin', 'gh.exe');
   } catch {}
-  const candidates = [
-    'gh',
-    path.join(process.env.LOCALAPPDATA || '', 'Microsoft', 'WinGet', 'Links', 'gh.exe'),
-    wingetGh
-  ].filter(Boolean);
+  const candidates = ['gh', path.join(process.env.LOCALAPPDATA || '', 'Microsoft', 'WinGet', 'Links', 'gh.exe'), wingetGh].filter(Boolean);
   for (const executable of candidates) {
     try {
-      return execFileSync(executable, ['api', 'user', '--jq', '.login'], {
-        encoding: 'utf8', windowsHide: true
-      }).trim();
+      execFileSync(executable, ['--version'], { encoding: 'utf8', windowsHide: true });
+      return executable;
     } catch {}
   }
   return null;
+}
+
+function authenticatedGithubLogin() {
+  const executable = githubCliExecutable();
+  if (!executable) return null;
+  try {
+    return execFileSync(executable, ['api', 'user', '--jq', '.login'], { encoding: 'utf8', windowsHide: true }).trim();
+  } catch { return null; }
+}
+
+const DT_GITHUB_REPO = 'forum1100/DT-Desktop-Suite';
+const GROK_INBOUND_PATH = 'runtime/peer-mailbox/inbound/grok-ceo';
+const GROK_OUTBOUND_PATH = 'runtime/peer-mailbox/outbound/grok-ceo';
+
+function ghApi(executable, args, options = {}) {
+  return execFileSync(executable, ['api', ...args], {
+    encoding: 'utf8', windowsHide: true, timeout: options.timeout || 15000,
+    maxBuffer: 1024 * 1024 * 4
+  });
+}
+
+function readGithubMailboxFile(executable, repoPath) {
+  return ghApi(executable, [
+    `repos/${DT_GITHUB_REPO}/contents/${repoPath}?ref=main`,
+    '-H', 'Accept: application/vnd.github.raw+json'
+  ]);
+}
+
+function findGrokProposalForCapture(captureSessionId) {
+  const executable = githubCliExecutable();
+  if (!executable) throw new Error('GitHub CLI is required for temporary Grok mailbox transport');
+  const listing = JSON.parse(ghApi(executable, [`repos/${DT_GITHUB_REPO}/contents/${GROK_INBOUND_PATH}?ref=main`]));
+  const candidates = listing.filter(item => item.type === 'file' && item.name.endsWith('.json') && !item.name.startsWith('NEGATIVE_'));
+  for (const item of candidates) {
+    const proposal = JSON.parse(readGithubMailboxFile(executable, `${GROK_INBOUND_PATH}/${item.name}`));
+    if (proposal.captureSessionId === captureSessionId) return { proposal, fileName: item.name };
+  }
+  return null;
+}
+
+function publishGrokReceipt(receipt) {
+  const executable = githubCliExecutable();
+  if (!executable) throw new Error('GitHub CLI is required to return the Grok receipt');
+  const name = `${receipt.proposalHash}.receipt.json`;
+  const body = Buffer.from(JSON.stringify(receipt, null, 2), 'utf8').toString('base64');
+  const output = ghApi(executable, [
+    '--method', 'PUT', `repos/${DT_GITHUB_REPO}/contents/${GROK_OUTBOUND_PATH}/${name}`,
+    '-f', `message=Return DT Grok handshake receipt ${receipt.proposalHash.slice(0, 12)}`,
+    '-f', `content=${body}`, '-f', 'branch=main'
+  ]);
+  const parsed = JSON.parse(output);
+  return { commitSha: parsed.commit?.sha || null, path: parsed.content?.path || `${GROK_OUTBOUND_PATH}/${name}` };
+}
+
+function runGrokHandshakeCommand(command) {
+  const bridgeRoot = path.join(process.env.USERPROFILE || '', 'Documents', 'TJ_Command_Bridge');
+  const submit = path.join(bridgeRoot, 'submit.py');
+  if (!fs.existsSync(submit)) throw new Error('TJ Command Bridge submit.py was not found');
+  const proc = spawnSync('py', ['-3', submit, '--session', 'grok-ceo', '--cwd', bridgeRoot, '--timeout', '30', '--', command], {
+    encoding: 'utf8', windowsHide: true, timeout: 45000, maxBuffer: 1024 * 1024
+  });
+  const raw = String(proc.stdout || '').trim();
+  const lines = raw.split(/\r?\n/);
+  const bridgeRequestId = lines.shift()?.trim() || null;
+  let result = null;
+  try { result = JSON.parse(lines.join('\n')); } catch {}
+  if (!result) {
+    result = { request_id: bridgeRequestId, session_id: 'grok-ceo', exit_code: null,
+      stdout: '', stderr: String(proc.stderr || ''), error: proc.error?.message || `submit.py exited ${proc.status}` };
+  }
+  return { bridgeRequestId, result, submitExitCode: proc.status };
 }
 
 function registerIPC(registry) {
@@ -186,6 +254,52 @@ function registerIPC(registry) {
     for (const [token, action] of pendingControlActions) if (action.sessionId === sessionId) pendingControlActions.delete(token);
     const receipt = vault.append('capture-stopped', 'session-capture-manager', manifest);
     return { manifest, receipt };
+  });
+  ipcMain.handle('peer:grok:handshake', async (_event, request = {}) => {
+    const captureSessionId = String(request.captureSessionId || '');
+    if (!activeCaptureSessions.has(captureSessionId)) throw new Error('Active DT capture is required for Grok handshake');
+    const login = authenticatedGithubLogin();
+    if (!isOwner(ownerProfile, login)) throw new Error('Verified owner GitHub identity is required');
+    const found = findGrokProposalForCapture(captureSessionId);
+    if (!found) return { status: 'WAITING_FOR_GROK_PROPOSAL', connectionStatus: 'NOT_CONNECTED', captureSessionId };
+    const proposal = found.proposal;
+    const confirmation = await dialog.showMessageBox({
+      type: 'warning',
+      title: 'Authorize one Grok handshake',
+      message: 'DT found a Grok peer proposal for the active recorded task.',
+      detail: `Proposal: ${proposal.proposalHash}\nCapability: ${proposal.capability}\nCommand: ${proposal.payload?.command || '(none)'}\n\nAuthorize exactly one bounded execution?`,
+      buttons: ['Cancel', 'Authorize once'], defaultId: 0, cancelId: 0, noLink: true
+    });
+    const prepared = prepareGrokHandshake(proposal, {
+      ownerApproved: confirmation.response === 1,
+      dtAuthenticated: true,
+      activeCaptureSessionIds: [...activeCaptureSessions]
+    });
+    if (!prepared.accepted) {
+      const refused = createReceipt(proposal, prepared, { transport: 'github', executed: false, resultValidated: false });
+      const published = publishGrokReceipt(refused);
+      vault.append('grok-peer-handshake-refused', 'dt-hub', { ...refused, published });
+      return { status: 'REFUSED', connectionStatus: 'NOT_CONNECTED', receipt: refused, published };
+    }
+    const execution = runGrokHandshakeCommand(prepared.envelope.payload.command);
+    const result = execution.result;
+    const resultHash = crypto.createHash('sha256').update(JSON.stringify(result)).digest('hex');
+    const resultValidated = result.session_id === 'grok-ceo' && result.exit_code === 0 && String(result.stdout || '').trim() === 'GROK_CEO_PING';
+    const returned = createReceipt(proposal, prepared, {
+      transport: 'github', executed: result.exit_code !== null,
+      officialRequestId: prepared.envelope.requestId, officialRequestHash: prepared.envelope.requestHash,
+      bridgeRequestId: execution.bridgeRequestId, exitCode: result.exit_code,
+      stdout: result.stdout || '', stderr: result.stderr || '', resultHash, resultValidated
+    });
+    const published = publishGrokReceipt(returned);
+    vault.append('grok-peer-handshake-executed', 'dt-hub', {
+      proposalFile: found.fileName, proposalHash: proposal.proposalHash,
+      officialRequestId: prepared.envelope.requestId, officialRequestHash: prepared.envelope.requestHash,
+      captureSessionId, bridgeRequestId: execution.bridgeRequestId, resultHash, resultValidated,
+      receiptHash: returned.receiptHash, published
+    });
+    return { status: resultValidated ? 'RESULT_RETURNED_AWAITING_GROK_ACK' : 'EXECUTION_RESULT_INVALID',
+      connectionStatus: returned.connectionStatus, receipt: returned, published };
   });
   ipcMain.handle('control:queue', (_event, request = {}) => {
     const sessionId=String(request.sessionId||'');

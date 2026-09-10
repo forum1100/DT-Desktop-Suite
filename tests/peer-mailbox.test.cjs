@@ -31,6 +31,20 @@ test('missing captureSessionId is a hard refuse', () => {
   assert.equal(result.connectionStatus, 'NOT_CONNECTED');
 });
 
+test('tampered proposal hash is a hard refuse', () => {
+  const proposal = createGrokProposal({
+    executiveId: 'grok-ceo', provider: 'xai', sessionId: 'grok-ceo',
+    captureSessionId: '11111111-1111-4111-8111-111111111111',
+    capability: 'mailbox.ping'
+  });
+  const tampered = { ...proposal, capability: 'command.propose' };
+  const result = evaluateProposal(tampered, {
+    activeCaptureSessionIds: [proposal.captureSessionId], prismAuthorized: true, dtAuthenticated: true
+  });
+  assert.equal(result.accepted, false);
+  assert.equal(result.reason, 'PROPOSAL_INTEGRITY_FAILURE');
+});
+
 test('inactive captureSessionId is a hard refuse', () => {
   const proposal = createGrokProposal({
     executiveId: 'grok-ceo',

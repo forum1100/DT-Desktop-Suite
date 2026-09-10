@@ -124,6 +124,7 @@ function setCaptureUI(recording, message) {
   document.querySelector('#capture-start').disabled = recording;
   document.querySelector('#capture-stop').disabled = !recording;
   document.querySelector('#capture-task').disabled = recording;
+  document.querySelector('#grok-handshake').disabled = !recording;
 }
 
 async function finalizeCapture(status = 'COMPLETED') {
@@ -137,6 +138,8 @@ async function finalizeCapture(status = 'COMPLETED') {
   } catch (error) {
     setCaptureUI(false, 'CAPTURE FAILURE PRESERVED');
   } finally {
+    document.querySelector('#capture-id').textContent = 'No active capture ID';
+    document.querySelector('#grok-handshake-state').textContent = 'NOT CONNECTED';
     captureStream?.getTracks().forEach(track => track.stop());
     captureRecorder = null; captureStream = null; captureSession = null; queuedControl = null;
     clearInterval(controlCountdown); controlCountdown = null;
@@ -175,6 +178,8 @@ document.querySelector('#capture-start').addEventListener('click', async () => {
       if (captureRecorder?.state === 'recording') captureRecorder.stop();
     });
     captureRecorder.start(1500);
+    document.querySelector('#capture-id').textContent = captureSession.sessionId;
+    document.querySelector('#grok-handshake-state').textContent = 'WAITING FOR GROK PROPOSAL';
     setCaptureUI(true, '● REC · TASK BOUND');
   } catch (error) {
     captureStream?.getTracks().forEach(track => track.stop());
@@ -190,6 +195,21 @@ document.querySelector('#capture-start').addEventListener('click', async () => {
 
 document.querySelector('#capture-stop').addEventListener('click', () => {
   if (captureRecorder?.state === 'recording') captureRecorder.stop();
+});
+
+document.querySelector('#grok-handshake').addEventListener('click', async () => {
+  const state = document.querySelector('#grok-handshake-state');
+  if (!captureSession || captureRecorder?.state !== 'recording') {
+    state.textContent = 'ACTIVE CAPTURE REQUIRED';
+    return;
+  }
+  state.textContent = 'POLLING GROK MAILBOX…';
+  try {
+    const result = await window.dt.processGrokHandshake({ captureSessionId: captureSession.sessionId });
+    state.textContent = result.status || result.connectionStatus || 'NOT CONNECTED';
+  } catch (error) {
+    state.textContent = 'HANDSHAKE ERROR · ' + error.message;
+  }
 });
 
 const testPad=document.querySelector('#cursor-test-pad');

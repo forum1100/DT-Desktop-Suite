@@ -8,6 +8,7 @@ contextBridge.exposeInMainWorld('dt', {
   startCapture: request => ipcRenderer.invoke('capture:start', request),
   appendCapture: (sessionId, chunk) => ipcRenderer.invoke('capture:append', sessionId, chunk),
   stopCapture: (sessionId, status) => ipcRenderer.invoke('capture:stop', sessionId, status),
+  processGrokHandshake: request => ipcRenderer.invoke('peer:grok:handshake', request),
   queueControl: request => ipcRenderer.invoke('control:queue', request),
   executeControl: token => ipcRenderer.invoke('control:execute', token),
   cancelControl: (token, reason) => ipcRenderer.invoke('control:cancel', token, reason),
