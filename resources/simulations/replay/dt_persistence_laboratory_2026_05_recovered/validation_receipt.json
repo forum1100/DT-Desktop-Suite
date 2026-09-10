@@ -1,0 +1,13 @@
+{
+  "status": "SOURCE_FAITHFUL_REPLAY_NUMERICALLY_EQUIVALENT_TO_HISTORICAL_DISPLAY_PRECISION",
+  "source_sha256": "a17548e9ee5444f8d062fa3ea096d83e2e6daf939cd4995d2a97327198961522",
+  "source_hash_match": true,
+  "historical_rows_parsed": 15,
+  "replay_rows": 15,
+  "row_key_sets_match": true,
+  "max_abs_delta_vs_historical_6dp": 4.757115630305009e-07,
+  "historical_status": "success",
+  "replay_returncode": 0,
+  "scientific_status": "TOY_SYNTHETIC_PERSISTENCE_MODEL_NOT_DOMAIN_VALIDATION",
+  "validation_note": "Current pandas formatting differs from historical string rendering, so validation compares the full 15-row numeric table rather than raw repr bytes. All displayed historical values reproduce within six-decimal display precision."
+}

@@ -1,0 +1,20 @@
+{
+  "simulation_id": "dt_persistence_laboratory_2026_05_recovered",
+  "family": "persistence_laboratory",
+  "source_class": "VERBATIM_EXECUTION_CELL_RECOVERED_FROM_CHATGPT_EXPORT",
+  "scientific_status": "TOY_SYNTHETIC_PERSISTENCE_MODEL_NOT_DOMAIN_VALIDATION",
+  "runs": [
+    {
+      "conversation_id": "69fcc4b7-cf9c-83ea-8ff4-45499aecdb98",
+      "title": "13",
+      "source_file": "conversations-004.json",
+      "node_id": "c642dbc9-a8bf-4373-8a53-adb39df771b4",
+      "run_id": "ffeeef00-7dd7-47eb-9e05-8ab30b01a4b2",
+      "historical_status": "success",
+      "code_length": 4074,
+      "code_sha256": "a17548e9ee5444f8d062fa3ea096d83e2e6daf939cd4995d2a97327198961522",
+      "historical_final_expression_output": "(        regime             model  mse_mean   mse_std  corr_mean\n 0   hysteresis       DTRecursive  0.093335  0.011571   0.994939\n 1   hysteresis            Linear  5.978324  0.750262   0.899210\n 2   hysteresis  SigmoidThreshold  0.847983  0.084427   0.983993\n 3         null       DTRecursive  0.063586  0.005078   0.915061\n 4         null            Linear  9.179068  0.974263   0.606803\n 5         null  SigmoidThreshold  0.294090  0.053368   0.842783\n 6    predation       DTRecursive  0.110615  0.012050   0.995483\n 7    predation            Linear  5.399081  0.659748   0.910501\n 8    predation  SigmoidThreshold  1.186368  0.115432   0.976970\n 9   senescence       DTRecursive  0.192808  0.024810   0.996592\n 10  senescence            Linear  4.737144  0.945314   0.830775\n 11  senescence  SigmoidThreshold  2.135164  0.150156   0.988808\n 12   threshold       DTRecursive  0.078158  0.008832   0.991721\n 13   threshold            Linear  6.992970  0.881445   0.866373\n 14   threshold  SigmoidThreshold  0.744848  0.095711   0.977637,\n model       DTRecursive    Linear  SigmoidThreshold\n regime                                             \n hysteresis     0.093335  5.978324          0.847983\n null           0.063586  9.179068          0.294090\n predation      0.110615  5.399081          1.186368\n senescence     0.192808  4.737144          2.135164\n threshold      0.078158  6.992970          0.744848,\n model       DTRecursive    Linear  SigmoidThreshold\n regime                                             \n hysteresis     0.994939  0.899210          0.983993\n null           0.915061  0.606803          0.842783\n predation      0.995483  0.910501          0.976970\n senescence     0.996592  0.830775          0.988808\n threshold      0.991721  0.866373          0.977637)",
+      "historical_exception": null
+    }
+  ]
+}

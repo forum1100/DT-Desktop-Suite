@@ -50,12 +50,18 @@
       "preserves_causal_process": true
     },
     {
-      "simulation_id": "dt_persistence_laboratory_historical",
+      "simulation_id": "dt_persistence_laboratory_2026_05_recovered",
       "family": "persistence_laboratory",
-      "status": "NEEDS_EXACT_SOURCE_RECOVERY",
-      "source_class": "HISTORICAL_CLAIM",
-      "entrypoint": null,
-      "source_locators": []
+      "status": "VERBATIM_EXECUTION_CELL_RECOVERED_REPLAYED_NUMERICALLY_EQUIVALENT",
+      "source_class": "VERBATIM_EXECUTION_CELL_RECOVERED_FROM_CHATGPT_EXPORT",
+      "entrypoint": "packs/dt_persistence_laboratory_2026_05_recovered/replay.py",
+      "source_locators": [
+        "historical_chatgpt_export:2026-05:conversation:69fcc4b7-cf9c-83ea-8ff4-45499aecdb98:node:c642dbc9-a8bf-4373-8a53-adb39df771b4"
+      ],
+      "run_count": 1,
+      "preserves_causal_process": true,
+      "scientific_status": "TOY_SYNTHETIC_PERSISTENCE_MODEL_NOT_DOMAIN_VALIDATION",
+      "validation_residual": "synthetic_target_generator_is_explicitly_DT_favored; independent predictive validation not established"
     },
     {
       "simulation_id": "dt_toy_1d_smoother_2026_05_recovered",
@@ -104,14 +110,15 @@
     {
       "simulation_id": "dt_prism_defense_historical",
       "family": "prism_defense",
-      "status": "EXECUTION_CODE_CANDIDATES_FOUND_FAMILY_BOUNDARY_REQUIRED",
-      "source_class": "HISTORICAL_EXPORT_CANDIDATES",
+      "status": "BROAD_CANDIDATE_SET_FULLY_DISPOSITIONED_EXISTING_FAMILIES",
+      "source_class": "HISTORICAL_EXPORT_CANDIDATES_RECONCILED",
       "entrypoint": null,
       "source_locators": [
         "historical_chatgpt_export:2026-05:11_code_nodes_broad_match"
       ],
       "candidate_code_nodes": 11,
-      "promotion_block": "separate_dedicated_prism_lineage_from_prism_embedded_in_other_simulations"
+      "promotion_block": null,
+      "disposition_report": "PRISM_CANDIDATE_DISPOSITION.md"
     },
     {
       "simulation_id": "dt_agent_foundry_synthetic",
