@@ -77,18 +77,26 @@
     {
       "simulation_id": "dt_recursive_civilization_historical",
       "family": "recursive_civilization",
-      "status": "NEEDS_EXACT_SOURCE_RECOVERY",
-      "source_class": "HISTORICAL_CLAIM",
+      "status": "EXECUTION_CODE_CANDIDATES_FOUND_RECONCILIATION_REQUIRED",
+      "source_class": "HISTORICAL_EXPORT_CANDIDATES",
       "entrypoint": null,
-      "source_locators": []
+      "source_locators": [
+        "historical_chatgpt_export:2026-05:18_code_nodes_broad_match"
+      ],
+      "candidate_code_nodes": 18,
+      "promotion_block": "family_deduplication_parentage_and_execution_role_classification"
     },
     {
       "simulation_id": "dt_prism_defense_historical",
       "family": "prism_defense",
-      "status": "NEEDS_OPERATIONAL_VALIDATION",
-      "source_class": "HISTORICAL_CLAIM",
+      "status": "EXECUTION_CODE_CANDIDATES_FOUND_FAMILY_BOUNDARY_REQUIRED",
+      "source_class": "HISTORICAL_EXPORT_CANDIDATES",
       "entrypoint": null,
-      "source_locators": []
+      "source_locators": [
+        "historical_chatgpt_export:2026-05:11_code_nodes_broad_match"
+      ],
+      "candidate_code_nodes": 11,
+      "promotion_block": "separate_dedicated_prism_lineage_from_prism_embedded_in_other_simulations"
     },
     {
       "simulation_id": "dt_agent_foundry_synthetic",
