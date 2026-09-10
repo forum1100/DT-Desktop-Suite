@@ -225,6 +225,44 @@ function dtCloseout(input) {
   };
 }
 
+function desktopControl(input) {
+  const action=String(input.action||'').trim().toUpperCase();
+  const allowed=['MOVE','LEFT_CLICK','RIGHT_CLICK','SCROLL'];
+  const x=Number(input.x), y=Number(input.y), scrollAmount=Number(input.scrollAmount||0);
+  const missing=[];
+  if(!present(input.authorizedTask)) missing.push('authorizedTask');
+  if(!allowed.includes(action)) missing.push('validAction');
+  if(action!=='SCROLL'&&(!Number.isInteger(x)||!Number.isInteger(y))) missing.push('integerCoordinates');
+  if(action==='SCROLL'&&(!Number.isInteger(scrollAmount)||Math.abs(scrollAmount)>1200)) missing.push('boundedScrollAmount');
+  return { authorizedTask:input.authorizedTask||null, proposedAction:{action,x,y,scrollAmount},
+    state:missing.length?'INCOMPLETE_ACTION':'READY_FOR_VISIBLE_QUEUE',missing,
+    executed:false,activeCaptureRequired:true,singleUseApprovalRequired:true,
+    typingPermitted:false,unattendedMacroPermitted:false };
+}
+
+function agentSupervisor(input) {
+  let snapshot={workers:[]}, parseError=null;
+  try { snapshot=typeof input.workerSnapshot==='string'?JSON.parse(input.workerSnapshot):input.workerSnapshot||snapshot; }
+  catch(error){ parseError=error.message; }
+  const workers=Array.isArray(snapshot.workers)?snapshot.workers:[];
+  const desired=Math.max(1,Math.min(20,Number(input.desiredMaxPerRole)||1));
+  const protectedSet=new Set(list(input.protectedWorkers));
+  const groups={};
+  for(const worker of workers){const role=worker.role||'UNKNOWN';(groups[role]??=[]).push(worker);}
+  const candidates=[];
+  for(const [role,rows] of Object.entries(groups)){
+    const eligible=rows.filter(w=>w.alive&&w.status==='IDLE'&&!protectedSet.has(w.worker_id))
+      .sort((a,b)=>(a.task_count||0)-(b.task_count||0));
+    const excess=Math.max(0,rows.filter(w=>w.alive).length-desired);
+    candidates.push(...eligible.slice(0,excess).map(w=>({workerId:w.worker_id,role,pid:w.pid,
+      reason:'IDLE_DUPLICATE_CANDIDATE',taskCount:w.task_count||0})));
+  }
+  return {observedWorkers:workers.length,desiredMaxPerRole:desired,protectedWorkers:[...protectedSet],
+    constraints:list(input.constraints),parseError,consolidationCandidates:candidates,
+    autoTerminationPermitted:false,historyDeletionPermitted:false,
+    status:parseError?'INVALID_SNAPSHOT':'PLAN_ONLY_EXPLICIT_TERMINATION_REQUIRED'};
+}
+
 function operationsHistorian(input) {
   const runs=list(input.agentRuns), failures=list(input.failures);
   const concurrency=list(input.concurrencyWindows), gaps=list(input.idleGaps);
@@ -270,6 +308,8 @@ const closeoutEngines = {
   'completion-spark': completionSpark,
   'agent-foundry': agentFoundry,
   'dt-closeout': dtCloseout,
+  'desktop-control': desktopControl,
+  'agent-supervisor': agentSupervisor,
   'operations-historian': operationsHistorian,
   'suite-release-manager': suiteReleaseManager
 };

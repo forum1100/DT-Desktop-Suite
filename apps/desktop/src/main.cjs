@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, safeStorage, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, safeStorage, dialog, screen } = require('electron');
 const path = require('node:path');
 const fs = require('node:fs');
 const { execFileSync } = require('node:child_process');
@@ -23,6 +23,8 @@ const { listSimulations, replaySimulation } = require('../../../packages/simulat
 let vault, keys, broker, gateway, recovery;
 const suiteStartedAt = Date.now();
 const activeRuns = new Map();
+const activeCaptureSessions = new Set();
+const pendingControlActions = new Map();
 const ownerProfile = require('../../../packages/auth/src/owner.cjs');
 
 function operationsSnapshot() {
@@ -127,6 +129,7 @@ function registerIPC(registry) {
     };
     fs.writeFileSync(path.join(root, 'manifest.json'), JSON.stringify(manifest, null, 2));
     vault.append('capture-started', 'session-capture-manager', manifest);
+    activeCaptureSessions.add(sessionId);
     return { sessionId, startedAt: manifest.startedAt };
   });
   ipcMain.handle('capture:append', (_event, sessionId, chunk) => {
@@ -154,8 +157,50 @@ function registerIPC(registry) {
     manifest.videoSha256 = fs.existsSync(videoPath)
       ? require('node:crypto').createHash('sha256').update(fs.readFileSync(videoPath)).digest('hex') : null;
     fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
+    activeCaptureSessions.delete(sessionId);
+    for (const [token, action] of pendingControlActions) if (action.sessionId === sessionId) pendingControlActions.delete(token);
     const receipt = vault.append('capture-stopped', 'session-capture-manager', manifest);
     return { manifest, receipt };
+  });
+  ipcMain.handle('control:queue', (_event, request = {}) => {
+    const sessionId=String(request.sessionId||'');
+    if(!activeCaptureSessions.has(sessionId)) throw new Error('Active task capture required');
+    const action=String(request.action||'').toUpperCase();
+    if(!['MOVE','LEFT_CLICK','RIGHT_CLICK','SCROLL'].includes(action)) throw new Error('Unsupported cursor action');
+    const x=Number(request.x), y=Number(request.y), scrollAmount=Number(request.scrollAmount||0);
+    if(!Number.isInteger(x)||!Number.isInteger(y)) throw new Error('Integer screen coordinates required');
+    const inside=screen.getAllDisplays().some(display=>x>=display.bounds.x&&y>=display.bounds.y&&
+      x<display.bounds.x+display.bounds.width&&y<display.bounds.y+display.bounds.height);
+    if(!inside) throw new Error('Coordinates are outside connected displays');
+    if(action==='SCROLL'&&(!Number.isInteger(scrollAmount)||Math.abs(scrollAmount)>1200||scrollAmount===0)) {
+      throw new Error('Scroll must be a nonzero integer from -1200 to 1200');
+    }
+    const token=require('node:crypto').randomUUID();
+    const queued={token,sessionId,action,x,y,scrollAmount,queuedAt:new Date().toISOString(),expiresAt:Date.now()+60000};
+    pendingControlActions.set(token,queued);
+    vault.append('cursor-action-queued','desktop-control',{...queued,token:'REDACTED_SINGLE_USE'});
+    return {...queued,expiresAt:new Date(queued.expiresAt).toISOString()};
+  });
+  ipcMain.handle('control:execute', (_event, token) => {
+    const queued=pendingControlActions.get(String(token||''));
+    if(!queued) throw new Error('Unknown or already-used cursor approval');
+    pendingControlActions.delete(queued.token);
+    if(Date.now()>queued.expiresAt) throw new Error('Cursor approval expired');
+    if(!activeCaptureSessions.has(queued.sessionId)) throw new Error('Task capture ended before execution');
+    const flags=queued.action==='LEFT_CLICK'?[2,4]:queued.action==='RIGHT_CLICK'?[8,16]:[];
+    const operation=queued.action==='MOVE'
+      ? '[Cursor]::SetCursorPos('+queued.x+','+queued.y+') | Out-Null'
+      : queued.action==='SCROLL'
+        ? '[Cursor]::SetCursorPos('+queued.x+','+queued.y+') | Out-Null; [Cursor]::mouse_event(2048,0,0,'+queued.scrollAmount+',0)'
+        : '[Cursor]::SetCursorPos('+queued.x+','+queued.y+') | Out-Null; [Cursor]::mouse_event('+flags[0]+',0,0,0,0); [Cursor]::mouse_event('+flags[1]+',0,0,0,0)';
+    const ps='Add-Type -TypeDefinition @"\nusing System; using System.Runtime.InteropServices; public static class Cursor { [DllImport("user32.dll")] public static extern bool SetCursorPos(int X,int Y); [DllImport("user32.dll")] public static extern void mouse_event(uint f,uint dx,uint dy,int data,UIntPtr extra); }\n"@; '+operation;
+    execFileSync('powershell.exe',['-NoProfile','-NonInteractive','-Command',ps],{windowsHide:true,timeout:5000});
+    const event={sessionId:queued.sessionId,action:queued.action,x:queued.x,y:queued.y,
+      scrollAmount:queued.scrollAmount,executedAt:new Date().toISOString(),result:'EXECUTED_NOT_OUTCOME_VERIFIED'};
+    const eventFile=path.join(dataRoot(),'screen-captures',queued.sessionId,'control-events.jsonl');
+    fs.appendFileSync(eventFile,JSON.stringify(event)+'\n','utf8');
+    const receipt=vault.append('cursor-action-executed','desktop-control',event);
+    return {event,receipt};
   });
   ipcMain.handle('simulations:list', () => listSimulations());
   ipcMain.handle('simulations:replay', (_event, request = {}) => {

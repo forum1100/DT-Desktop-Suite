@@ -50,3 +50,27 @@ test('DT closeout is provider-export independent and requires verbatim reassembl
   assert.equal(out.verbatimReassemblyAssessmentRequired, true);
   assert.equal(out.modelContextAssumedComplete, false);
 });
+
+
+test('desktop control only prepares a bounded visible action', () => {
+  const out = runEngine('desktop-control', {
+    authorizedTask:'test cursor movement', action:'MOVE', x:'100', y:'200', scrollAmount:'0'
+  });
+  assert.equal(out.state, 'READY_FOR_VISIBLE_QUEUE');
+  assert.equal(out.executed, false);
+  assert.equal(out.activeCaptureRequired, true);
+  assert.equal(out.typingPermitted, false);
+});
+
+test('agent supervisor proposes idle duplicates without terminating them', () => {
+  const out = runEngine('agent-supervisor', {
+    workerSnapshot: JSON.stringify({workers:[
+      {worker_id:'a',role:'CLOSEOUT',alive:true,status:'IDLE',task_count:2,pid:1},
+      {worker_id:'b',role:'CLOSEOUT',alive:true,status:'IDLE',task_count:0,pid:2}
+    ]}),
+    desiredMaxPerRole:'1', protectedWorkers:'a', constraints:'preserve history'
+  });
+  assert.equal(out.consolidationCandidates[0].workerId, 'b');
+  assert.equal(out.autoTerminationPermitted, false);
+  assert.equal(out.historyDeletionPermitted, false);
+});

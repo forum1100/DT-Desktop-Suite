@@ -32,6 +32,8 @@ const agents = [
   ['memory', 'Consumer Memory Vault', 'Local append-only records and portable exports', 'operational', '#63e6be'],
   ['telemetry', 'Execution Telemetry', 'Runtime budgets, tool events, and unverifiable counters', 'experimental', '#ff8c42'],
   ['simulation-replay', 'Simulation Replay Lab', 'Registry-backed execution of recovered simulation packs with preserved receipts', 'experimental', '#00d4ff'],
+  ['desktop-control', 'Desktop Control Agent', 'Recorded one-action-at-a-time cursor control with explicit approval', 'experimental', '#ff3cac'],
+  ['agent-supervisor', 'Agent Supervisor', 'Live worker inventory, duplicate detection, and bounded consolidation planning', 'experimental', '#7cff6b'],
   ['operations-historian', 'Agent Operations Historian', 'Append-only runtime history and bounded swarm-efficiency recommendations', 'operational', '#32ff9a'],
   ['suite-release-manager', 'Suite Release Manager', 'Repository, patch, upgrade, test, rollback, and release governance', 'operational', '#4f8cff']
 ].map(([id, name, purpose, status, color]) => ({ id, name, purpose, status, color, ...common }));

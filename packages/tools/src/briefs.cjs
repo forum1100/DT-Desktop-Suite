@@ -167,6 +167,18 @@ const briefs = {
     observed: 'A remembered successful simulation is not the same thing as recovered code, and reconstructed code is not the historical source.',
     input: 'Choose a registered simulation, confirm or override the detected Python runtime, optionally set an output folder, and enter one command argument per line.'
   },
+  'desktop-control': {
+    thesis: 'Computer control is legitimate only when observation, authorization, execution, and verification remain separate and attributable.',
+    equation: 'Permitted action = active capture × bounded action × visible queue × single-use approval × preserved result',
+    observed: 'A cursor can cross an authority boundary faster than a person can reconstruct what an automation intended.',
+    input: 'Describe the authorized task, select one mouse action, provide bounded coordinates or scroll amount, inspect the preview, and explicitly execute it.'
+  },
+  'agent-supervisor': {
+    thesis: 'A swarm improves through measured role coverage and validated yield, not by keeping duplicate workers alive indefinitely.',
+    equation: 'Consolidation candidate = idle duplicate − protected worker − active task − unique capability',
+    observed: 'Many idle agents with the same role can consume resources while contributing no additional completed work.',
+    input: 'Load the live worker snapshot, set the desired maximum per role, name protected workers, and record operating constraints.'
+  },
   'operations-historian': {
     thesis: 'Longer useful operation comes from preserving real runtime history and removing measured bottlenecks, not merely keeping processes alive.',
     equation: 'Effective swarm yield = validated outputs / (wall time + retry cost + coordination cost)',

@@ -7,6 +7,8 @@ contextBridge.exposeInMainWorld('dt', {
   startCapture: request => ipcRenderer.invoke('capture:start', request),
   appendCapture: (sessionId, chunk) => ipcRenderer.invoke('capture:append', sessionId, chunk),
   stopCapture: (sessionId, status) => ipcRenderer.invoke('capture:stop', sessionId, status),
+  queueControl: request => ipcRenderer.invoke('control:queue', request),
+  executeControl: token => ipcRenderer.invoke('control:execute', token),
   listSimulations: () => ipcRenderer.invoke('simulations:list'),
   replaySimulation: request => ipcRenderer.invoke('simulations:replay', request),
   runAgent: (agentId, input) => ipcRenderer.invoke('agent:run', agentId, input),

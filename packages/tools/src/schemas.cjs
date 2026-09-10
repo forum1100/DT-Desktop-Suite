@@ -27,6 +27,8 @@ const schemas = {
   memory: ['recordType', 'sourceClass', 'content'],
   telemetry: ['counterType', 'observedValue', 'scope', 'source', 'unknownFields'],
   'simulation-replay': ['simulationId', 'pythonPath', 'outputRoot', 'extraArgs'],
+  'desktop-control': ['authorizedTask', 'action', 'x', 'y', 'scrollAmount'],
+  'agent-supervisor': ['workerSnapshot', 'desiredMaxPerRole', 'protectedWorkers', 'constraints'],
   'operations-historian': ['observationWindow', 'agentRuns', 'durations', 'usageMeasures', 'failures', 'concurrencyWindows', 'idleGaps', 'constraints'],
   'suite-release-manager': ['repository', 'currentVersion', 'targetVersion', 'changes', 'dependencyUpdates', 'testEvidence', 'securityReview', 'rollbackPoint', 'releaseDestination', 'ownerApproval']
 };

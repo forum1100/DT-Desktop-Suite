@@ -43,6 +43,14 @@ function choose(agent) {
         note: 'Only registered runnable packs can execute. Unresolved historical claims remain visible and blocked.'
       }, null, 2);
     }).catch(error => { result.textContent = JSON.stringify({ error: error.message }, null, 2); });
+  } else if (agent.id === 'agent-supervisor') {
+    window.dt.operationsSnapshot().then(snapshot => {
+      const field=form.querySelector('[name="workerSnapshot"]');
+      if(field) field.value=JSON.stringify(snapshot.coordinator || { workers: [] }, null, 2);
+      const desired=form.querySelector('[name="desiredMaxPerRole"]');
+      if(desired) desired.value='3';
+      result.textContent='Live coordinator snapshot loaded. Run bounded analysis to identify candidates; no worker will be terminated.';
+    }).catch(error => { result.textContent = JSON.stringify({ error: error.message }, null, 2); });
   }
 }
 
@@ -91,6 +99,7 @@ let captureStream = null;
 let captureSession = null;
 let captureChunkQueue = Promise.resolve();
 let captureFinalizing = false;
+let queuedControl = null;
 
 function setCaptureUI(recording, message) {
   document.querySelector('#capture-state').textContent = message || (recording ? '● REC' : 'NOT RECORDING');
@@ -112,7 +121,9 @@ async function finalizeCapture(status = 'COMPLETED') {
     setCaptureUI(false, 'CAPTURE FAILURE PRESERVED');
   } finally {
     captureStream?.getTracks().forEach(track => track.stop());
-    captureRecorder = null; captureStream = null; captureSession = null;
+    captureRecorder = null; captureStream = null; captureSession = null; queuedControl = null;
+    document.querySelector('#control-execute').disabled = true;
+    document.querySelector('#control-state').textContent = 'NO ACTION QUEUED';
     captureChunkQueue = Promise.resolve(); captureFinalizing = false;
   }
 }
@@ -149,6 +160,37 @@ document.querySelector('#capture-start').addEventListener('click', async () => {
 
 document.querySelector('#capture-stop').addEventListener('click', () => {
   if (captureRecorder?.state === 'recording') captureRecorder.stop();
+});
+
+document.querySelector('#control-queue').addEventListener('click', async () => {
+  const preview=document.querySelector('#control-preview');
+  if(!captureSession){preview.textContent='Active authorized screen capture required.';return;}
+  try{
+    queuedControl=await window.dt.queueControl({
+      sessionId:captureSession.sessionId,
+      action:document.querySelector('#control-action').value,
+      x:Number(document.querySelector('#control-x').value),
+      y:Number(document.querySelector('#control-y').value),
+      scrollAmount:Number(document.querySelector('#control-scroll').value||0)
+    });
+    preview.textContent=JSON.stringify({action:queuedControl.action,x:queuedControl.x,y:queuedControl.y,
+      scrollAmount:queuedControl.scrollAmount,expiresAt:queuedControl.expiresAt,
+      warning:'This exact action will execute once. Outcome remains unverified until observed.'},null,2);
+    document.querySelector('#control-state').textContent='AWAITING EXPLICIT EXECUTION';
+    document.querySelector('#control-execute').disabled=false;
+  }catch(error){queuedControl=null;preview.textContent=JSON.stringify({error:error.message},null,2);}
+});
+
+document.querySelector('#control-execute').addEventListener('click', async () => {
+  const preview=document.querySelector('#control-preview');
+  if(!queuedControl)return;
+  document.querySelector('#control-execute').disabled=true;
+  try{
+    const executed=await window.dt.executeControl(queuedControl.token);
+    preview.textContent=JSON.stringify(executed,null,2);
+    document.querySelector('#control-state').textContent='EXECUTED · OUTCOME UNVERIFIED';
+  }catch(error){preview.textContent=JSON.stringify({error:error.message},null,2);}
+  finally{queuedControl=null;}
 });
 
 let operationsMode = 'main';
