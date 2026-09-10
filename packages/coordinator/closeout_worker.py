@@ -2,6 +2,7 @@ from __future__ import annotations
 import argparse, json, time, traceback, os, hashlib
 from pathlib import Path
 from coordinator_core import init_db, heartbeat, claim_task, finish_task, fail_task, append_event
+from prism_guard import PrismRejected, require_task
 
 CHUNK = 8 * 1024 * 1024
 
@@ -76,6 +77,10 @@ HANDLERS = {
     'closeout_manifest': handle_closeout_manifest,
 }
 
+def execute_guarded(task_type, payload):
+    prism = require_task(task_type, payload)
+    return prism, HANDLERS[task_type](payload)
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--id', required=True); ap.add_argument('--once', action='store_true')
@@ -90,8 +95,13 @@ def main():
         heartbeat(c, a.id, 'CLOSEOUT_WORKER', caps, 'WORKING')
         try:
             payload = json.loads(task['payload'])
-            result = HANDLERS[task['task_type']](payload)
+            prism, result = execute_guarded(task['task_type'], payload)
+            append_event(c, a.id, 'PRISM_SECURITY_PASS', task['task_id'], prism)
             finish_task(c, a.id, task['task_id'], result)
+        except PrismRejected as exc:
+            evidence = {'code': 'PRISM_REJECTED', 'reasons': list(exc.reasons)}
+            append_event(c, a.id, 'PRISM_SECURITY_REJECTED', task['task_id'], evidence)
+            fail_task(c, a.id, task['task_id'], json.dumps(evidence, sort_keys=True))
         except Exception:
             fail_task(c, a.id, task['task_id'], traceback.format_exc())
         if a.once: break

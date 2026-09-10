@@ -2,6 +2,7 @@ from __future__ import annotations
 import sqlite3, json, hashlib, time
 from pathlib import Path
 from datetime import datetime, timezone
+from prism_guard import require_archive_record
 
 ROOT = Path(__file__).resolve().parent
 DB = ROOT / 'state' / 'archive_knowledge.db'
@@ -37,8 +38,13 @@ def stable_id(locator: str):
     return hashlib.sha256(locator.encode('utf-8')).hexdigest()
 
 def register_resource(locator, kind='file', bytes_=None, mtime_ns=None, sha256=None,
-                      source_class='UNKNOWN', title=None, labels=None, status='KNOWN'):
-    c=init_db(); rid=stable_id(locator); now=utcnow(); labels=labels or []
+                      source_class='UNKNOWN', title=None, labels=None, status='KNOWN',
+                      allowed_roots=None):
+    labels=labels or []
+    metadata = {'kind': kind, 'source_class': source_class, 'title': title,
+                'labels': labels, 'status': status}
+    require_archive_record(locator, metadata, allowed_roots)
+    c=init_db(); rid=stable_id(locator); now=utcnow()
     c.execute('''INSERT INTO resources(resource_id,locator,kind,bytes,mtime_ns,sha256,source_class,title,labels,first_seen,last_seen,status)
       VALUES(?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(locator) DO UPDATE SET
       kind=excluded.kind,bytes=excluded.bytes,mtime_ns=excluded.mtime_ns,sha256=COALESCE(excluded.sha256,resources.sha256),

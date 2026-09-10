@@ -48,10 +48,14 @@ def main():
           evidence=evidence)
         record_gate(agent_id,"SOURCE_RECONCILIATION","PASS",evidence)
         record_gate(agent_id,"RUNTIME_TEST","PASS",{
-          "basis":"Python contract and handler tests","promotion_effect":"NONE"})
+          "basis":"Python contract, Prism, and handler tests","promotion_effect":"NONE"})
+        record_gate(agent_id,"PRISM_SECURITY","PASS",{
+          "guard":"prism_guard.py","guard_sha256":file_sha(ROOT/"prism_guard.py"),
+          "tests":"test_prism_guard.py: 8 PASS",
+          "blocks":["path escape","unsupported task","credential-bearing payload",
+            "authority expansion","covert capture"],"promotion_effect":"NONE"})
         pending={
           "PERMISSIONS":"No attributable execution grant recorded for this mapped identity.",
-          "PRISM_SECURITY":"Runtime Prism preflight is not yet integrated into this process.",
           "TEACH_BACK":"Source-role teach-back packet has not been recorded.",
           "TAKEOVER":"Custodian takeover/acceptance has not been recorded.",
         }

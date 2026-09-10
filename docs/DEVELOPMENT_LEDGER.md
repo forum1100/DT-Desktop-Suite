@@ -104,3 +104,16 @@ The Adversarial Test Lab was restored as a design-only synthetic security workbe
 - Permissions, Prism-security integration, teach-back, and custodian-takeover gates remain PENDING for all three.
 - No lifecycle promotion, identity merge, authority transfer, or process start occurred.
 - Primary mappings: manager to HCC-001; worker to ATB-001; archive knowledge to HIS-001. Supporting-office relationships remain explicit and non-collapsing.
+
+
+## 2026-09-10 — Runtime Prism gate for provisional closeout processes
+
+- Added a shared fail-closed `prism_guard.py` boundary.
+- Integrated it before Closeout Manager worker launch/task submission, before Closeout Worker handler execution, and before Archive Knowledge resource registration.
+- Allowed closeout operations remain limited to hash, scan, slice, and manifest.
+- Explicit canonical read/write roots are required; path escape is rejected.
+- Credential-bearing fields/values, authority expansion, covert capture, and unsupported task types are rejected without logging credential values.
+- Verification: 8 Python Prism tests passed; 44 existing Node regression tests passed.
+- Qualification result: PRISM_SECURITY PASS for the three mapped implementation candidates.
+- No promotion, authority transfer, custodian takeover, or process activation occurred.
+- Remaining gates: PERMISSIONS, TEACH_BACK, and TAKEOVER.

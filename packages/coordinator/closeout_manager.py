@@ -2,6 +2,7 @@ from __future__ import annotations
 import argparse, json, os, subprocess, sys, uuid
 from pathlib import Path
 from coordinator_core import init_db, submit_task, append_event, utcnow
+from prism_guard import require_task
 
 ROOT = Path(__file__).resolve().parent
 STATE = ROOT / 'state'
@@ -29,6 +30,15 @@ def start_session(args):
     session_dir = SESSIONS / session_id
     session_dir.mkdir(parents=True, exist_ok=True)
     source = Path(args.source).resolve()
+    if not source.exists():
+        raise SystemExit(f'Source does not exist: {source}')
+    policy = {'read_roots': [str(source)], 'write_roots': [str(session_dir)]}
+    scan_payload = {'roots': [str(source)], '_prism': policy}
+    manifest_payload = {
+        'root': str(source), 'output': str(session_dir/'source_manifest.json'),
+        '_prism': policy}
+    require_task('closeout_scan', scan_payload)
+    require_task('closeout_manifest', manifest_payload)
     record = {
         'session_id': session_id,
         'created_at': utcnow(),
@@ -42,9 +52,8 @@ def start_session(args):
     started = launch_workers(args.workers, session_id)
     record['workers'] = started
     (session_dir/'session.json').write_text(json.dumps(record, indent=2), encoding='utf-8')
-    scan_id = submit_task('closeout_scan', {'roots':[str(source)]}, priority=10)
-    manifest_id = submit_task('closeout_manifest', {
-        'root': str(source), 'output': str(session_dir/'source_manifest.json')}, priority=90)
+    scan_id = submit_task('closeout_scan', scan_payload, priority=10)
+    manifest_id = submit_task('closeout_manifest', manifest_payload, priority=90)
     record['task_ids'] = {'scan': scan_id, 'manifest': manifest_id}
     (session_dir/'session.json').write_text(json.dumps(record, indent=2), encoding='utf-8')
     print(json.dumps(record, indent=2))
