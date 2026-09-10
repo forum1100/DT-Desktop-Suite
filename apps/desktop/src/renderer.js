@@ -100,6 +100,8 @@ let captureSession = null;
 let captureChunkQueue = Promise.resolve();
 let captureFinalizing = false;
 let queuedControl = null;
+let expectedTestAction = null;
+let observedTestAction = null;
 
 async function loadCaptureSources() {
   const select=document.querySelector('#capture-source');
@@ -186,6 +188,32 @@ document.querySelector('#capture-stop').addEventListener('click', () => {
   if (captureRecorder?.state === 'recording') captureRecorder.stop();
 });
 
+const testPad=document.querySelector('#cursor-test-pad');
+const scrollPad=document.querySelector('#cursor-scroll-pad');
+testPad.addEventListener('mouseenter',()=>{observedTestAction='MOVE';});
+testPad.addEventListener('click',()=>{observedTestAction='LEFT_CLICK';});
+testPad.addEventListener('contextmenu',event=>{event.preventDefault();observedTestAction='RIGHT_CLICK';});
+scrollPad.addEventListener('scroll',()=>{observedTestAction='SCROLL';});
+
+document.querySelector('#control-prepare-test').addEventListener('click',()=>{
+  const action=document.querySelector('#control-action').value;
+  const target=action==='SCROLL'?scrollPad:testPad;
+  const rect=target.getBoundingClientRect();
+  const chromeTop=Math.max(0,window.outerHeight-window.innerHeight);
+  const x=Math.round(window.screenX+rect.left+rect.width/2);
+  const y=Math.round(window.screenY+chromeTop+rect.top+Math.min(rect.height/2,36));
+  const scrollAmount=action==='SCROLL'?240:0;
+  document.querySelector('#control-x').value=x;
+  document.querySelector('#control-y').value=y;
+  document.querySelector('#control-scroll').value=scrollAmount;
+  document.querySelector('#capture-task').value='DT_CURSOR_TEST action='+action+' X='+x+' Y='+y+' SCROLL='+scrollAmount+
+    '. Operate only on the internal safe test pad. Do not interact with another application or modify user data.';
+  expectedTestAction=action; observedTestAction=null;
+  document.querySelector('#control-preview').textContent=JSON.stringify({
+    test:'INTERNAL_SAFE_PAD',action,x,y,scrollAmount,next:'Start authorized capture, then preview and queue.'
+  },null,2);
+});
+
 document.querySelector('#control-queue').addEventListener('click', async () => {
   const preview=document.querySelector('#control-preview');
   if(!captureSession){preview.textContent='Active authorized screen capture required.';return;}
@@ -215,7 +243,21 @@ document.querySelector('#control-execute').addEventListener('click', async () =>
   try{
     const executed=await window.dt.executeControl(queuedControl.token);
     preview.textContent=JSON.stringify(executed,null,2);
-    document.querySelector('#control-state').textContent='EXECUTED · OUTCOME UNVERIFIED';
+    document.querySelector('#control-state').textContent='EXECUTED · CHECKING TEST PAD';
+    setTimeout(async()=>{
+      const passed=expectedTestAction===observedTestAction;
+      try {
+        const recorded=await window.dt.recordControlTest({sessionId:captureSession?.sessionId,
+          expected:expectedTestAction,observed:observedTestAction});
+        preview.textContent=JSON.stringify({execution:executed.event,test:recorded.result,
+          evidence:'Recorded in control-events.jsonl and the append-only DT vault.'},null,2);
+        document.querySelector('#control-state').textContent=passed?'SAFE TEST PASS · RECORDED':'SAFE TEST NOT OBSERVED · RECORDED';
+      } catch (recordError) {
+        preview.textContent=JSON.stringify({execution:executed.event,expected:expectedTestAction,
+          observed:observedTestAction,status:passed?'PASS':'FAIL_OR_NOT_OBSERVED',recordingError:recordError.message},null,2);
+        document.querySelector('#control-state').textContent='TEST RESULT COULD NOT BE RECORDED';
+      }
+    },700);
   }catch(error){preview.textContent=JSON.stringify({error:error.message},null,2);}
   finally{queuedControl=null;}
 });

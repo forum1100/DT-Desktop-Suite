@@ -10,6 +10,7 @@ contextBridge.exposeInMainWorld('dt', {
   stopCapture: (sessionId, status) => ipcRenderer.invoke('capture:stop', sessionId, status),
   queueControl: request => ipcRenderer.invoke('control:queue', request),
   executeControl: token => ipcRenderer.invoke('control:execute', token),
+  recordControlTest: request => ipcRenderer.invoke('control:test-result', request),
   listSimulations: () => ipcRenderer.invoke('simulations:list'),
   replaySimulation: request => ipcRenderer.invoke('simulations:replay', request),
   runAgent: (agentId, input) => ipcRenderer.invoke('agent:run', agentId, input),

@@ -206,6 +206,19 @@ function registerIPC(registry) {
     const receipt=vault.append('cursor-action-executed','desktop-control',event);
     return {event,receipt};
   });
+  ipcMain.handle('control:test-result', (_event, request = {}) => {
+    const sessionId=String(request.sessionId||'');
+    if(!activeCaptureSessions.has(sessionId)) throw new Error('Active task capture required to record test result');
+    const allowed=['MOVE','LEFT_CLICK','RIGHT_CLICK','SCROLL'];
+    const expected=allowed.includes(String(request.expected||'').toUpperCase())?String(request.expected).toUpperCase():null;
+    const observed=allowed.includes(String(request.observed||'').toUpperCase())?String(request.observed).toUpperCase():null;
+    if(!expected) throw new Error('Valid expected test action required');
+    const result={sessionId,expected,observed,status:expected===observed?'PASS':'FAIL_OR_NOT_OBSERVED',recordedAt:new Date().toISOString()};
+    const eventFile=path.join(dataRoot(),'screen-captures',sessionId,'control-events.jsonl');
+    fs.appendFileSync(eventFile,JSON.stringify({type:'SAFE_TEST_RESULT',...result})+'\n','utf8');
+    const receipt=vault.append('cursor-safe-test-result','desktop-control',result);
+    return {result,receipt};
+  });
   ipcMain.handle('simulations:list', () => listSimulations());
   ipcMain.handle('simulations:replay', (_event, request = {}) => {
     let pythonPath = String(request.pythonPath || '').trim();
