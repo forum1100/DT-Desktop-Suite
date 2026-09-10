@@ -1,0 +1,19 @@
+{
+  "schema": "dt-peer-edge/1.0-template",
+  "executiveId": "grok-ceo",
+  "provider": "xai",
+  "sessionId": "grok-ceo",
+  "captureSessionId": "<ACTIVE_DT_CAPTURE_SESSION_UUID>",
+  "capability": "command.propose",
+  "payload": {
+    "command": "echo GROK_CEO_PING",
+    "workingDirectory": "<DT_APPROVED_WORKING_DIRECTORY>",
+    "intent": "DT peer connection proof only"
+  },
+  "expiresAt": "<ISO_TIMESTAMP_WITHIN_5_MINUTES>",
+  "notes": [
+    "Template only; not an authorization token.",
+    "DT must generate requestId and requestHash.",
+    "Prism and active-capture validation remain mandatory before execution."
+  ]
+}

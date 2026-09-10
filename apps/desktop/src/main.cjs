@@ -405,14 +405,20 @@ function registerIPC(registry) {
     return true;
   });
   ipcMain.handle('provider:ask', async (_event, request) => {
-    const { provider, model, baseUrl, prompt, agentId, input } = request;
+    const { provider, model, baseUrl, prompt, agentId, input, captureSessionId } = request;
     if (!String(prompt || '').trim()) throw new Error('Question required');
+    if (!activeCaptureSessions.has(String(captureSessionId || ''))) {
+      throw new Error('Active user-visible DT task capture is required for connected AI work');
+    }
     const definition = providerDefinition(provider, baseUrl ? { baseUrl } : {});
     const agent = registry.get(agentId);
     const brief = briefs[agentId];
     const system = [
-      'You are connected to the local DT Desktop Suite.',
-      'Preserve sources, contradictions, failed branches, uncertainty, and consumer authority.',
+      'You are connected as an authorized peer intelligence node through the local DT Platform.',
+      'The DT Platform itself is the provider-neutral gateway and authority plane. MCP, APIs, sockets, and provider-specific connectors are edge adapters only.',
+      'Authorized peer AI providers have equal executive standing with one another unless the human owner explicitly assigns a narrower role for a task. Do not silently supersede, demote, terminate, or expand another peer AI node.',
+      'Human owner authority, DT identity/governance, Prism policy, and provenance remain above provider execution.',
+      'Preserve sources, contradictions, failed branches, uncertainty, peer disagreements, and consumer authority.',
       'Do not certify truth or promote experimental work as established science.',
       agent ? 'Active program: ' + agent.name + ' (' + agent.status + ').' : 'No active program selected.',
       brief ? 'Program thesis: ' + brief.thesis + ' Governing relation: ' + brief.equation : '',
@@ -426,7 +432,8 @@ function registerIPC(registry) {
     });
     const safety = preflight({ text: response.text, sources: [], status: 'provider-generated', authority: provider });
     const receipt = vault.append('provider-response', agentId || 'dt-hub', {
-      provider, model, prompt: prompt.trim(), response: response.text, safety
+      provider, model, prompt: prompt.trim(), response: response.text, safety,
+      captureSessionId, executiveStanding: 'PEER', gatewayAuthority: 'DT_PLATFORM'
     });
     return { text: response.text, safety, receipt };
   });

@@ -491,7 +491,8 @@ document.querySelector('#ask-ai').addEventListener('click', async () => {
       baseUrl: document.querySelector('#base-url').value.trim(),
       prompt: document.querySelector('#ai-prompt').value,
       agentId: selected?.id || null,
-      input: currentInput()
+      input: currentInput(),
+      captureSessionId: captureSession.sessionId
     });
     output.textContent = response.text + '\n\nSafety receipt:\n' + JSON.stringify(response.safety, null, 2);
   } catch (error) {
