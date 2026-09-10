@@ -185,6 +185,17 @@ function registerIPC(registry) {
     vault.append('cursor-action-queued','desktop-control',{...queued,token:'REDACTED_SINGLE_USE'});
     return {...queued,expiresAt:new Date(queued.expiresAt).toISOString()};
   });
+  ipcMain.handle('control:cancel', (_event, token, reason = 'USER_ABANDONED') => {
+    const queued=pendingControlActions.get(String(token||''));
+    if(!queued) throw new Error('Unknown or already-resolved cursor approval');
+    pendingControlActions.delete(queued.token);
+    const event={sessionId:queued.sessionId,action:queued.action,x:queued.x,y:queued.y,
+      canceledAt:new Date().toISOString(),result:String(reason||'USER_ABANDONED').slice(0,80)};
+    const eventFile=path.join(dataRoot(),'screen-captures',queued.sessionId,'control-events.jsonl');
+    fs.appendFileSync(eventFile,JSON.stringify({type:'CURSOR_ACTION_NOT_EXECUTED',...event})+'\n','utf8');
+    const receipt=vault.append('cursor-action-canceled','desktop-control',event);
+    return {event,receipt};
+  });
   ipcMain.handle('control:execute', (_event, token) => {
     const queued=pendingControlActions.get(String(token||''));
     if(!queued) throw new Error('Unknown or already-used cursor approval');

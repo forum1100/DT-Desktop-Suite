@@ -10,6 +10,7 @@ contextBridge.exposeInMainWorld('dt', {
   stopCapture: (sessionId, status) => ipcRenderer.invoke('capture:stop', sessionId, status),
   queueControl: request => ipcRenderer.invoke('control:queue', request),
   executeControl: token => ipcRenderer.invoke('control:execute', token),
+  cancelControl: (token, reason) => ipcRenderer.invoke('control:cancel', token, reason),
   recordControlTest: request => ipcRenderer.invoke('control:test-result', request),
   listSimulations: () => ipcRenderer.invoke('simulations:list'),
   replaySimulation: request => ipcRenderer.invoke('simulations:replay', request),

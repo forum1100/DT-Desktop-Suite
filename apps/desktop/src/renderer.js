@@ -102,6 +102,7 @@ let captureFinalizing = false;
 let queuedControl = null;
 let expectedTestAction = null;
 let observedTestAction = null;
+let controlCountdown = null;
 
 async function loadCaptureSources() {
   const select=document.querySelector('#capture-source');
@@ -138,7 +139,10 @@ async function finalizeCapture(status = 'COMPLETED') {
   } finally {
     captureStream?.getTracks().forEach(track => track.stop());
     captureRecorder = null; captureStream = null; captureSession = null; queuedControl = null;
-    document.querySelector('#control-execute').disabled = true;
+    clearInterval(controlCountdown); controlCountdown = null;
+    const executeButton=document.querySelector('#control-execute');
+    executeButton.disabled = true; executeButton.classList.remove('armed'); executeButton.textContent='STEP 6 — EXECUTE ONCE';
+    document.querySelector('#control-abandon').hidden=true;
     document.querySelector('#control-state').textContent = 'NO ACTION QUEUED';
     captureChunkQueue = Promise.resolve(); captureFinalizing = false;
   }
@@ -195,6 +199,28 @@ testPad.addEventListener('click',()=>{observedTestAction='LEFT_CLICK';});
 testPad.addEventListener('contextmenu',event=>{event.preventDefault();observedTestAction='RIGHT_CLICK';});
 scrollPad.addEventListener('scroll',()=>{observedTestAction='SCROLL';});
 
+function disarmControl() {
+  clearInterval(controlCountdown); controlCountdown=null;
+  const executeButton=document.querySelector('#control-execute');
+  executeButton.disabled=true; executeButton.classList.remove('armed');
+  executeButton.textContent='STEP 6 — EXECUTE ONCE';
+  document.querySelector('#control-abandon').hidden=true;
+  document.querySelector('#capture-stop').disabled=!captureSession;
+}
+
+async function abandonQueuedControl(reason='USER_ABANDONED') {
+  if(!queuedControl)return;
+  const preview=document.querySelector('#control-preview');
+  try {
+    const canceled=await window.dt.cancelControl(queuedControl.token,reason);
+    preview.textContent=JSON.stringify({notExecuted:canceled.event,evidence:'Failure branch preserved.'},null,2);
+    document.querySelector('#control-state').textContent='NOT EXECUTED · PRESERVED';
+  } catch(error) { preview.textContent=JSON.stringify({error:error.message},null,2); }
+  finally { queuedControl=null; disarmControl(); }
+}
+
+document.querySelector('#control-abandon').addEventListener('click',()=>abandonQueuedControl());
+
 document.querySelector('#control-prepare-test').addEventListener('click',()=>{
   const action=document.querySelector('#control-action').value;
   const target=action==='SCROLL'?scrollPad:testPad;
@@ -231,15 +257,29 @@ document.querySelector('#control-queue').addEventListener('click', async () => {
     preview.textContent=JSON.stringify({action:queuedControl.action,x:queuedControl.x,y:queuedControl.y,
       scrollAmount:queuedControl.scrollAmount,expiresAt:queuedControl.expiresAt,
       warning:'This exact action will execute once. Outcome remains unverified until observed.'},null,2);
-    document.querySelector('#control-state').textContent='AWAITING EXPLICIT EXECUTION';
-    document.querySelector('#control-execute').disabled=false;
+    const executeButton=document.querySelector('#control-execute');
+    const expiresAt=Date.parse(queuedControl.expiresAt);
+    executeButton.disabled=false; executeButton.classList.add('armed');
+    document.querySelector('#control-abandon').hidden=false;
+    document.querySelector('#capture-stop').disabled=true;
+    const updateCountdown=()=>{
+      const seconds=Math.max(0,Math.ceil((expiresAt-Date.now())/1000));
+      executeButton.textContent='STEP 6 — EXECUTE ONCE · '+seconds+'s';
+      document.querySelector('#control-state').textContent='ACTION QUEUED · EXECUTION REQUIRED · '+seconds+'s';
+      if(seconds===0){clearInterval(controlCountdown);controlCountdown=null;abandonQueuedControl('APPROVAL_EXPIRED_NOT_EXECUTED');}
+    };
+    clearInterval(controlCountdown); updateCountdown(); controlCountdown=setInterval(updateCountdown,250);
+    executeButton.scrollIntoView({behavior:'smooth',block:'center'}); executeButton.focus();
   }catch(error){queuedControl=null;preview.textContent=JSON.stringify({error:error.message},null,2);}
 });
 
 document.querySelector('#control-execute').addEventListener('click', async () => {
   const preview=document.querySelector('#control-preview');
   if(!queuedControl)return;
-  document.querySelector('#control-execute').disabled=true;
+  clearInterval(controlCountdown); controlCountdown=null;
+  const executeButton=document.querySelector('#control-execute');
+  executeButton.disabled=true; executeButton.classList.remove('armed'); executeButton.textContent='EXECUTING ONCE…';
+  document.querySelector('#control-abandon').hidden=true;
   try{
     const executed=await window.dt.executeControl(queuedControl.token);
     preview.textContent=JSON.stringify(executed,null,2);
@@ -259,7 +299,7 @@ document.querySelector('#control-execute').addEventListener('click', async () =>
       }
     },700);
   }catch(error){preview.textContent=JSON.stringify({error:error.message},null,2);}
-  finally{queuedControl=null;}
+  finally{queuedControl=null;disarmControl();}
 });
 
 let operationsMode = 'main';

@@ -41,7 +41,7 @@
       <section id="desktop-control">
         <div class="ai-title"><div><p class="brief-label">GOVERNED DESKTOP CONTROL</p><h2>Queue one recorded cursor action</h2></div><span id="control-state">NO ACTION QUEUED</span></div>
         <div class="control-grid"><select id="control-action"><option value="MOVE">Move cursor</option><option value="LEFT_CLICK">Left click</option><option value="RIGHT_CLICK">Right click</option><option value="SCROLL">Scroll</option></select><input id="control-x" type="number" placeholder="Screen X"><input id="control-y" type="number" placeholder="Screen Y"><input id="control-scroll" type="number" min="-1200" max="1200" placeholder="Scroll ±1200"></div>
-        <div class="provider-row"><button id="control-prepare-test" type="button">Prepare safe test</button><button id="control-queue" type="button">Preview and queue</button><button id="control-execute" type="button" disabled>Execute queued action</button></div>
+        <div class="provider-row"><button id="control-prepare-test" type="button">Prepare safe test</button><button id="control-queue" type="button">Preview and queue</button><button id="control-execute" type="button" disabled>STEP 6 — EXECUTE ONCE</button><button id="control-abandon" type="button" hidden>Preserve as abandoned</button></div>
         <div id="cursor-test-pad" tabindex="0"><span>SAFE CURSOR TARGET</span><div id="cursor-scroll-pad"><i></i><b>SCROLL TEST REGION</b><i></i><i></i></div></div>
         <pre id="control-preview">Choose an action, press Prepare safe test, then start the authorized capture.</pre>
       </section>
