@@ -80,3 +80,11 @@ The Adversarial Test Lab was restored as a design-only synthetic security workbe
 - Added Suite Release Manager for patches, dependencies, tests, security review,
   rollback, release manifests, destination, and explicit owner approval.
 - Runtime measurements are labeled as local observations, not model-token billing.
+
+## 2026-09-10 — Governed Desktop Control activation
+
+- Promoted Desktop Control Agent from experimental to operational only after four end-to-end safe-pad tests passed: MOVE, LEFT_CLICK, RIGHT_CLICK, and SCROLL.
+- Verified the complete chain: visible task-bound capture, bounded queue, single-use approval, native execution, observed outcome, append-only receipts, video SHA-256, vault-chain validation, portable export, and readback verification.
+- Preserved predecessor failures: blank coordinates becoming zero, incomplete queued actions, UIntPtr conversion failure, unobserved click timing, and upward scroll at the top boundary.
+- Operational status does not grant typing, macros, unattended control, covert capture, or perpetual authority. Every action still requires active capture and separate runtime approval.
+- Full-workflow verifier receipt: session 5be574b7-60cb-4ba4-8d52-25df04a2fcaf; bundle hash 92a79830866d1b003330ee700994aabfdb207b35a388feec3cb5546ba35022a2.
