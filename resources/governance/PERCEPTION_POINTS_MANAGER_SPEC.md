@@ -94,3 +94,5 @@ The preserved lineage is:
 `ASSISTANT_NEXT_ACTION_PROPOSAL -> USER_CONTINUATION_ACKNOWLEDGMENT -> EXECUTION/RESULT`.
 
 All three nodes remain distinct source records. The inferred continuation edge is derived metadata, not a rewrite of the user's words. This rule is especially important for simulation histories because run-to-run changes were frequently proposed in the assistant turn and accepted by a very short user reply.
+## Causal-process reconstruction invariant
+The primary historical unit is the causal process, not the isolated turn or endpoint. Reconstruction must preserve the sequence by which observations and proposals produced user authorization, execution, result, correction, and the next state. Short continuation responses inherit actionable context from the preceding assistant proposal while remaining verbatim as user text. Simulation histories must preserve run-to-run causes, parameter/rule changes, failure modes, corrections, and downstream consequences.

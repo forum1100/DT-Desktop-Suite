@@ -1,0 +1,109 @@
+{
+  "schema_version": "1.0",
+  "authority": "DT_CLOSEOUT_BOOTSTRAP",
+  "created_local": "2026-09-09T18:16:00-04:00",
+  "capture_standard": {
+    "minimum": "VERBATIM_REASSEMBLY_EQUIVALENT",
+    "target": "LIVE_CHAT_SUPERSET",
+    "summary_may_substitute_for_source": false,
+    "live_capture_is_active_source": true,
+    "provider_export_required": false,
+    "provider_export_request_forbidden_by_default": true,
+    "trigger_phrase": "DT_CLOSEOUT"
+  },
+  "paths": {
+    "coordinator_root": "C:\\Users\\thoma\\Documents\\TJ_Local_Coordinator",
+    "coordinator_db": "C:\\Users\\thoma\\Documents\\TJ_Local_Coordinator\\state\\coordinator.db",
+    "archive_knowledge_db": "C:\\Users\\thoma\\Documents\\TJ_Local_Coordinator\\state\\archive_knowledge.db",
+    "desktop_suite_repo": "C:\\Users\\thoma\\Documents\\GitHub\\DT-Desktop-Suite",
+    "managed_drive_root": "G:\\My Drive\\TJ\\Ai Folder\\GPTopenAI",
+    "drive_closeout_root": "G:\\My Drive\\TJ\\Ai Folder\\GPTopenAI\\DT_CLOSEOUT",
+    "librarian_launcher": "C:\\Users\\thoma\\Desktop\\DT Works Suite Transfer\\DT Works Suite 0.1.0\\Agent Launchers\\The Librarian.cmd",
+    "reconciliation_gate": "C:\\Users\\thoma\\Documents\\TJ_Local_Coordinator\\FOUNDRY_IMPLEMENTATION_RECONCILIATION_GATE.md",
+    "perception_points_manager_spec": "C:\\Users\\thoma\\Documents\\TJ_Local_Coordinator\\PERCEPTION_POINTS_MANAGER_SPEC.md",
+    "perception_points_manager_schema": "C:\\Users\\thoma\\Documents\\TJ_Local_Coordinator\\PERCEPTION_POINTS_MANAGER_SCHEMA.json",
+    "continuation_inheritance_rule": "C:\\Users\\thoma\\Documents\\TJ_Local_Coordinator\\CONTINUATION_INHERITANCE_RULE.md"
+  },
+  "drive": {
+    "cloud_closeout_folder_id": "1Z_qWI6KNXQ4N2DjPgTQBHydecusBLADP",
+    "replication_mode": "DESKTOP_MOUNTED_DRIVE",
+    "copy_all_session_artifacts": true,
+    "copy_generated_closeout_data": true,
+    "verify_copy_with_sha256": true
+  },
+  "rules": [
+    "COPY_BEFORE_CONSOLIDATING",
+    "PRESERVE_BEFORE_INTERPRETING",
+    "SOURCE_BEFORE_SUMMARY",
+    "ACTUAL_EXECUTION_BEFORE_CLAIMED_EXECUTION",
+    "READBACK_BEFORE_VERIFIED_PERSISTENCE",
+    "NO_SELF_CANONICALIZATION",
+    "PRESERVE_FAILED_SUPERSEDED_AND_DIVERGENT_BRANCHES",
+    "INFORMATION_TRANSFER_DOES_NOT_EQUAL_AUTHORITY_TRANSFER",
+    "NO_PROVIDER_EXPORT_DEPENDENCY",
+    "DT_CLOSEOUT_TRIGGER_STARTS_LOCAL_CAPTURE",
+    "VERBATIM_REASSEMBLY_REQUIRED",
+    "MODEL_CONTEXT_NOT_ASSUMED_COMPLETE",
+    "UNOBSERVED_CHAT_CONTENT_MUST_BE_REPORTED_AS_A_SOURCE_GAP",
+    "SHORT_CONTINUATION_INHERITS_PREVIOUS_ASSISTANT_NEXT_ACTION_CONTEXT",
+    "PRESERVE_ASSISTANT_PROPOSAL_USER_ACKNOWLEDGMENT_EXECUTION_TRIPLET",
+    "CAUSAL_PROCESS_IS_PRIMARY_RECONSTRUCTION_UNIT"
+  ],
+  "governing_sources": [
+    {
+      "title": "DT_CLOSEOUT_MASTER_OPERATING_PACKAGE_v2026-09-09",
+      "drive_id": "1gerZqfSYjmtP3ke5RwnQpthDLd4sVygNC68zSR6mvI4"
+    },
+    {
+      "title": "DT_CLOSEOUT_TOOL_AND_EMPLOYEE_REGISTRY_v2026-09-09",
+      "drive_id": "1bn_gkv4ErUHOgimCrAZeaeTe-edpeEmrBY7SZMy3nlI"
+    },
+    {
+      "title": "DT_CLOSEOUT_CHANGELOG_AND_DISCOVERY_CURSOR_v2026-09-09",
+      "drive_id": "1sQ7uH4kUyZKUfqZsqmxuo334QRWT-e1qljw1iLYbdhs"
+    },
+    {
+      "title": "AGENT_MASTER_FOUNDRY_DORMANT_SPEC_v0.1",
+      "drive_id": "1bB_WHhG87I_vyUh6CmFVykdBh0W3LjnX5CfB7FEZYis"
+    },
+    {
+      "title": "AFM-001_TOP_TIER_AGENT_MAKER_DORMANT_SPEC_v1.0",
+      "drive_id": "1aZdvE1Gndd4z222RpbvlQ-Ks21ueZPwxf62Um0RwJHM"
+    },
+    {
+      "title": "FOUNDRY_BIRTH_BRANCH_INGESTION_AND_DESCENT_CONTRACT_v1.0",
+      "drive_id": "15FQXRUCV28LPdD7g8r5qvzsSGS3JD7p-ANijxFWBiOo"
+    },
+    {
+      "title": "CURRENT_CHAT_MULTI_AGENT_ACTION_TABLE_2026-08-20",
+      "drive_id": "1i2q_y2MqaYOPYmd3Fs2LNHpVr8_hNVVoREODH8Efpos"
+    }
+  ],
+  "implementation_states": [
+    "SPECIFIED_ONLY",
+    "DORMANT_SPEC",
+    "IMPLEMENTATION_CANDIDATE",
+    "IMPLEMENTED_UNVALIDATED",
+    "VALIDATED",
+    "RUNNING",
+    "RETIRED",
+    "SUPERSEDED",
+    "UNKNOWN"
+  ],
+  "required_session_outputs": [
+    "bootstrap_snapshot.json",
+    "session.json",
+    "source_manifest.json",
+    "export_superset_manifest.json",
+    "drive_replication_receipt.json"
+  ],
+  "completion_gate": {
+    "verbatim_reassembly_equivalence_assessed": true,
+    "provider_export_not_required": true,
+    "all_known_gaps_explicit": true,
+    "desktop_drive_replication_verified": true,
+    "source_and_derived_separated": true,
+    "terminal_boundary_recorded": true
+  },
+  "causal_process_invariant": "C:\\Users\\thoma\\Documents\\TJ_Local_Coordinator\\CAUSAL_PROCESS_INVARIANT.md"
+}
