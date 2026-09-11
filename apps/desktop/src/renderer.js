@@ -103,6 +103,9 @@ let queuedControl = null;
 let expectedTestAction = null;
 let observedTestAction = null;
 let controlCountdown = null;
+let grokCommandTimer = null;
+let grokCommandBusy = false;
+let peerChatTimer = null;
 
 async function loadCaptureSources() {
   const select=document.querySelector('#capture-source');
@@ -125,6 +128,8 @@ function setCaptureUI(recording, message) {
   document.querySelector('#capture-stop').disabled = !recording;
   document.querySelector('#capture-task').disabled = recording;
   document.querySelector('#grok-handshake').disabled = !recording;
+  document.querySelector('#grok-command-channel').disabled = !recording;
+  document.querySelector('#peer-chat-poll').disabled = !recording;
 }
 
 async function finalizeCapture(status = 'COMPLETED') {
@@ -143,6 +148,10 @@ async function finalizeCapture(status = 'COMPLETED') {
     captureStream?.getTracks().forEach(track => track.stop());
     captureRecorder = null; captureStream = null; captureSession = null; queuedControl = null;
     clearInterval(controlCountdown); controlCountdown = null;
+    clearInterval(grokCommandTimer); grokCommandTimer = null; grokCommandBusy = false;
+    clearInterval(peerChatTimer); peerChatTimer = null;
+    document.querySelector('#grok-command-channel').textContent='Enable Grok command channel';
+    document.querySelector('#grok-command-state').textContent='COMMAND CHANNEL OFF';
     const executeButton=document.querySelector('#control-execute');
     executeButton.disabled = true; executeButton.classList.remove('armed'); executeButton.textContent='STEP 6 — EXECUTE ONCE';
     document.querySelector('#control-abandon').hidden=true;
@@ -181,6 +190,8 @@ document.querySelector('#capture-start').addEventListener('click', async () => {
     document.querySelector('#capture-id').textContent = captureSession.sessionId;
     document.querySelector('#grok-handshake-state').textContent = 'WAITING FOR GROK PROPOSAL';
     setCaptureUI(true, '● REC · TASK BOUND');
+    document.querySelector('#grok-command-state').textContent = 'COMMAND CHANNEL OFF';
+    refreshPeerConnections().catch(()=>{});
   } catch (error) {
     captureStream?.getTracks().forEach(track => track.stop());
     captureStream = null; captureSession = null; captureRecorder = null;
@@ -211,6 +222,61 @@ document.querySelector('#grok-handshake').addEventListener('click', async () => 
     state.textContent = 'HANDSHAKE ERROR · ' + error.message;
   }
 });
+
+
+async function pollGrokCommandOnce() {
+  const state=document.querySelector('#grok-command-state');
+  if(grokCommandBusy||!captureSession||captureRecorder?.state!=='recording')return;
+  grokCommandBusy=true;
+  try {
+    const result=await window.dt.processGrokCommand({captureSessionId:captureSession.sessionId});
+    state.textContent=result.status||'COMMAND CHANNEL READY';
+  } catch(error) { state.textContent='COMMAND ERROR · '+error.message; }
+  finally { grokCommandBusy=false; }
+}
+
+document.querySelector('#grok-command-channel').addEventListener('click', async () => {
+  const button=document.querySelector('#grok-command-channel');
+  const state=document.querySelector('#grok-command-state');
+  if(!captureSession||captureRecorder?.state!=='recording'){state.textContent='ACTIVE CAPTURE REQUIRED';return;}
+  if(grokCommandTimer){clearInterval(grokCommandTimer);grokCommandTimer=null;button.textContent='Enable Grok command channel';state.textContent='COMMAND CHANNEL OFF';return;}
+  button.textContent='Disable Grok command channel';state.textContent='COMMAND CHANNEL ACTIVE · DT GOVERNED';
+  await pollGrokCommandOnce();
+  grokCommandTimer=setInterval(pollGrokCommandOnce,2500);
+});
+
+function renderPeerChat(messages=[]) {
+  const box=document.querySelector('#peer-chat-transcript');
+  box.value=messages.map(message => [
+    `[${message.createdAt}] ${message.from} → ${message.to}`,
+    message.text,
+    `# ${message.messageHash}`
+  ].join('\n')).join('\n\n');
+  box.scrollTop=box.scrollHeight;
+}
+
+async function refreshPeerConnections() {
+  const section=document.querySelector('#peer-chat');
+  try {
+    const state=await window.dt.listPeerConnections();
+    section.hidden=!state.chatEnabled;
+    document.querySelector('#peer-chat-state').textContent=state.chatEnabled?'PEER CHAT ACTIVE':'WAITING FOR 2 PEERS';
+    document.querySelector('#peer-chat-peers').textContent=(state.peers||[]).map(peer=>peer.executiveId).join(' ↔ ');
+    if(state.chatEnabled){
+      const chat=await window.dt.listPeerChat();renderPeerChat(chat.messages||[]);
+      if(captureSession&&captureRecorder?.state==='recording'&&!peerChatTimer)peerChatTimer=setInterval(pollPeerChatOnce,3000);
+    }
+    if((!state.chatEnabled||!captureSession||captureRecorder?.state!=='recording')&&peerChatTimer){clearInterval(peerChatTimer);peerChatTimer=null;}
+  } catch(error){document.querySelector('#peer-chat-state').textContent='PEER CHAT ERROR · '+error.message;}
+}
+
+async function pollPeerChatOnce() {
+  if(!captureSession||captureRecorder?.state!=='recording'||document.querySelector('#peer-chat').hidden)return;
+  try {const result=await window.dt.pollPeerChat({captureSessionId:captureSession.sessionId});renderPeerChat(result.messages||[]);}
+  catch(error){document.querySelector('#peer-chat-state').textContent='PEER CHAT ERROR · '+error.message;}
+}
+
+document.querySelector('#peer-chat-poll').addEventListener('click',pollPeerChatOnce);
 
 const testPad=document.querySelector('#cursor-test-pad');
 const scrollPad=document.querySelector('#cursor-scroll-pad');
@@ -546,7 +612,8 @@ document.querySelector('#import-vault').addEventListener('click', async () => {
   }
 });
 
-boot().catch(error => { result.textContent = error.stack; });
+boot().then(()=>refreshPeerConnections()).catch(error => { result.textContent = error.stack; });
+setInterval(()=>refreshPeerConnections().catch(()=>{}),5000);
 
 const adminDialog = document.querySelector('#admin-dialog');
 document.querySelector('#admin-open').addEventListener('click', async () => {

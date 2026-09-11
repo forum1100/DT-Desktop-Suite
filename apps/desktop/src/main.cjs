@@ -12,6 +12,9 @@ const { createBundle, verifyBundle } = require('../../../packages/core/src/porta
 const { appendSeal, createSeal } = require('../../../packages/core/src/provenance.cjs');
 const { createReceipt } = require('../../../packages/core/src/peer-mailbox.cjs');
 const { prepareGrokHandshake, proposalWasConsumed } = require('../../../packages/core/src/grok-handshake.cjs');
+const { prepareGrokCommand, prismCommandDecision, commandProposalWasConsumed, createCommandReceipt } = require('../../../packages/core/src/grok-command.cjs');
+const { createPeerMessage, verifyPeerMessage } = require('../../../packages/core/src/peer-chat.cjs');
+const { listPeerExecutives } = require('../../../packages/auth/src/peers.cjs');
 const { RecoveryAuthority } = require('../../../packages/auth/src/recovery.cjs');
 const { ownerBootstrap, isOwner } = require('../../../packages/auth/src/policy.cjs');
 const { agents } = require('../../../packages/tools/src/agents.cjs');
@@ -62,6 +65,40 @@ function operationsSnapshot() {
 
 function dataRoot() {
   return path.join(app.getPath('userData'), 'dt-vault');
+}
+
+function peerConnectionRoot() {
+  return path.join(dataRoot(), 'peer-connections');
+}
+
+function connectedPeers() {
+  const root = peerConnectionRoot();
+  fs.mkdirSync(root, { recursive: true });
+  const known = new Map(listPeerExecutives().map(peer => [peer.id, peer]));
+  const rows = [];
+  for (const file of fs.readdirSync(root).filter(name => name.endsWith('.json'))) {
+    try {
+      const state = JSON.parse(fs.readFileSync(path.join(root, file), 'utf8'));
+      if (state.status !== 'CONNECTED' || !known.has(state.executiveId)) continue;
+      rows.push({ ...known.get(state.executiveId), ...state });
+    } catch {}
+  }
+  return rows;
+}
+
+function persistPeerConnection(executiveId, state = {}) {
+  const peer = listPeerExecutives().find(item => item.id === executiveId);
+  if (!peer) throw new Error('Unknown peer executive');
+  const root = peerConnectionRoot(); fs.mkdirSync(root, { recursive: true });
+  const record = { ...peer, ...state, executiveId: peer.id, gatewayAuthority: 'DT_PLATFORM', updatedAt: new Date().toISOString() };
+  fs.writeFileSync(path.join(root, `${peer.id}.json`), JSON.stringify(record, null, 2));
+  return record;
+}
+
+function commandAllowedRoots() {
+  const roots = [process.env.USERPROFILE || ''].filter(Boolean);
+  const drive = 'G:\My Drive'; if (fs.existsSync(drive)) roots.push(drive);
+  return roots;
 }
 
 function createWindow(agentId = null) {
@@ -136,6 +173,8 @@ function authenticatedGithubLogin() {
 const DT_GITHUB_REPO = 'forum1100/DT-Desktop-Suite';
 const GROK_INBOUND_PATH = 'runtime/peer-mailbox/inbound/grok-ceo';
 const GROK_OUTBOUND_PATH = 'runtime/peer-mailbox/outbound/grok-ceo';
+const PEER_CHAT_INBOUND_PATH = 'runtime/peer-chat/inbound';
+const PEER_CHAT_OUTBOUND_PATH = 'runtime/peer-chat/outbound';
 
 function ghApi(executable, args, options = {}) {
   return execFileSync(executable, ['api', ...args], {
@@ -151,26 +190,33 @@ function readGithubMailboxFile(executable, repoPath) {
   ]);
 }
 
-function findGrokProposalForCapture(captureSessionId) {
+function findGrokProposalsForCapture(captureSessionId, capability = null) {
   const executable = githubCliExecutable();
   if (!executable) throw new Error('GitHub CLI is required for temporary Grok mailbox transport');
   const listing = JSON.parse(ghApi(executable, [`repos/${DT_GITHUB_REPO}/contents/${GROK_INBOUND_PATH}?ref=main`]));
+  const matches = [];
   const candidates = listing.filter(item => item.type === 'file' && item.name.endsWith('.json') && !item.name.startsWith('NEGATIVE_'));
   for (const item of candidates) {
     const proposal = JSON.parse(readGithubMailboxFile(executable, `${GROK_INBOUND_PATH}/${item.name}`));
-    if (proposal.captureSessionId === captureSessionId) return { proposal, fileName: item.name };
+    if (proposal.captureSessionId !== captureSessionId) continue;
+    if (capability && proposal.capability !== capability) continue;
+    matches.push({ proposal, fileName: item.name });
   }
-  return null;
+  return matches.sort((a, b) => String(a.proposal.proposedAt || '').localeCompare(String(b.proposal.proposedAt || '')));
 }
 
-function publishGrokReceipt(receipt) {
+function findGrokProposalForCapture(captureSessionId, capability = null) {
+  return findGrokProposalsForCapture(captureSessionId, capability)[0] || null;
+}
+
+function publishGrokReceipt(receipt, purpose = 'peer') {
   const executable = githubCliExecutable();
   if (!executable) throw new Error('GitHub CLI is required to return the Grok receipt');
   const name = `${receipt.proposalHash}.receipt.json`;
   const body = Buffer.from(JSON.stringify(receipt, null, 2), 'utf8').toString('base64');
   const output = ghApi(executable, [
     '--method', 'PUT', `repos/${DT_GITHUB_REPO}/contents/${GROK_OUTBOUND_PATH}/${name}`,
-    '-f', `message=Return DT Grok handshake receipt ${receipt.proposalHash.slice(0, 12)}`,
+    '-f', `message=Return DT Grok ${purpose} receipt ${receipt.proposalHash.slice(0, 12)}`,
     '-f', `content=${body}`, '-f', 'branch=main'
   ]);
   const parsed = JSON.parse(output);
@@ -196,6 +242,84 @@ function runGrokHandshakeCommand(command) {
   return { bridgeRequestId, result, submitExitCode: proc.status };
 }
 
+function runGrokCommand(command, cwd, timeoutSeconds = 120) {
+  const bridgeRoot = path.join(process.env.USERPROFILE || '', 'Documents', 'TJ_Command_Bridge');
+  const submit = path.join(bridgeRoot, 'submit.py');
+  if (!fs.existsSync(submit)) throw new Error('TJ Command Bridge submit.py was not found');
+  if (!fs.existsSync(cwd)) throw new Error('Requested command working directory does not exist');
+  const timeout = Math.max(1, Math.min(900, Number(timeoutSeconds) || 120));
+  const proc = spawnSync('py', ['-3', submit, '--session', 'grok-ceo', '--cwd', cwd, '--timeout', String(timeout), '--', command], {
+    encoding: 'utf8', windowsHide: true, timeout: (timeout + 15) * 1000, maxBuffer: 1024 * 1024 * 4
+  });
+  const raw = String(proc.stdout || '').trim();
+  const lines = raw.split(/\r?\n/);
+  const bridgeRequestId = lines.shift()?.trim() || null;
+  let result = null;
+  try { result = JSON.parse(lines.join('\n')); } catch {}
+  if (!result) result = { request_id: bridgeRequestId, session_id: 'grok-ceo', exit_code: null,
+    stdout: '', stderr: String(proc.stderr || ''), error: proc.error?.message || `submit.py exited ${proc.status}` };
+  return { bridgeRequestId, result, submitExitCode: proc.status };
+}
+
+function peerChatCliPath() {
+  return path.join(process.env.USERPROFILE || '', 'Documents', 'TJ_Command_Bridge', 'peer_chat.py');
+}
+
+function appendLocalPeerMessage(message) {
+  const cli = peerChatCliPath();
+  if (!fs.existsSync(cli)) throw new Error('DT peer chat CLI was not found');
+  const proc = spawnSync('py', ['-3', cli, 'append', '--json', JSON.stringify(message)], {
+    encoding: 'utf8', windowsHide: true, timeout: 10000, maxBuffer: 1024 * 1024
+  });
+  if (proc.status !== 0) throw new Error(String(proc.stderr || 'Peer chat CLI append failed'));
+  return JSON.parse(String(proc.stdout || '{}'));
+}
+
+function listLocalPeerMessages(limit = 200) {
+  const cli = peerChatCliPath();
+  if (!fs.existsSync(cli)) return [];
+  const proc = spawnSync('py', ['-3', cli, 'list', '--limit', String(Math.max(1, Math.min(1000, limit)))], {
+    encoding: 'utf8', windowsHide: true, timeout: 10000, maxBuffer: 1024 * 1024 * 4
+  });
+  if (proc.status !== 0) return [];
+  try { return JSON.parse(String(proc.stdout || '[]')).filter(verifyPeerMessage); } catch { return []; }
+}
+
+function publishPeerChatMessage(message) {
+  const executable = githubCliExecutable();
+  if (!executable) throw new Error('GitHub CLI is required for temporary peer-chat transport');
+  const repoPath = `${PEER_CHAT_OUTBOUND_PATH}/${message.to}/${message.messageHash}.json`;
+  const body = Buffer.from(JSON.stringify(message, null, 2), 'utf8').toString('base64');
+  const output = ghApi(executable, ['--method', 'PUT', `repos/${DT_GITHUB_REPO}/contents/${repoPath}`,
+    '-f', `message=Route DT peer message ${message.messageHash.slice(0, 12)}`,
+    '-f', `content=${body}`, '-f', 'branch=main']);
+  const parsed = JSON.parse(output);
+  return { commitSha: parsed.commit?.sha || null, path: parsed.content?.path || repoPath };
+}
+
+function pollPeerChatInbound(captureSessionId) {
+  const executable = githubCliExecutable();
+  if (!executable) throw new Error('GitHub CLI is required for temporary peer-chat transport');
+  const connected = connectedPeers();
+  const connectedIds = new Set(connected.map(peer => peer.executiveId));
+  const ingested = new Set(vault.all().filter(row => row.kind === 'peer-message-ingested').map(row => row.data?.messageHash).filter(Boolean));
+  const received = [];
+  for (const peer of connected) {
+    let listing = [];
+    try { listing = JSON.parse(ghApi(executable, [`repos/${DT_GITHUB_REPO}/contents/${PEER_CHAT_INBOUND_PATH}/${peer.executiveId}?ref=main`])); }
+    catch { continue; }
+    for (const item of listing.filter(row => row.type === 'file' && row.name.endsWith('.json'))) {
+      const message = JSON.parse(readGithubMailboxFile(executable, `${PEER_CHAT_INBOUND_PATH}/${peer.executiveId}/${item.name}`));
+      if (!verifyPeerMessage(message) || message.from !== peer.executiveId || !connectedIds.has(message.to)) continue;
+      if (message.captureSessionId !== captureSessionId || ingested.has(message.messageHash)) continue;
+      appendLocalPeerMessage(message); ingested.add(message.messageHash); received.push(message);
+      vault.append('peer-message-ingested', 'dt-peer-chat', { messageHash: message.messageHash,
+        from: message.from, to: message.to, captureSessionId, transport: 'github-temporary-mailbox' });
+    }
+  }
+  return received;
+}
+
 function registerIPC(registry) {
   ipcMain.handle('hub:status', () => ({ ...gateway.status(), port: gateway.port }));
   ipcMain.handle('agents:list', () => registry.list().map(agent => ({
@@ -204,6 +328,32 @@ function registerIPC(registry) {
     brief: briefs[agent.id]
   })));
   ipcMain.handle('operations:snapshot', () => operationsSnapshot());
+  ipcMain.handle('peer:connections', () => {
+    const peers = connectedPeers();
+    return { peers, count: peers.length, chatEnabled: peers.length >= 2, gatewayAuthority: 'DT_PLATFORM' };
+  });
+  ipcMain.handle('peer:chat:list', () => ({ messages: listLocalPeerMessages(300), peers: connectedPeers() }));
+  ipcMain.handle('peer:chat:poll', (_event, request = {}) => {
+    const captureSessionId = String(request.captureSessionId || '');
+    if (!activeCaptureSessions.has(captureSessionId)) throw new Error('Active DT capture is required for peer chat');
+    const peers = connectedPeers();
+    if (peers.length < 2) throw new Error('At least two connected peer executives are required');
+    const received = pollPeerChatInbound(captureSessionId);
+    return { received, messages: listLocalPeerMessages(300), peers };
+  });
+  ipcMain.handle('peer:chat:send', (_event, request = {}) => {
+    const captureSessionId = String(request.captureSessionId || '');
+    if (!activeCaptureSessions.has(captureSessionId)) throw new Error('Active DT capture is required for peer chat');
+    const peers = connectedPeers(); const ids = new Set(peers.map(peer => peer.executiveId));
+    if (peers.length < 2) throw new Error('At least two connected peer executives are required');
+    if (!ids.has(request.from) || !ids.has(request.to)) throw new Error('Both peer-chat participants must be connected');
+    const message = createPeerMessage({ from: request.from, to: request.to, text: request.text, captureSessionId });
+    appendLocalPeerMessage(message);
+    const published = publishPeerChatMessage(message);
+    vault.append('peer-message-sent', 'dt-peer-chat', { messageHash: message.messageHash,
+      from: message.from, to: message.to, captureSessionId, published, executionAuthority: false, mouseAuthority: false });
+    return { message, published };
+  });
   ipcMain.handle('capture:sources', async () => (await desktopCapturer.getSources({
     types: ['screen', 'window'], thumbnailSize: { width: 0, height: 0 }, fetchWindowIcons: false
   })).map(source => ({ id: source.id, name: source.name, displayId: source.display_id || null })));
@@ -260,7 +410,7 @@ function registerIPC(registry) {
     if (!activeCaptureSessions.has(captureSessionId)) throw new Error('Active DT capture is required for Grok handshake');
     const login = authenticatedGithubLogin();
     if (!isOwner(ownerProfile, login)) throw new Error('Verified owner GitHub identity is required');
-    const found = findGrokProposalForCapture(captureSessionId);
+    const found = findGrokProposalForCapture(captureSessionId, 'command.propose');
     if (!found) return { status: 'WAITING_FOR_GROK_PROPOSAL', connectionStatus: 'NOT_CONNECTED', captureSessionId };
     const proposal = found.proposal;
     if (proposalWasConsumed(vault.all(), proposal.proposalHash)) {
@@ -281,7 +431,7 @@ function registerIPC(registry) {
     });
     if (!prepared.accepted) {
       const refused = createReceipt(proposal, prepared, { transport: 'github', executed: false, resultValidated: false });
-      const published = publishGrokReceipt(refused);
+      const published = publishGrokReceipt(refused, 'handshake');
       vault.append('grok-peer-handshake-refused', 'dt-hub', { ...refused, published });
       return { status: 'REFUSED', connectionStatus: 'NOT_CONNECTED', receipt: refused, published };
     }
@@ -303,7 +453,7 @@ function registerIPC(registry) {
       bridgeRequestId: execution.bridgeRequestId, exitCode: result.exit_code,
       stdout: result.stdout || '', stderr: result.stderr || '', resultHash, resultValidated
     });
-    const published = publishGrokReceipt(returned);
+    const published = publishGrokReceipt(returned, 'handshake');
     vault.append('grok-peer-handshake-executed', 'dt-hub', {
       proposalFile: found.fileName, proposalHash: proposal.proposalHash,
       officialRequestId: prepared.envelope.requestId, officialRequestHash: prepared.envelope.requestHash,
@@ -312,6 +462,61 @@ function registerIPC(registry) {
     });
     return { status: resultValidated ? 'RESULT_RETURNED_AWAITING_GROK_ACK' : 'EXECUTION_RESULT_INVALID',
       connectionStatus: returned.connectionStatus, receipt: returned, published };
+  });
+  ipcMain.handle('peer:grok:command', async (_event, request = {}) => {
+    const captureSessionId = String(request.captureSessionId || '');
+    if (!activeCaptureSessions.has(captureSessionId)) throw new Error('Active DT capture is required for Grok commands');
+    if (!connectedPeers().some(peer => peer.executiveId === 'grok-ceo')) throw new Error('grok-ceo is not in CONNECTED state');
+    const login = authenticatedGithubLogin();
+    if (!isOwner(ownerProfile, login)) throw new Error('Verified owner GitHub identity is required');
+    const available = findGrokProposalsForCapture(captureSessionId, 'command.execute')
+      .filter(item => !commandProposalWasConsumed(vault.all(), item.proposal.proposalHash));
+    if (!available.length) return { status: 'WAITING_FOR_GROK_COMMAND', connectionStatus: 'CONNECTED', captureSessionId };
+    const found = available[0], proposal = found.proposal;
+    const policyContext = { allowedRoots: commandAllowedRoots(), defaultCwd: process.env.USERPROFILE || '' };
+    const prism = prismCommandDecision(proposal, policyContext);
+    let ownerApproved = false;
+    if (prism.allowed && prism.approvalRequired) {
+      const confirmation = await dialog.showMessageBox({
+        type: 'warning', title: 'Authorize one Grok command',
+        message: 'DT Prism requires owner approval for this command.',
+        detail: `Command: ${prism.normalized?.command || '(none)'}
+CWD: ${prism.normalized?.cwd || '(none)'}
+Risk: ${prism.risk?.level || 'UNKNOWN'}
+
+Authorize exactly one execution?`,
+        buttons: ['Cancel', 'Authorize once'], defaultId: 0, cancelId: 0, noLink: true
+      });
+      ownerApproved = confirmation.response === 1;
+    }
+    const prepared = prepareGrokCommand(proposal, { ...policyContext, ownerApproved,
+      dtAuthenticated: true, activeCaptureSessionIds: [...activeCaptureSessions] });
+    if (!prepared.accepted) {
+      const refused = createCommandReceipt(proposal, prepared, { ownerApproved, executed: false });
+      const published = publishGrokReceipt(refused, 'command');
+      vault.append('grok-peer-command-refused', 'dt-hub', { proposalFile: found.fileName,
+        proposalHash: proposal.proposalHash, captureSessionId, reason: prepared.reason, receiptHash: refused.receiptHash, published });
+      return { status: 'COMMAND_REFUSED', connectionStatus: 'CONNECTED', receipt: refused, published };
+    }
+    if (commandProposalWasConsumed(vault.all(), proposal.proposalHash)) {
+      return { status: 'REPLAY_BLOCKED_ALREADY_CONSUMED', connectionStatus: 'CONNECTED', proposalHash: proposal.proposalHash };
+    }
+    vault.append('grok-peer-command-consumed', 'dt-hub', { proposalFile: found.fileName,
+      proposalHash: proposal.proposalHash, captureSessionId, consumedAt: new Date().toISOString(), rule: 'SINGLE_USE_COMMAND_PROPOSAL' });
+    const normalized = prepared.envelope.payload;
+    const execution = runGrokCommand(normalized.command, normalized.cwd, normalized.timeoutSeconds);
+    const result = execution.result;
+    const resultHash = crypto.createHash('sha256').update(JSON.stringify(result)).digest('hex');
+    const returned = createCommandReceipt(proposal, prepared, { ownerApproved, executed: result.exit_code !== null,
+      officialRequestId: prepared.envelope.requestId, officialRequestHash: prepared.envelope.requestHash,
+      bridgeRequestId: execution.bridgeRequestId, exitCode: result.exit_code,
+      stdout: result.stdout || '', stderr: result.stderr || '', resultHash });
+    const published = publishGrokReceipt(returned, 'command');
+    vault.append('grok-peer-command-executed', 'dt-hub', { proposalFile: found.fileName,
+      proposalHash: proposal.proposalHash, captureSessionId, bridgeRequestId: execution.bridgeRequestId,
+      officialRequestId: prepared.envelope.requestId, officialRequestHash: prepared.envelope.requestHash,
+      resultHash, exitCode: result.exit_code, receiptHash: returned.receiptHash, published });
+    return { status: 'COMMAND_RESULT_RETURNED', connectionStatus: 'CONNECTED', receipt: returned, published };
   });
   ipcMain.handle('control:queue', (_event, request = {}) => {
     const sessionId=String(request.sessionId||'');

@@ -13,6 +13,8 @@ const TRANSPORT_CLASS = Object.freeze({
 
 const ALLOWED_GROK_CAPABILITIES = Object.freeze([
   'command.propose',
+  'command.execute',
+  'peer.message',
   'mailbox.ping',
   'mailbox.read-receipt'
 ]);
