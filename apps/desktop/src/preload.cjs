@@ -34,5 +34,8 @@ contextBridge.exposeInMainWorld('dt', {
   ownerRecover: ticket => ipcRenderer.invoke('owner:recover', ticket),
   listProviders: () => ipcRenderer.invoke('provider:list'),
   storeProvider: (provider, secret) => ipcRenderer.invoke('provider:store', provider, secret),
-  askProvider: request => ipcRenderer.invoke('provider:ask', request)
+  askProvider: request => ipcRenderer.invoke('provider:ask', request),
+  aiMailboxStatus: () => ipcRenderer.invoke('ai-mailbox:status'),
+  aiMailboxWrite: request => ipcRenderer.invoke('ai-mailbox:write', request),
+  aiMailboxRead: request => ipcRenderer.invoke('ai-mailbox:read', request)
 });

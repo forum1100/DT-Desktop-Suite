@@ -33,6 +33,22 @@
         <textarea id="ai-prompt" rows="3" placeholder="Ask a question. The selected DT program and its current inputs will be included automatically."></textarea>
         <button id="ask-ai" type="button">Ask connected AI</button><pre id="ai-result" hidden></pre>
       </section>
+      <section id="training-bot">
+        <div class="ai-title"><div><p class="brief-label">DT TRAINING BOT</p><h2>Teach the suite a new procedure</h2></div><span id="training-state">LOCAL TRAINING STANDBY</span></div>
+        <label class="training-label">What new direction, discovery, or explanation should DT learn?
+          <textarea id="training-observation" rows="3" placeholder="Describe the procedure or explain how something works…"></textarea>
+        </label>
+        <div class="provider-row"><button id="training-activate" type="button">Activate training prompt</button><button id="training-copy" type="button" disabled>Copy prompt to AI</button><button id="training-save" type="button" disabled>Save lesson locally</button><label class="toggle-label"><input id="training-auto-send" type="checkbox"> Allow automatic AI handoff for this session</label></div>
+        <div class="provider-row"><select id="training-mailbox"><option value="openai">OpenAI mailbox</option><option value="anthropic">Claude mailbox</option><option value="xai">Grok mailbox</option><option value="ollama">Local Ollama mailbox</option><option value="compatible">Compatible AI mailbox</option></select><button id="training-mailbox-write" type="button" disabled>Write prompt to mailbox</button><button id="training-mailbox-poll" type="button">Poll mailbox replies</button><span id="training-mailbox-state">MAILBOX INITIALIZING</span></div>
+        <label class="training-label">Generated prompt — copy this to any connected AI
+          <textarea id="training-prompt" rows="6" readonly placeholder="The DT training prompt will appear here."></textarea>
+        </label>
+        <label class="training-label">Paste the AI’s response here
+          <textarea id="training-reply" rows="6" placeholder="Paste the reply from ChatGPT, Claude, Grok, or another AI…"></textarea>
+        </label>
+        <small id="training-disclosure">Automatic handoff is off. When enabled, only this training prompt is sent to the selected provider; the state and handoff are logged locally.</small>
+        <pre id="training-history" class="training-history">No local lessons recorded yet.</pre>
+      </section>
       <section id="capture-manager">
         <div class="ai-title"><div><p class="brief-label">SESSION CAPTURE MANAGER</p><h2>Task-bound screen evidence</h2></div><span id="capture-state">NOT RECORDING</span></div>
         <div class="provider-row"><input id="capture-task" placeholder="Describe the authorized task being recorded"><select id="capture-source"><option value="">Loading screens and windows…</option></select><button id="capture-refresh" type="button">Refresh sources</button><button id="capture-start" type="button">Start authorized capture</button><button id="capture-stop" type="button" disabled>Stop & preserve</button></div>

@@ -101,6 +101,48 @@ function commandAllowedRoots() {
   return roots;
 }
 
+const AI_MAILBOX_PEERS = Object.freeze(['openai', 'anthropic', 'xai', 'ollama', 'compatible']);
+function driveStreamingRoot() {
+  const configured = process.env.DT_DRIVE_STREAMING_ROOT;
+  const fallback = path.join(process.env.USERPROFILE || '', 'Desktop', 'DT-Suit Memory', 'DT_Works_Vault', 'Drive Streaming');
+  const root = path.resolve(configured || fallback);
+  fs.mkdirSync(root, { recursive: true });
+  return root;
+}
+function aiMailboxRoot(peerId) {
+  const id = String(peerId || '').trim().toLowerCase();
+  if (!AI_MAILBOX_PEERS.includes(id)) throw new Error('Unknown AI mailbox peer');
+  const root = path.join(driveStreamingRoot(), 'ai-mailboxes', id);
+  fs.mkdirSync(path.join(root, 'inbound'), { recursive: true });
+  fs.mkdirSync(path.join(root, 'outbound'), { recursive: true });
+  return root;
+}
+function mailboxFileName(prefix = 'message') {
+  return new Date().toISOString().replace(/[:.]/g, '-') + '-' + prefix + '-' + crypto.randomUUID() + '.json';
+}
+function writeAiMailbox(peerId, direction, payload = {}) {
+  if (!['inbound', 'outbound'].includes(direction)) throw new Error('Mailbox direction must be inbound or outbound');
+  const root = aiMailboxRoot(peerId);
+  const body = { schema: 'dt-local-ai-mailbox/1.0', peerId, direction, createdAt: new Date().toISOString(), payload };
+  body.sha256 = crypto.createHash('sha256').update(JSON.stringify(body)).digest('hex');
+  const target = path.join(root, direction, mailboxFileName('dt'));
+  const temp = target + '.tmp';
+  fs.writeFileSync(temp, JSON.stringify(body, null, 2), 'utf8');
+  fs.renameSync(temp, target);
+  vault.append('ai-mailbox-write', 'dt-training-bot', { peerId, direction, path: target, sha256: body.sha256 });
+  return { ok: true, peerId, direction, path: target, sha256: body.sha256 };
+}
+function readAiMailbox(peerId, direction = 'inbound') {
+  if (!['inbound', 'outbound'].includes(direction)) throw new Error('Mailbox direction must be inbound or outbound');
+  const root = aiMailboxRoot(peerId);
+  const folder = path.join(root, direction);
+  const messages = fs.readdirSync(folder).filter(name => name.endsWith('.json')).sort().map(name => {
+    const file = path.join(folder, name);
+    try { return { file: name, ...JSON.parse(fs.readFileSync(file, 'utf8')) }; } catch { return { file: name, invalid: true }; }
+  });
+  return { root, peerId, direction, messages };
+}
+
 function createWindow(agentId = null) {
   const win = new BrowserWindow({
     width: 1320, height: 860, minWidth: 920, minHeight: 620,
@@ -321,6 +363,25 @@ function pollPeerChatInbound(captureSessionId) {
 }
 
 function registerIPC(registry) {
+  ipcMain.handle('ai-mailbox:status', () => ({
+    root: driveStreamingRoot(),
+    peers: AI_MAILBOX_PEERS.map(peerId => {
+      const root = aiMailboxRoot(peerId);
+      return {
+        peerId,
+        root,
+        inbound: fs.readdirSync(path.join(root, 'inbound')).filter(name => name.endsWith('.json')).length,
+        outbound: fs.readdirSync(path.join(root, 'outbound')).filter(name => name.endsWith('.json')).length
+      };
+    })
+  }));
+  ipcMain.handle('ai-mailbox:write', (_event, request = {}) => {
+    const peerId = String(request.peerId || '').toLowerCase();
+    const direction = request.direction === 'inbound' ? 'inbound' : 'outbound';
+    return writeAiMailbox(peerId, direction, request.payload || {});
+  });
+  ipcMain.handle('ai-mailbox:read', (_event, request = {}) => readAiMailbox(String(request.peerId || '').toLowerCase(), request.direction || 'inbound'));
+
   ipcMain.handle('hub:status', () => ({ ...gateway.status(), port: gateway.port }));
   ipcMain.handle('agents:list', () => registry.list().map(agent => ({
     ...agent,

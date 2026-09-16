@@ -78,6 +78,186 @@ function currentInput() {
   return form ? Object.fromEntries(new FormData(form)) : {};
 }
 
+const trainingStoreKey = 'dt.training.lessons.v1';
+let trainingDraft = null;
+
+async function refreshTrainingMailbox() {
+  try {
+    const status = await window.dt.aiMailboxStatus();
+    const peer = status.peers.find(item => item.peerId === document.querySelector('#training-mailbox').value);
+    document.querySelector('#training-mailbox-state').textContent = peer
+      ? peer.peerId.toUpperCase() + ' MAILBOX · IN ' + peer.inbound + ' · OUT ' + peer.outbound
+      : 'MAILBOX UNAVAILABLE';
+  } catch (error) {
+    document.querySelector('#training-mailbox-state').textContent = 'MAILBOX ERROR';
+  }
+}
+
+function trainingLessons() {
+  try { return JSON.parse(localStorage.getItem(trainingStoreKey) || '[]'); }
+  catch { return []; }
+}
+
+function renderTrainingHistory() {
+  const history = trainingLessons();
+  const output = document.querySelector('#training-history');
+  output.textContent = history.length
+    ? history.slice(-5).reverse().map(item => {
+      const provider = item.provider ? ' · ' + item.provider : '';
+      return '[' + item.createdAt + '] ' + item.status + provider + ' · ' + item.observation.slice(0, 140);
+    }).join('\n')
+    : 'No local lessons recorded yet.';
+}
+
+function trainingPrompt(observation) {
+  const agent = selected?.name || 'DT Desktop Suite';
+  return [
+    'You are a teaching peer assisting the DT Desktop Suite.',
+    'Do not claim validation. Separate observed facts, instructions, assumptions, uncertainties, and proposed tests.',
+    'Preserve failed branches and explain what evidence would falsify or correct the lesson.',
+    'Return a concise procedure, prerequisites, expected result, failure modes, and a verification test.',
+    'Current DT program: ' + agent,
+    '',
+    'New direction or explanation:',
+    observation
+  ].join('\n');
+}
+
+async function activateTrainingPrompt() {
+  const observation = document.querySelector('#training-observation').value.trim();
+  const state = document.querySelector('#training-state');
+  if (!observation) { state.textContent = 'DESCRIBE A NEW DIRECTION FIRST'; return; }
+  trainingDraft = { observation, prompt: trainingPrompt(observation), createdAt: new Date().toISOString() };
+  document.querySelector('#training-prompt').value = trainingDraft.prompt;
+  document.querySelector('#training-copy').disabled = false;
+  document.querySelector('#training-mailbox-write').disabled = false;
+  document.querySelector('#training-save').disabled = true;
+  state.textContent = 'PROMPT READY · LOCAL';
+  const auto = document.querySelector('#training-auto-send').checked;
+  if (auto) {
+    if (!captureSession || captureRecorder?.state !== 'recording') {
+      state.textContent = 'AUTO HANDOFF REQUIRES ACTIVE CAPTURE';
+      return;
+    }
+    state.textContent = 'AUTO HANDOFF IN PROGRESS…';
+    try {
+      const response = await window.dt.askProvider({
+        provider: document.querySelector('#provider').value,
+        model: document.querySelector('#model').value.trim(),
+        baseUrl: document.querySelector('#base-url').value.trim(),
+        prompt: trainingDraft.prompt,
+        agentId: selected?.id || 'training-bot',
+        input: { observation, mode: 'training-bot-auto-handoff' },
+        captureSessionId: captureSession.sessionId
+      });
+      document.querySelector('#training-reply').value = response.text || '';
+      trainingDraft.provider = document.querySelector('#provider').value;
+      trainingDraft.safety = response.safety || null;
+      state.textContent = 'AI RESPONSE RECEIVED · REVIEW BEFORE SAVING';
+      document.querySelector('#training-save').disabled = !response.text;
+    } catch (error) {
+      state.textContent = 'AUTO HANDOFF FAILED · COPY MODE AVAILABLE';
+      document.querySelector('#training-reply').value = JSON.stringify({ error: error.message }, null, 2);
+    }
+  }
+}
+
+document.querySelector('#training-observation').addEventListener('input', event => {
+  if (event.target.value.trim().length > 20) document.querySelector('#training-state').textContent = 'NEW TRAINING CANDIDATE';
+});
+
+document.querySelector('#training-auto-send').addEventListener('change', event => {
+  document.querySelector('#training-state').textContent = event.target.checked ? 'AUTO HANDOFF ON · CAPTURE-BOUND' : 'COPY/PASTE MODE';
+  document.querySelector('#training-disclosure').textContent = event.target.checked
+    ? 'Automatic handoff is on for this session. Only activated training prompts go to the selected provider, under visible capture and local logging.'
+    : 'Automatic handoff is off. Nothing is sent automatically; copy/paste mode remains available.';
+});
+
+document.querySelector('#training-activate').addEventListener('click', () => activateTrainingPrompt().catch(error => {
+  document.querySelector('#training-state').textContent = 'TRAINING ACTIVATION FAILED';
+  document.querySelector('#training-reply').value = error.message;
+}));
+
+document.querySelector('#training-copy').addEventListener('click', async () => {
+  const prompt = document.querySelector('#training-prompt').value;
+  if (!prompt) return;
+  try {
+    await navigator.clipboard.writeText(prompt);
+    document.querySelector('#training-state').textContent = 'PROMPT COPIED · WAITING FOR AI REPLY';
+  } catch {
+    document.querySelector('#training-prompt').select();
+    document.querySelector('#training-state').textContent = 'SELECTED · PRESS CTRL+C';
+  }
+  document.querySelector('#training-save').disabled = !document.querySelector('#training-reply').value.trim();
+});
+
+document.querySelector('#training-reply').addEventListener('input', event => {
+  document.querySelector('#training-save').disabled = !trainingDraft || !event.target.value.trim();
+});
+
+document.querySelector('#training-save').addEventListener('click', () => {
+  if (!trainingDraft) return;
+  const reply = document.querySelector('#training-reply').value.trim();
+  if (!reply) return;
+  const record = {
+    ...trainingDraft,
+    reply,
+    provider: trainingDraft.provider || 'manual-copy-paste',
+    status: 'pending-human-validation',
+    savedAt: new Date().toISOString()
+  };
+  const history = trainingLessons();
+  history.push(record);
+  localStorage.setItem(trainingStoreKey, JSON.stringify(history));
+  document.querySelector('#training-state').textContent = 'LESSON SAVED LOCALLY · PENDING VALIDATION';
+  document.querySelector('#training-save').disabled = true;
+  renderTrainingHistory();
+});
+
+renderTrainingHistory();
+document.querySelector('#training-mailbox').addEventListener('change', refreshTrainingMailbox);
+document.querySelector('#training-mailbox-write').addEventListener('click', async () => {
+  if (!trainingDraft) return;
+  const peerId = document.querySelector('#training-mailbox').value;
+  try {
+    const written = await window.dt.aiMailboxWrite({
+      peerId,
+      direction: 'outbound',
+      payload: {
+        kind: 'training-prompt',
+        prompt: trainingDraft.prompt,
+        observation: trainingDraft.observation,
+        agentId: selected?.id || 'training-bot',
+        replyExpected: true
+      }
+    });
+    trainingDraft.mailbox = written.path;
+    document.querySelector('#training-state').textContent = 'PROMPT WRITTEN TO ' + peerId.toUpperCase() + ' MAILBOX';
+    refreshTrainingMailbox();
+  } catch (error) {
+    document.querySelector('#training-state').textContent = 'MAILBOX WRITE FAILED';
+  }
+});
+document.querySelector('#training-mailbox-poll').addEventListener('click', async () => {
+  const peerId = document.querySelector('#training-mailbox').value;
+  try {
+    const result = await window.dt.aiMailboxRead({ peerId, direction: 'inbound' });
+    const reply = result.messages.filter(item => item.payload?.kind === 'training-reply').at(-1);
+    if (reply) {
+      document.querySelector('#training-reply').value = reply.payload.reply || '';
+      if (trainingDraft) trainingDraft.provider = peerId;
+      document.querySelector('#training-save').disabled = !document.querySelector('#training-reply').value.trim();
+      document.querySelector('#training-state').textContent = 'MAILBOX REPLY RECEIVED · REVIEW BEFORE SAVING';
+    } else {
+      document.querySelector('#training-state').textContent = 'NO TRAINING REPLY YET';
+    }
+    refreshTrainingMailbox();
+  } catch (error) {
+    document.querySelector('#training-state').textContent = 'MAILBOX POLL FAILED';
+  }
+});
+refreshTrainingMailbox().catch(() => {});
+
 async function refreshInbox(agent = selected) {
   const button = document.querySelector('#process-inbox');
   if (!agent || agent.id === 'librarian') {
