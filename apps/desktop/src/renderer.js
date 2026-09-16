@@ -123,6 +123,15 @@ function trainingPrompt(observation) {
   ].join('\n');
 }
 
+function classifyTrainingProviderFailure(error) {
+  const message = String(error?.message || error);
+  if (/\\b401\\b/.test(message)) return 'AUTHENTICATION FAILED · RECONNECT PROVIDER · NO AUTOMATIC RETRY';
+  if (/\\b403\\b/.test(message)) return 'AUTHORIZATION DENIED · CHECK PROVIDER SCOPE';
+  if (/\\b429\\b/.test(message)) return 'RATE LIMITED · BOUNDED RETRY REQUIRED';
+  if (/\\b5\\d{2}\\b/.test(message)) return 'PROVIDER UNAVAILABLE · FAILURE PRESERVED';
+  return 'AUTO HANDOFF FAILED · COPY MODE AVAILABLE';
+}
+
 async function activateTrainingPrompt() {
   const observation = document.querySelector('#training-observation').value.trim();
   const state = document.querySelector('#training-state');
@@ -156,8 +165,12 @@ async function activateTrainingPrompt() {
       state.textContent = 'AI RESPONSE RECEIVED · REVIEW BEFORE SAVING';
       document.querySelector('#training-save').disabled = !response.text;
     } catch (error) {
-      state.textContent = 'AUTO HANDOFF FAILED · COPY MODE AVAILABLE';
-      document.querySelector('#training-reply').value = JSON.stringify({ error: error.message }, null, 2);
+      state.textContent = classifyTrainingProviderFailure(error);
+      document.querySelector('#training-reply').value = JSON.stringify({
+        error: error.message,
+        classification: state.textContent,
+        nextStep: /401/.test(String(error?.message || error)) ? 'Reconnect the selected provider and run a harmless status test before retrying.' : 'Preserve the failure and use copy mode if appropriate.'
+      }, null, 2);
     }
   }
 }
