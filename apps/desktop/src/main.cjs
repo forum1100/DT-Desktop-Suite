@@ -21,13 +21,14 @@ const { agents } = require('../../../packages/tools/src/agents.cjs');
 const { schemas } = require('../../../packages/tools/src/schemas.cjs');
 const { briefs } = require('../../../packages/tools/src/briefs.cjs');
 const { runAgent } = require('../../../packages/tools/src/runner.cjs');
+const { EmbeddedSupervisor } = require('../../../packages/tools/src/supervisor.cjs');
 const { routeTask, executeWorkflow } = require('../../../packages/tools/src/workflow.cjs');
 const { inboxFor, processInbox } = require('../../../packages/tools/src/inbox.cjs');
 const { preflight } = require('../../../packages/safety/src/preflight.cjs');
 const { PROVIDERS, providerDefinition, requestAI } = require('../../../packages/providers/src/index.cjs');
 const { listSimulations, replaySimulation } = require('../../../packages/simulations/src/replay.cjs');
 
-let vault, keys, broker, gateway, recovery;
+let vault, keys, broker, gateway, recovery, supervisor;
 const suiteStartedAt = Date.now();
 const activeRuns = new Map();
 const activeCaptureSessions = new Set();
@@ -688,16 +689,26 @@ Authorize exactly one execution?`,
         inputBytes:Buffer.byteLength(JSON.stringify(input || {})),
         outputBytes:Buffer.byteLength(JSON.stringify(output || {})) };
       const receipt = vault.append('agent-run', agentId, { ...output, runtimeMetric:metric });
+      supervisor?.recordAgentRun(agentId, receipt, metric, true);
       return { output, receipt, runtimeMetric:metric };
     } catch (error) {
-      vault.append('agent-run', agentId, { error:error.message, runtimeMetric:{
-        durationMs:Date.now()-startedMs, success:false,
-        inputBytes:Buffer.byteLength(JSON.stringify(input || {})), outputBytes:0 }});
+      const metric = { durationMs:Date.now()-startedMs, success:false,
+        inputBytes:Buffer.byteLength(JSON.stringify(input || {})), outputBytes:0 };
+      const receipt = vault.append('agent-run', agentId, { error:error.message, runtimeMetric:metric });
+      supervisor?.recordAgentRun(agentId, receipt, metric, false, error.message);
       throw error;
     } finally { activeRuns.delete(runId); }
   });
-  ipcMain.handle('workflow:route', (_event, request) => routeTask(request, broker, vault));
-  ipcMain.handle('workflow:execute', (_event, request) => executeWorkflow(request, broker, vault));
+  ipcMain.handle('workflow:route', (_event, request) => {
+    const result = routeTask(request, broker, vault);
+    supervisor?.recordWorkflow('route', result);
+    return result;
+  });
+  ipcMain.handle('workflow:execute', async (_event, request) => {
+    const result = await executeWorkflow(request, broker, vault);
+    supervisor?.recordWorkflow('execute', result);
+    return result;
+  });
   ipcMain.handle('agent:inbox', (_event, agentId) => inboxFor(agentId, vault));
   ipcMain.handle('agent:process-inbox', (_event, agentId) => processInbox(agentId, vault, broker));
   ipcMain.handle('vault:list', () => vault.all());
@@ -847,11 +858,15 @@ app.whenReady().then(() => {
   broker = new Broker(vault, registry);
   gateway = createGateway({ keys, vault, broker, agents: registry });
   gateway.start();
+  supervisor = new EmbeddedSupervisor({ app, vault, agents });
+  supervisor.start();
   registerIPC(registry);
   const flag = process.argv.find(arg => arg.startsWith('--agent='));
   createWindow(flag ? flag.slice(8) : null);
   app.on('activate', () => { if (!BrowserWindow.getAllWindows().length) createWindow(); });
 });
+
+app.on('before-quit', () => supervisor?.stop());
 
 app.on('window-all-closed', () => {
   gateway?.stop();
