@@ -16,9 +16,10 @@
     </div>
     <div class="admin-stack">
       <div class="status" id="hub-status"><i></i> CHECKING HUB <b>127.0.0.1:11740</b></div>
-      <button id="admin-open" type="button">Owner access</button>
+      <button id="suite-closeout" type="button">Closeout</button><button id="admin-open" type="button">Owner access</button>
     </div>
   </header>
+  <div id="shell-tabs"><button id="shell-agent-tab" class="active" type="button">DT Programs</button><button id="shell-terminal-tab" type="button">Command shells</button><div id="process-tabs"></div><span id="adapter-summary">ADAPTER STATUS LOADING</span></div>
   <main>
     <aside>
       <h2>Agent Programs</h2>
@@ -26,6 +27,14 @@
       <section class="vault-controls"><h2>Consumer Memory</h2><button id="export-vault" type="button">Export verified vault</button><button id="import-vault" type="button">Import without overwrite</button><small id="vault-state">History remains local until you export it.</small></section>
     </aside>
     <section id="workspace">
+      <div id="agent-shell">
+      <section id="dt-prompt-console">
+        <div class="ai-title"><div><p class="brief-label">DT LOCAL INTELLIGENCE</p><h2>Ask DT</h2></div><span id="dt-runtime-state">LOCAL RUNTIME CHECKING</span></div>
+        <textarea id="dt-prompt" rows="4" placeholder="Ask DT to inspect, diagnose, run a learned skill, use a tool, or work with the local system…"></textarea>
+        <div class="provider-row"><button id="dt-prompt-run" type="button">Run locally</button><label class="toggle-label"><input id="dt-owner-approve" type="checkbox"> Owner approval for this run when a learned step requires it</label></div>
+        <pre id="dt-prompt-result">DT routes locally first. Remote AI is not required.</pre>
+        <small id="dt-capability-summary">Discovering shared tools and storage…</small>
+      </section>
       <section id="ai-console">
         <div class="ai-title"><div><p class="brief-label">DT NEUTRAL AI GATEWAY</p><h2>Connect peer intelligence through DT</h2></div><span id="provider-state">LOCAL ANALYSIS AVAILABLE</span></div>
         <div class="provider-row"><select id="provider"></select><input id="model" placeholder="Model name"><input id="base-url" placeholder="Custom base URL (compatible only)"></div>
@@ -38,7 +47,7 @@
         <label class="training-label">What new direction, discovery, or explanation should DT learn?
           <textarea id="training-observation" rows="3" placeholder="Describe the procedure or explain how something works…"></textarea>
         </label>
-        <div class="provider-row"><button id="training-activate" type="button">Activate training prompt</button><button id="training-copy" type="button" disabled>Copy prompt to AI</button><button id="training-save" type="button" disabled>Save lesson locally</button><label class="toggle-label"><input id="training-auto-send" type="checkbox"> Allow automatic AI handoff for this session</label></div>
+        <div class="provider-row"><button id="training-activate" type="button">Activate training prompt</button><button id="training-save-local" type="button">Save as local procedure</button><button id="training-copy" type="button" disabled>Copy prompt to AI</button><button id="training-save" type="button" disabled>Save AI-assisted lesson</button><label class="toggle-label"><input id="training-auto-send" type="checkbox"> Allow automatic AI handoff for this session</label></div>
         <div class="provider-row"><select id="training-mailbox"><option value="openai">OpenAI mailbox</option><option value="anthropic">Claude mailbox</option><option value="xai">Grok mailbox</option><option value="ollama">Local Ollama mailbox</option><option value="compatible">Compatible AI mailbox</option></select><button id="training-mailbox-write" type="button" disabled>Write prompt to mailbox</button><button id="training-mailbox-poll" type="button">Poll mailbox replies</button><span id="training-mailbox-state">MAILBOX INITIALIZING</span></div>
         <label class="training-label">Generated prompt — copy this to any connected AI
           <textarea id="training-prompt" rows="6" readonly placeholder="The DT training prompt will appear here."></textarea>
@@ -90,8 +99,35 @@
         <div class="agent-actions"><button id="run" type="button">Run bounded analysis</button><button id="replay-simulation" type="button" hidden>Replay registered simulation</button><button id="route-workflow" type="button" hidden>Route only</button><button id="execute-workflow" type="button" hidden>Run coordinated workflow</button><button id="process-inbox" type="button" hidden>Process signed inbox <span id="inbox-count"></span></button></div>
         <pre id="result">Awaiting input.</pre>
       </div>
+      </div>
+      <section id="terminal-workspace" hidden>
+        <div class="ai-title"><div><p class="brief-label">DT MANAGED COMMAND RUNTIME</p><h2>Hidden child shells · visible as tabs here</h2></div><span id="terminal-state">NO SHELL SELECTED</span></div>
+        <div class="provider-row"><input id="terminal-name" placeholder="Session name"><input id="terminal-owner" value="DT Platform" placeholder="Owner/workstream"><input id="terminal-cwd" value="C:\Users\thoma\Documents\GitHub" placeholder="Working directory"><button id="terminal-create" type="button">+ New shell tab</button></div>
+        <div id="terminal-tabs"></div>
+        <div id="terminal-empty"><h3>No command shell selected</h3><p>DT-owned PowerShell, Node, Python, and command jobs run without separate windows. Create or select a tab to view stdout/stderr and issue commands.</p></div>
+        <div id="terminal-panel" hidden><div class="terminal-head"><div><b id="terminal-title"></b><small id="terminal-meta"></small></div><button id="terminal-close" type="button">Close shell</button></div><pre id="terminal-output"></pre><div class="provider-row"><textarea id="terminal-input" rows="2" placeholder="Enter command for this DT-managed shell"></textarea><button id="terminal-send" type="button">Execute</button></div></div>
+        <small>Single DT shell · subprocess windows hidden · stdout/stderr retained in the command audit · AI not required</small>
+      </section>
     </section>
   </main>
+
+  <dialog id="user-auth-dialog" class="release-dialog">
+    <p class="eyebrow">LOCAL USER PROFILE</p><h2 id="auth-title">Sign in to DT</h2>
+    <p id="auth-note">Your password stays on this Windows device as an OS-encrypted verifier.</p>
+    <label>Username<input id="auth-username" autocomplete="username"></label>
+    <label id="auth-password-label">Password<input id="auth-password" type="password" autocomplete="current-password"></label>
+    <label id="auth-new-password-label" hidden>New password<input id="auth-new-password" type="password" autocomplete="new-password"></label>
+    <label id="auth-recovery-label" hidden>Recovery code<input id="auth-recovery"></label>
+    <pre id="auth-output">Checking local profile…</pre>
+    <div class="dialog-actions"><button id="auth-primary" type="button">Continue</button><button id="auth-recover-open" type="button">Use recovery code</button></div>
+    <div id="auth-post-register" hidden><p><strong>Save this recovery code now. It is shown once.</strong></p><code id="auth-recovery-code"></code><p>How should this computer handle future launches?</p><div class="dialog-actions"><button id="auth-every-launch" type="button">Require sign-in every launch</button><button id="auth-trust-device" type="button">Keep me signed in on this device</button></div></div>
+  </dialog>
+  <dialog id="closeout-dialog" class="release-dialog">
+    <p class="eyebrow">DT CLOSEOUT</p><h2>What should happen to this session?</h2>
+    <p>Export creates a verified recovery package before shutdown. Discard skips the session export, but DT's append-only audit/provenance record is not rewritten.</p>
+    <div class="dialog-actions"><button id="closeout-export" type="button">Export current session & close</button><button id="closeout-discard" class="danger" type="button">Discard session export & close</button><button id="closeout-cancel" type="button">Cancel</button></div>
+    <pre id="closeout-output">Choose export or discard.</pre>
+  </dialog>
   <dialog id="admin-dialog">
     <button id="admin-close" aria-label="Close">×</button>
     <p class="eyebrow">AUTHORITY PLANE</p><h2>Owner administration</h2>

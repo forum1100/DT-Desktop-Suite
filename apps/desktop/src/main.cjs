@@ -1,22 +1,36 @@
-const { app, BrowserWindow, ipcMain, safeStorage, dialog, screen, session, desktopCapturer } = require('electron');
+const { app, BrowserWindow, ipcMain, safeStorage, dialog, screen, session, desktopCapturer, Tray, Menu } = require('electron');
 const path = require('node:path');
 const fs = require('node:fs');
 const crypto = require('node:crypto');
+const os = require('node:os');
 const { execFileSync, spawnSync } = require('node:child_process');
 const { Vault } = require('../../../packages/core/src/vault.cjs');
 const { AgentRegistry } = require('../../../packages/core/src/registry.cjs');
 const { Broker } = require('../../../packages/core/src/broker.cjs');
 const { KeyAuthority } = require('../../../packages/core/src/keys.cjs');
 const { createGateway } = require('../../../packages/core/src/gateway.cjs');
+const { AdapterStatusRegistry, summarizeAdapterState } = require('../../../packages/core/src/adapter-status.cjs');
+const { TerminalRuntime } = require('../../../packages/core/src/terminal-runtime.cjs');
+const { CapabilityBus } = require('../../../packages/core/src/capability-bus.cjs');
+const { registerCoreCapabilities } = require('../../../packages/core/src/core-capabilities.cjs');
+const { LearnedSkillRegistry, compileTeacherReply, executeSkill, teacherPrompt } = require('../../../packages/core/src/learned-skills.cjs');
+const { DTLocalIntelligence } = require('../../../packages/core/src/local-intelligence.cjs');
+const { PromptRuntime } = require('../../../packages/core/src/prompt-runtime.cjs');
+const { runHeadlessCommand } = require('../../../packages/core/src/headless-command.cjs');
+const { ExperienceLedger } = require('../../../packages/core/src/experience-ledger.cjs');
+const { ResidentRuntime } = require('../../../packages/core/src/resident-runtime.cjs');
+const { DTBootstrap } = require('../../../packages/core/src/bootstrap.cjs');
+const { createLocalProcedure } = require('../../../packages/core/src/training.cjs');
 const { createBundle, verifyBundle } = require('../../../packages/core/src/portable.cjs');
 const { appendSeal, createSeal } = require('../../../packages/core/src/provenance.cjs');
 const { createReceipt } = require('../../../packages/core/src/peer-mailbox.cjs');
 const { prepareGrokHandshake, proposalWasConsumed } = require('../../../packages/core/src/grok-handshake.cjs');
-const { prepareGrokCommand, prismCommandDecision, commandProposalWasConsumed, createCommandReceipt } = require('../../../packages/core/src/grok-command.cjs');
+const { prepareGrokCommand, prismCommandDecision, commandProposalWasConsumed, createCommandReceipt, commandRisk } = require('../../../packages/core/src/grok-command.cjs');
 const { createPeerMessage, verifyPeerMessage } = require('../../../packages/core/src/peer-chat.cjs');
 const { manifest: grokRemoteCliManifest, activationState: grokRemoteCliActivationState } = require('../../../packages/plugins/grok-remote-cli/index.cjs');
 const { listPeerExecutives } = require('../../../packages/auth/src/peers.cjs');
 const { RecoveryAuthority } = require('../../../packages/auth/src/recovery.cjs');
+const { createLocalUser, verifyPassword, verifyRecovery } = require('../../../packages/auth/src/local-user.cjs');
 const { ownerBootstrap, isOwner } = require('../../../packages/auth/src/policy.cjs');
 const { agents } = require('../../../packages/tools/src/agents.cjs');
 const { schemas } = require('../../../packages/tools/src/schemas.cjs');
@@ -29,9 +43,32 @@ const { preflight } = require('../../../packages/safety/src/preflight.cjs');
 const { PROVIDERS, providerDefinition, buildRequest, requestAI } = require('../../../packages/providers/src/index.cjs');
 const { listSimulations, replaySimulation } = require('../../../packages/simulations/src/replay.cjs');
 
-if (process.argv.includes('--grok-provider-ping')) app.setPath('userData', path.join(process.env.APPDATA, 'dt-desktop-suite'));
+const utilityMode = process.argv.includes('--grok-provider-ping');
+if (utilityMode) app.setPath('userData', path.join(process.env.APPDATA, 'dt-desktop-suite'));
 
-let vault, keys, broker, gateway, recovery, supervisor;
+let mainWindow = null;
+let pendingAgentSelection = (process.argv.find(arg => arg.startsWith('--agent=')) || '').slice(8) || null;
+let pendingShellView = (process.argv.find(arg => arg.startsWith('--view=')) || '').slice(7) || null;
+if (!utilityMode) {
+  const lock = app.requestSingleInstanceLock();
+  if (!lock) app.quit();
+  else app.on('second-instance', (_event, argv) => {
+    const flag = argv.find(arg => arg.startsWith('--agent='));
+    const viewFlag = argv.find(arg => arg.startsWith('--view='));
+    const agentId = flag ? flag.slice(8) : null;
+    const view = viewFlag ? viewFlag.slice(7) : null;
+    if (!mainWindow || mainWindow.isDestroyed()) { createWindow(agentId, view); return; }
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    mainWindow.show(); mainWindow.focus();
+    if (agentId) mainWindow.webContents.send('shell:select-agent', agentId);
+    if (view) mainWindow.webContents.send('shell:set-view', view);
+  });
+}
+
+let vault, keys, broker, gateway, recovery, supervisor, adapters, terminals, capabilityBus, skillRegistry, localIntelligence, promptRuntime, experience, residentRuntime, bootstrapState, tray;
+let isQuitting = false;
+let localUserAuthenticated = false;
+let cleanCloseout = false;
 const suiteStartedAt = Date.now();
 const activeRuns = new Map();
 const activeCaptureSessions = new Set();
@@ -69,6 +106,32 @@ function operationsSnapshot() {
 
 function dataRoot() {
   return path.join(app.getPath('userData'), 'dt-vault');
+}
+
+function localUserFile(){ return path.join(dataRoot(),'credentials','local-user.bin'); }
+function loadLocalUser(){
+  const file=localUserFile(); if(!fs.existsSync(file)) return null;
+  if(!safeStorage.isEncryptionAvailable()) throw new Error('OS encryption unavailable for local user profile');
+  return JSON.parse(safeStorage.decryptString(fs.readFileSync(file)));
+}
+function saveLocalUser(record){
+  if(!safeStorage.isEncryptionAvailable()) throw new Error('OS encryption unavailable for local user profile');
+  const file=localUserFile(); fs.mkdirSync(path.dirname(file),{recursive:true});
+  fs.writeFileSync(file,safeStorage.encryptString(JSON.stringify(record))); return record;
+}
+function localUserStatus(){
+  const record=loadLocalUser(); const trusted=record?.signInMode==='TRUST_THIS_DEVICE';
+  return {exists:!!record,username:record?.username||null,signInMode:record?.signInMode||'EVERY_LAUNCH',authenticated:!!record&&(localUserAuthenticated||trusted)};
+}
+function automaticRecoveryExport(reason){
+  if(!vault) return null;
+  const entries=vault.all(); const bundle=createBundle(entries,{application:'DT Desktop Suite',reason,automatic:true});
+  const stamp=new Date().toISOString().replace(/[:.]/g,'-');
+  const dir=path.join(process.env.USERPROFILE,'Documents','DT Exports','auto-recovery-'+stamp); fs.mkdirSync(dir,{recursive:true});
+  const file=path.join(dir,'DT-Consumer-Vault.json'); fs.writeFileSync(file,JSON.stringify(bundle,null,2),'utf8');
+  const verified=verifyBundle(JSON.parse(fs.readFileSync(file,'utf8')));
+  fs.writeFileSync(path.join(dir,'recovery-manifest.json'),JSON.stringify({reason,createdAt:new Date().toISOString(),recordCount:entries.length,bundleHash:bundle.bundleHash,verification:verified},null,2),'utf8');
+  return {path:file,recordCount:entries.length,bundleHash:bundle.bundleHash,verification:verified};
 }
 
 function peerConnectionRoot() {
@@ -147,9 +210,106 @@ function readAiMailbox(peerId, direction = 'inbound') {
   return { root, peerId, direction, messages };
 }
 
-function createWindow(agentId = null) {
-  const win = new BrowserWindow({
-    width: 1320, height: 860, minWidth: 920, minHeight: 620,
+
+function seedRecoveredAdapterEvidence() {
+  if (!adapters) return;
+  const roots = [process.env.DT_GROK_SYNC_ROOT, 'C:\\DT\\GoogleDrive\\My Drive\\GROK_DT_SYNC'].filter(Boolean);
+  for (const root of roots) {
+    if (!fs.existsSync(root)) continue;
+    const ping = path.join(root, '20260917T_CORRECTED__GROK_SYNC__COFFEEMAKER_PROVIDER_PING__RECEIPT.md');
+    if (fs.existsSync(ping)) {
+      const text = fs.readFileSync(ping, 'utf8');
+      adapters.record('xai-provider', {
+        adapter: 'xai', implementationComplete: true,
+        status: /Status:\s*PONG_RECEIVED/i.test(text) ? 'PONG_RECEIVED' : 'PROOF_PRESENT_UNVERIFIED',
+        httpStatus: Number((/HTTP status:\s*(\d+)/i.exec(text) || [])[1] || 0) || null,
+        outcomeVerified: /Status:\s*PONG_RECEIVED/i.test(text), evidencePath: ping
+      });
+    }
+    const cli = path.join(root, '20260917T140918EDT__GROK_SYNC__REMOTE_CLI_PROOF__RESULT.json');
+    if (fs.existsSync(cli)) {
+      try {
+        const proof = JSON.parse(fs.readFileSync(cli, 'utf8'));
+        adapters.record('grok-remote-cli', {
+          adapter: 'grok-remote-cli', implementationComplete: true,
+          outcomeVerified: proof.outcomeVerified === true, providerHttpStatus: proof.providerHttpStatus,
+          proofHash: proof.proofHash || null, resultHash: proof.resultHash || null,
+          standingLease: false, evidencePath: cli
+        });
+      } catch {}
+    }
+  }
+}
+
+
+
+function localSkillRuntime(ownerApproved = false) {
+  return {
+    ownerApproved,
+    runAgent: async (agentId, input) => {
+      const started = Date.now();
+      try {
+        const output = runAgent(agentId, input || {});
+        const receipt = vault.append('agent-run', agentId, {
+          ...output, invokedBy: 'dt-local-skill',
+          runtimeMetric: { durationMs: Date.now()-started, success: true, inputBytes: 0, outputBytes: 0 }
+        });
+        experience?.append('agent-run', { agentId, input, success: true, receiptId: receipt.id });
+        return { output, receipt };
+      } catch (error) {
+        experience?.append('agent-run', { agentId, input, success: false, error: String(error.message || error) });
+        residentRuntime?.submitIncident({ source: 'agent.run', agentId, error: String(error.stack || error) });
+        throw error;
+      }
+    },
+    executeWorkflow: async request => executeWorkflow(request, broker, vault),
+    callTool: async (toolId, input) => capabilityBus.call(toolId, input || {}, { ownerApproved }),
+    runCommand: async (step, input) => {
+      const result = runHeadlessCommand(step, input || {}, {
+        ownerApproved,
+        defaultCwd: bootstrapState?.environment?.home || process.env.USERPROFILE,
+        allowedRoots: [bootstrapState?.environment?.home,
+          ...(bootstrapState?.environment?.googleDrive || []).map(item => item.root)].filter(Boolean)
+      });
+      experience?.append('headless-command', {
+        command: result.command, cwd: result.cwd, exitCode: result.exitCode,
+        stdout: result.stdout, stderr: result.stderr, success: result.exitCode === 0
+      }, { invokedBy: 'dt-local-skill' });
+      if (result.exitCode !== 0 || result.error) residentRuntime?.submitIncident({
+        source: 'learned-skill-command', command: result.command, cwd: result.cwd,
+        exitCode: result.exitCode, stdout: result.stdout, stderr: result.stderr, error: result.error
+      });
+      return result;
+    }
+  };
+}
+
+
+function createTray() {
+  if (tray) return tray;
+  const icon = path.join(__dirname, '..', 'assets', 'icons', 'suite.ico');
+  tray = new Tray(icon);
+  tray.setToolTip('DT Desktop Suite — resident runtime active');
+  tray.setContextMenu(Menu.buildFromTemplate([
+    { label: 'Open DT', click: () => createWindow() },
+    { label: 'Command shells', click: () => createWindow(null, 'terminals') },
+    { type: 'separator' },
+    { label: 'Quit DT Platform', click: () => { isQuitting = true; app.quit(); } }
+  ]));
+  tray.on('double-click', () => createWindow());
+  return tray;
+}
+
+function createWindow(agentId = null, view = null) {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    if (agentId) mainWindow.webContents.send('shell:select-agent', agentId);
+    if (view) mainWindow.webContents.send('shell:set-view', view);
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    mainWindow.show(); mainWindow.focus();
+    return mainWindow;
+  }
+  mainWindow = new BrowserWindow({
+    width: 1440, height: 900, minWidth: 980, minHeight: 640,
     backgroundColor: '#070914',
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
@@ -158,7 +318,15 @@ function createWindow(agentId = null) {
       sandbox: true
     }
   });
-  win.loadFile(path.join(__dirname, 'index.html'), { query: agentId ? { agent: agentId } : {} });
+  const query = {}; if (agentId) query.agent = agentId; if (view) query.view = view;
+  mainWindow.loadFile(path.join(__dirname, 'index.html'), { query });
+  mainWindow.on('close', event => {
+    if (isQuitting) return;
+    event.preventDefault();
+    mainWindow.hide();
+  });
+  mainWindow.on('closed', () => { mainWindow = null; });
+  return mainWindow;
 }
 
 function credentialFile(provider) {
@@ -385,6 +553,128 @@ function registerIPC(registry) {
     return writeAiMailbox(peerId, direction, request.payload || {});
   });
   ipcMain.handle('ai-mailbox:read', (_event, request = {}) => readAiMailbox(String(request.peerId || '').toLowerCase(), request.direction || 'inbound'));
+
+  ipcMain.handle('training:save-local', (_event, request = {}) => {
+    const procedure = createLocalProcedure(request.observation, {
+      agentId: request.agentId || null, title: request.title || null
+    });
+    const root = path.join(dataRoot(), 'training', 'procedures');
+    fs.mkdirSync(root, { recursive: true });
+    const target = path.join(root, procedure.id + '.json');
+    const temp = target + '.tmp';
+    fs.writeFileSync(temp, JSON.stringify(procedure, null, 2), 'utf8');
+    fs.renameSync(temp, target);
+    const receipt = vault.append('local-procedure-learned', 'dt-training-bot', {
+      procedureId: procedure.id, agentId: procedure.context.agentId, requiresAI: false,
+      executionMode: procedure.executionMode, path: target
+    });
+    return { procedure, receipt, path: target };
+  });
+
+  ipcMain.handle('bootstrap:status', () => bootstrapState);
+  ipcMain.handle('capabilities:list', () => capabilityBus.list());
+  ipcMain.handle('runtime:status', async () => ({
+    resident: residentRuntime?.status() || { running: false },
+    localModel: await localIntelligence.status(),
+    bootstrap: bootstrapState,
+    learnedSkills: skillRegistry.list().map(skill => ({
+      id: skill.id, name: skill.name, state: skill.state,
+      requiresAIAtRuntime: skill.requiresAIAtRuntime, skillHash: skill.skillHash
+    }))
+  }));
+  ipcMain.handle('prompt:run', async (_event, request = {}) => {
+    const prompt = String(request.prompt || '').trim();
+    experience.append('user-prompt', { prompt, input: request.input || {} }, { surface: 'dt-prompt' });
+    try {
+      const result = await promptRuntime.handle({
+        prompt, input: request.input || {},
+        runtime: localSkillRuntime(request.ownerApproved === true)
+      });
+      experience.append('prompt-result', { prompt, result }, { surface: 'dt-prompt' });
+      return result;
+    } catch (error) {
+      const failure = { source: 'prompt.run', prompt, error: String(error.stack || error) };
+      experience.append('prompt-failure', failure, { surface: 'dt-prompt' });
+      residentRuntime?.submitIncident(failure);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('training:teacher-prompt', (_event, request = {}) => ({
+    prompt: teacherPrompt(request.observation, {
+      knownAgents: registry.list().map(agent => agent.id),
+      knownTools: capabilityBus.list().map(tool => tool.id)
+    }),
+    knownAgents: registry.list().map(agent => agent.id),
+    knownTools: capabilityBus.list().map(tool => tool.id),
+    target: 'LOCAL_EXECUTABLE_SKILL', requiresAIAtRuntime: false
+  }));
+  ipcMain.handle('training:compile-teacher-reply', (_event, request = {}) => {
+    const skill = compileTeacherReply(request.reply, {
+      teacher: request.teacher || 'external-ai',
+      knownAgents: registry.list().map(agent => agent.id),
+      knownTools: capabilityBus.list().map(tool => tool.id)
+    });
+    skillRegistry.save(skill);
+    experience.append('teacher-skill-candidate', {
+      teacher: request.teacher || 'external-ai', skillId: skill.id,
+      skillHash: skill.skillHash, name: skill.name, requiresAIAtRuntime: false
+    });
+    vault.append('learned-skill-candidate', 'dt-training-bot', {
+      skillId: skill.id, skillHash: skill.skillHash, teacher: skill.teacher,
+      requiresAIAtRuntime: false
+    });
+    return skill;
+  });
+  ipcMain.handle('training:list-skills', () => skillRegistry.list());
+  ipcMain.handle('training:validate-skill', (_event, request = {}) => {
+    const skill = skillRegistry.load(request.skillId);
+    if (!skill) throw new Error('Unknown learned skill');
+    const unknownTools = skill.steps.filter(step => step.type === 'tool.call' && !capabilityBus.has(step.toolId));
+    const unknownAgents = skill.steps.filter(step => step.type === 'agent.run' && !registry.get(step.agentId));
+    const blockedCommands = skill.steps.filter(step => step.type === 'command.run' && commandRisk(step.command).level === 'BLOCKED');
+    const passed = unknownTools.length === 0 && unknownAgents.length === 0 && blockedCommands.length === 0;
+    const validation = {
+      passed, validator: 'DT_LOCAL_STATIC_VALIDATOR',
+      evidence: { unknownTools: unknownTools.length, unknownAgents: unknownAgents.length,
+        blockedCommands: blockedCommands.length, runtimeExecutionTested: false },
+      status: passed ? 'STRUCTURE_VALIDATED_RUNTIME_TEST_PENDING' : 'FAILED'
+    };
+    vault.append('learned-skill-validation', 'dt-training-bot', { skillId: skill.id, ...validation });
+    return validation;
+  });
+  ipcMain.handle('training:promote-skill', (_event, request = {}) => {
+    if (request.runtimeTestPassed !== true) throw new Error('Runtime test must pass before promotion');
+    const promoted = skillRegistry.promote(request.skillId, {
+      passed: true, validator: 'DT_LOCAL_RUNTIME_VALIDATOR', evidence: request.evidence || null
+    });
+    vault.append('learned-skill-promoted', 'dt-training-bot', {
+      skillId: promoted.id, skillHash: promoted.skillHash, requiresAIAtRuntime: false
+    });
+    return promoted;
+  });
+  ipcMain.handle('adapter:status', () => {
+    const providerProof = adapters.load('xai-provider');
+    const cliProof = adapters.load('grok-remote-cli');
+    const peerConnected = connectedPeers().some(peer => peer.executiveId === 'grok-ceo');
+    const state = summarizeAdapterState({
+      credentialStored: fs.existsSync(credentialFile('xai')), providerProof, cliProof,
+      peerConnected, standingLease: false
+    });
+    return {
+      xaiProvider: { ...state, proof: providerProof },
+      grokRemoteCli: { ...state, proof: cliProof, plugin: grokRemoteCliManifest },
+      activation: grokRemoteCliActivationState({
+        peerConnected, activeCapture: activeCaptureSessions.size > 0,
+        ownerVerified: isOwner(ownerProfile, authenticatedGithubLogin()),
+        bridgeAvailable: fs.existsSync(path.join(process.env.USERPROFILE || '', 'Documents', 'TJ_Command_Bridge', 'submit.py'))
+      })
+    };
+  });
+  ipcMain.handle('terminal:list', () => terminals.list());
+  ipcMain.handle('terminal:create', (_event, input) => terminals.create(input || {}));
+  ipcMain.handle('terminal:send', (_event, id, command) => terminals.send(id, command));
+  ipcMain.handle('terminal:close', (_event, id) => terminals.close(id));
 
   ipcMain.handle('hub:status', () => ({ ...gateway.status(), port: gateway.port }));
   ipcMain.handle('agents:list', () => registry.list().map(agent => ({
@@ -703,27 +993,61 @@ Authorize exactly one execution?`,
         outputBytes:Buffer.byteLength(JSON.stringify(output || {})) };
       const receipt = vault.append('agent-run', agentId, { ...output, runtimeMetric:metric });
       supervisor?.recordAgentRun(agentId, receipt, metric, true);
+      experience?.append('agent-run', { agentId, input, output, metric, receiptId: receipt.id }, { surface: 'agent-ui' });
       return { output, receipt, runtimeMetric:metric };
     } catch (error) {
       const metric = { durationMs:Date.now()-startedMs, success:false,
         inputBytes:Buffer.byteLength(JSON.stringify(input || {})), outputBytes:0 };
       const receipt = vault.append('agent-run', agentId, { error:error.message, runtimeMetric:metric });
       supervisor?.recordAgentRun(agentId, receipt, metric, false, error.message);
+      const failure = { source:'agent.run', agentId, input, metric, error:String(error.stack || error) };
+      experience?.append('agent-failure', failure, { surface: 'agent-ui' });
+      residentRuntime?.submitIncident(failure);
       throw error;
     } finally { activeRuns.delete(runId); }
   });
   ipcMain.handle('workflow:route', (_event, request) => {
     const result = routeTask(request, broker, vault);
     supervisor?.recordWorkflow('route', result);
+    experience?.append('workflow-route', { request, result }, { surface: 'agent-ui' });
     return result;
   });
   ipcMain.handle('workflow:execute', async (_event, request) => {
     const result = await executeWorkflow(request, broker, vault);
     supervisor?.recordWorkflow('execute', result);
+    experience?.append('workflow-execute', { request, result }, { surface: 'agent-ui' });
     return result;
   });
   ipcMain.handle('agent:inbox', (_event, agentId) => inboxFor(agentId, vault));
   ipcMain.handle('agent:process-inbox', (_event, agentId) => processInbox(agentId, vault, broker));
+  ipcMain.handle('auth:status', () => localUserStatus());
+  ipcMain.handle('auth:register', (_event, request={}) => {
+    if(loadLocalUser()) throw new Error('A local user already exists on this device');
+    const created=createLocalUser(request); saveLocalUser(created.record); localUserAuthenticated=true;
+    vault.append('local-user-created','dt-auth',{username:created.record.username,signInMode:created.record.signInMode});
+    return {status:localUserStatus(),recoveryCode:created.recoveryCode};
+  });
+  ipcMain.handle('auth:login', (_event, request={}) => {
+    const record=loadLocalUser(); if(!record||record.username!==String(request.username||'').trim()||!verifyPassword(record,request.password)) throw new Error('Username or password not accepted');
+    localUserAuthenticated=true; vault.append('local-user-login','dt-auth',{username:record.username}); return localUserStatus();
+  });
+  ipcMain.handle('auth:set-mode', (_event, mode) => {
+    const record=loadLocalUser(); if(!record||!localUserAuthenticated) throw new Error('Sign in first');
+    if(!['EVERY_LAUNCH','TRUST_THIS_DEVICE'].includes(mode)) throw new Error('Invalid sign-in mode');
+    record.signInMode=mode; record.updatedAt=new Date().toISOString(); saveLocalUser(record); return localUserStatus();
+  });
+  ipcMain.handle('auth:recover', (_event, request={}) => {
+    const record=loadLocalUser(); if(!record||record.username!==String(request.username||'').trim()||!verifyRecovery(record,request.recoveryCode)) throw new Error('Recovery code not accepted');
+    const replacement=createLocalUser({username:record.username,password:request.newPassword,signInMode:'EVERY_LAUNCH'}); replacement.record.id=record.id; replacement.record.createdAt=record.createdAt; saveLocalUser(replacement.record); localUserAuthenticated=true;
+    vault.append('local-user-recovered','dt-auth',{username:record.username}); return {status:localUserStatus(),recoveryCode:replacement.recoveryCode};
+  });
+  ipcMain.handle('session:closeout', (_event, decision) => {
+    if(!localUserStatus().authenticated) throw new Error('Sign in required');
+    let exported=null; if(decision==='export') exported=automaticRecoveryExport('USER_CLOSEOUT_EXPORT');
+    else if(decision==='discard') vault.append('session-closeout-discard','dt-desktop',{scope:'ephemeral-session-only',persistentAuditPreserved:true});
+    else throw new Error('Closeout decision must be export or discard');
+    cleanCloseout=true; setTimeout(()=>app.quit(),80); return {decision,exported};
+  });
   ipcMain.handle('vault:list', () => vault.all());
   ipcMain.handle('vault:export', async () => {
     const bundle = createBundle(vault.all(), { application: 'DT Desktop Suite' });
@@ -803,13 +1127,17 @@ Authorize exactly one execution?`,
     vault.append('owner-recovered', 'dt-hub', { githubLogin: login, adminKeyId: restored.id });
     return { verified: true, adminKey: restored, shownOnce: true };
   });
-  ipcMain.handle('provider:list', () => Object.entries(PROVIDERS).map(([id, item]) => ({
-    id,
-    label: item.label,
-    keyRequired: item.keyRequired,
-    hasCredential: fs.existsSync(credentialFile(id)),
-    connected: !item.keyRequired || fs.existsSync(credentialFile(id))
-  })));
+  ipcMain.handle('provider:list', () => Object.entries(PROVIDERS).map(([id, item]) => {
+    const hasCredential = fs.existsSync(credentialFile(id));
+    const proof = id === 'xai' ? adapters.load('xai-provider') : null;
+    const verifiedReachable = proof?.outcomeVerified === true || proof?.status === 'PONG_RECEIVED';
+    return {
+      id, label: item.label, keyRequired: item.keyRequired, hasCredential,
+      implementationComplete: true,
+      connectivity: id === 'xai' ? (verifiedReachable ? 'VERIFIED_REACHABLE' : 'UNVERIFIED') : (!item.keyRequired ? 'LOCAL_READY' : 'UNVERIFIED'),
+      connected: id === 'xai' ? verifiedReachable : (!item.keyRequired || hasCredential)
+    };
+  }));
   ipcMain.handle('provider:store', (_event, provider, secret) => {
     if (!PROVIDERS[provider]) throw new Error('Unsupported provider');
     if (!safeStorage.isEncryptionAvailable()) throw new Error('OS encryption unavailable');
@@ -868,12 +1196,30 @@ app.whenReady().then(async () => {
   vault = new Vault(root);
   keys = new KeyAuthority(path.join(root, 'authority'));
   recovery = new RecoveryAuthority(path.join(root, 'authority'), keys, ownerProfile.githubLogin);
+  adapters = new AdapterStatusRegistry(root);
+  seedRecoveredAdapterEvidence();
+  bootstrapState = new DTBootstrap(root).run();
+  experience = new ExperienceLedger(root);
+  residentRuntime = new ResidentRuntime({ root, vault, experience, maxWorkers: 3 });
+  if (!utilityMode) residentRuntime.start();
+  capabilityBus = new CapabilityBus({ vault });
+  registerCoreCapabilities(capabilityBus, {
+    environment: bootstrapState.environment, runHeadlessCommand, experience, residentRuntime,
+    extraRoots: ['C:\DT'].filter(value => fs.existsSync(value))
+  });
+  skillRegistry = new LearnedSkillRegistry(root);
+  localIntelligence = new DTLocalIntelligence();
+  promptRuntime = new PromptRuntime({ skillRegistry, capabilityBus, localIntelligence, executeSkill, vault });
+  terminals = new TerminalRuntime({
+    auditRoot: path.join(app.getPath('userData'), 'command-center'), vault, experience, residentRuntime,
+    emit: (channel, data) => { if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send(channel, data); }
+  });
   const registry = new AgentRegistry(agents);
   broker = new Broker(vault, registry);
   gateway = createGateway({ keys, vault, broker, agents: registry });
   gateway.start();
   supervisor = new EmbeddedSupervisor({ app, vault, agents });
-  supervisor.start();
+  if (!utilityMode) supervisor.start();
   registerIPC(registry);
   if (process.argv.includes('--grok-provider-ping')) {
     const nonce='GROK-PING-20260916T2226EDT-COFFEEMAKER3737';
@@ -893,16 +1239,25 @@ app.whenReady().then(async () => {
     const status=responseText==='PONG'?'PONG_RECEIVED':'NOT_CONNECTED';
     const body=['# COFFEEMAKER PROVIDER PING RETRY RECEIPT','', '- Source: GPT-desktop-root','- Device: CoffeeMaker3737','- Provider adapter: xai via DT Desktop Suite',`- Model sent: ${model}`,`- Nonce: ${nonce}`,`- HTTP status: ${httpStatus??'(none)'}`,`- Provider error class: ${errorClass||'(none)'}`,`- Provider error message: ${errorMessage||'(none)'}`,`- Response: ${responseText||'(none)'}`,`- Status: ${status}`,'- Credential material included: false','- Canonical claimed: false','- HVAC: PARKED',`- Created: ${new Date().toISOString()}`].join('\n');
     const receiptPath=path.join(syncRoot,'20260917T_CORRECTED__GROK_SYNC__COFFEEMAKER_PROVIDER_PING__RECEIPT.md');
-    fs.writeFileSync(receiptPath,body,'utf8'); console.log(JSON.stringify({receiptPath,status,httpStatus,errorClass,errorMessage,response:responseText,model},null,2)); app.quit(); return;
+    fs.writeFileSync(receiptPath,body,'utf8');
+    adapters.record('xai-provider',{adapter:'xai',implementationComplete:true,status,httpStatus,outcomeVerified:status==='PONG_RECEIVED',evidencePath:receiptPath});
+    console.log(JSON.stringify({receiptPath,status,httpStatus,errorClass,errorMessage,response:responseText,model},null,2)); app.quit(); return;
   }
-  const flag = process.argv.find(arg => arg.startsWith('--agent='));
-  createWindow(flag ? flag.slice(8) : null);
+  createTray();
+  createWindow(pendingAgentSelection, pendingShellView);
   app.on('activate', () => { if (!BrowserWindow.getAllWindows().length) createWindow(); });
 });
 
-app.on('before-quit', () => supervisor?.stop());
+app.on('before-quit', () => {
+  if (!cleanCloseout) { try { automaticRecoveryExport('UNCLEAN_OR_EXTERNAL_QUIT'); } catch (error) { try { fs.writeFileSync(path.join(dataRoot(),'last-unclean-export-error.txt'),String(error.stack||error),'utf8'); } catch {} } }
+  isQuitting = true;
+  terminals?.closeAll();
+  residentRuntime?.stop();
+  supervisor?.stop();
+  gateway?.stop();
+  try { tray?.destroy(); } catch {}
+});
 
 app.on('window-all-closed', () => {
-  gateway?.stop();
-  if (process.platform !== 'darwin') app.quit();
+  // The DT kernel remains resident. Reopen through the tray or launch DT again.
 });

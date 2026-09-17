@@ -39,3 +39,9 @@ npm.cmd start
 ```
 
 This is an early executable foundation. Scientific and safety status is disclosed per agent, and synthetic execution is never promoted as empirical validation.
+
+## User account and closeout
+
+On first launch, DT Desktop Suite requires creation of a local username and password. The password is stored only as an OS-encrypted derived verifier; a one-time recovery code is shown after profile creation. The user then chooses whether credentials are required on every launch or this Windows device remains trusted until the preference is changed.
+
+Normal closeout always asks whether to export the current session or discard the session export. Choosing export creates a verified portable vault package before shutdown. Choosing discard does not rewrite the append-only provenance/audit chain. If the application is terminated without a clean closeout decision, the main process attempts an automatic recovery export before services stop.

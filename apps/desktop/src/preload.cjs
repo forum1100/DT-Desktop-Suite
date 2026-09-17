@@ -1,7 +1,20 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('dt', {
+  authStatus: () => ipcRenderer.invoke('auth:status'),
+  authRegister: request => ipcRenderer.invoke('auth:register', request),
+  authLogin: request => ipcRenderer.invoke('auth:login', request),
+  authSetMode: mode => ipcRenderer.invoke('auth:set-mode', mode),
+  authRecover: request => ipcRenderer.invoke('auth:recover', request),
+  closeoutSession: decision => ipcRenderer.invoke('session:closeout', decision),
   hubStatus: () => ipcRenderer.invoke('hub:status'),
+  adapterStatus: () => ipcRenderer.invoke('adapter:status'),
+  bootstrapStatus: () => ipcRenderer.invoke('bootstrap:status'),
+  runtimeStatus: () => ipcRenderer.invoke('runtime:status'),
+  listCapabilities: () => ipcRenderer.invoke('capabilities:list'),
+  runPrompt: request => ipcRenderer.invoke('prompt:run', request),
+  onSelectAgent: callback => ipcRenderer.on('shell:select-agent', (_event, id) => callback(id)),
+  onShellView: callback => ipcRenderer.on('shell:set-view', (_event, view) => callback(view)),
   listAgents: () => ipcRenderer.invoke('agents:list'),
   operationsSnapshot: () => ipcRenderer.invoke('operations:snapshot'),
   listCaptureSources: () => ipcRenderer.invoke('capture:sources'),
@@ -37,5 +50,17 @@ contextBridge.exposeInMainWorld('dt', {
   askProvider: request => ipcRenderer.invoke('provider:ask', request),
   aiMailboxStatus: () => ipcRenderer.invoke('ai-mailbox:status'),
   aiMailboxWrite: request => ipcRenderer.invoke('ai-mailbox:write', request),
-  aiMailboxRead: request => ipcRenderer.invoke('ai-mailbox:read', request)
+  aiMailboxRead: request => ipcRenderer.invoke('ai-mailbox:read', request),
+  saveLocalProcedure: request => ipcRenderer.invoke('training:save-local', request),
+  teacherPrompt: request => ipcRenderer.invoke('training:teacher-prompt', request),
+  compileTeacherReply: request => ipcRenderer.invoke('training:compile-teacher-reply', request),
+  listLearnedSkills: () => ipcRenderer.invoke('training:list-skills'),
+  validateSkill: request => ipcRenderer.invoke('training:validate-skill', request),
+  promoteSkill: request => ipcRenderer.invoke('training:promote-skill', request),
+  listTerminals: () => ipcRenderer.invoke('terminal:list'),
+  createTerminal: input => ipcRenderer.invoke('terminal:create', input),
+  sendTerminal: (id, command) => ipcRenderer.invoke('terminal:send', id, command),
+  closeTerminal: id => ipcRenderer.invoke('terminal:close', id),
+  onTerminalOutput: callback => ipcRenderer.on('terminal:output', (_event, data) => callback(data)),
+  onTerminalState: callback => ipcRenderer.on('terminal:state', (_event, data) => callback(data))
 });

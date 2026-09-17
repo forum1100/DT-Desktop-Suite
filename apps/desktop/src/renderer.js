@@ -1,5 +1,6 @@
 let selected = null;
 let providers = [];
+let agentCatalog = [];
 const nav = document.querySelector('#agents');
 const panel = document.querySelector('#agent-panel');
 const empty = document.querySelector('#empty');
@@ -7,6 +8,10 @@ const form = document.querySelector('#agent-form');
 const result = document.querySelector('#result');
 
 function choose(agent) {
+  if (!agent) return;
+  setShellMode('agents');
+  ensureProcessTab('agent:' + agent.id, agent.name, () => choose(agent));
+  activateProcessTab('agent:' + agent.id);
   selected = agent;
   document.title = `${agent.name} — DT Desktop Suite`;
   empty.hidden = true; panel.hidden = false;
@@ -190,6 +195,35 @@ document.querySelector('#training-activate').addEventListener('click', () => act
   document.querySelector('#training-state').textContent = 'TRAINING ACTIVATION FAILED';
   document.querySelector('#training-reply').value = error.message;
 }));
+
+
+document.querySelector('#training-save-local').addEventListener('click', async () => {
+  const observation = document.querySelector('#training-observation').value.trim();
+  const state = document.querySelector('#training-state');
+  if (!observation) { state.textContent = 'DESCRIBE A PROCEDURE FIRST'; return; }
+  try {
+    const saved = await window.dt.saveLocalProcedure({
+      observation,
+      agentId: selected?.id || null,
+      title: selected ? selected.name + ' procedure' : 'DT local procedure'
+    });
+    const history = trainingLessons();
+    history.push({
+      createdAt: saved.procedure.createdAt,
+      observation,
+      reply: saved.procedure.steps.join('\n'),
+      provider: 'local-deterministic',
+      status: 'active-local-procedure',
+      procedureId: saved.procedure.id,
+      path: saved.path
+    });
+    localStorage.setItem(trainingStoreKey, JSON.stringify(history));
+    state.textContent = 'LOCAL PROCEDURE SAVED · AI NOT REQUIRED';
+    document.querySelector('#training-prompt').value = saved.procedure.steps
+      .map((step, index) => `${index + 1}. ${step}`).join('\n');
+    renderTrainingHistory();
+  } catch (error) { state.textContent = 'LOCAL PROCEDURE FAILED · ' + error.message; }
+});
 
 document.querySelector('#training-copy').addEventListener('click', async () => {
   const prompt = document.querySelector('#training-prompt').value;
@@ -630,7 +664,8 @@ async function boot() {
   const hub = await window.dt.hubStatus();
   const hubStatus = document.querySelector('#hub-status');
   hubStatus.childNodes[1].textContent = hub.online ? ' LOCAL HUB ONLINE ' : hub.shared ? ' SHARED HUB DETECTED ' : ' LOCAL HUB OFFLINE ';
-  const agents = await window.dt.listAgents();
+  agentCatalog = await window.dt.listAgents();
+  const agents = agentCatalog;
   for (const agent of agents) {
     const button = document.createElement('button');
     button.className = 'agent-button'; button.dataset.id = agent.id;
@@ -820,8 +855,215 @@ document.querySelector('#import-vault').addEventListener('click', async () => {
   }
 });
 
-boot().then(()=>refreshPeerConnections()).catch(error => { result.textContent = error.stack; });
-setInterval(()=>refreshPeerConnections().catch(()=>{}),5000);
+
+const shellAgentTab = document.querySelector('#shell-agent-tab');
+const shellTerminalTab = document.querySelector('#shell-terminal-tab');
+const agentShell = document.querySelector('#agent-shell');
+const terminalWorkspace = document.querySelector('#terminal-workspace');
+const processTabs = document.querySelector('#process-tabs');
+const terminalTabs = document.querySelector('#terminal-tabs');
+const terminalRuntime = { sessions: new Map(), output: new Map(), selected: null };
+
+function setShellMode(mode) {
+  const terminals = mode === 'terminals';
+  agentShell.hidden = terminals;
+  terminalWorkspace.hidden = !terminals;
+  shellAgentTab.classList.toggle('active', !terminals);
+  shellTerminalTab.classList.toggle('active', terminals);
+}
+
+function activateProcessTab(key) {
+  processTabs.querySelectorAll('button').forEach(button => button.classList.toggle('active', button.dataset.key === key));
+}
+
+function ensureProcessTab(key, label, activate) {
+  let button = processTabs.querySelector(`[data-key="${CSS.escape(key)}"]`);
+  if (!button) {
+    button = document.createElement('button');
+    button.dataset.key = key;
+    button.textContent = label;
+    button.addEventListener('click', activate);
+    processTabs.append(button);
+  }
+  return button;
+}
+
+function removeProcessTab(key) {
+  processTabs.querySelector(`[data-key="${CSS.escape(key)}"]`)?.remove();
+}
+
+
+shellAgentTab.addEventListener('click', () => setShellMode('agents'));
+shellTerminalTab.addEventListener('click', () => setShellMode('terminals'));
+window.dt.onSelectAgent(id => {
+  const agent = agentCatalog.find(item => item.id === id);
+  if (agent) choose(agent);
+});
+window.dt.onShellView(view => { if (view === 'terminals') setShellMode('terminals'); else if (view === 'agents') setShellMode('agents'); });
+
+async function refreshDTRuntime() {
+  const state = document.querySelector('#dt-runtime-state');
+  const summary = document.querySelector('#dt-capability-summary');
+  try {
+    const [runtime, capabilities] = await Promise.all([window.dt.runtimeStatus(), window.dt.listCapabilities()]);
+    const driveRoots = runtime.bootstrap?.environment?.googleDrive || [];
+    state.textContent = runtime.localModel?.available
+      ? 'DT LOCAL MODEL ONLINE · WORKERS ' + runtime.resident.active.length
+      : 'DT DETERMINISTIC RUNTIME ONLINE · LOCAL MODEL OFFLINE';
+    summary.textContent = capabilities.length + ' shared tools · ' + driveRoots.length +
+      ' Google Drive root(s) · ' + runtime.learnedSkills.length + ' learned skill(s)';
+  } catch (error) {
+    state.textContent = 'DT RUNTIME STATUS ERROR';
+    summary.textContent = error.message;
+  }
+}
+
+document.querySelector('#dt-prompt').addEventListener('keydown', event => { if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) { event.preventDefault(); document.querySelector('#dt-prompt-run').click(); } });
+
+document.querySelector('#dt-prompt-run').addEventListener('click', async () => {
+  const prompt = document.querySelector('#dt-prompt').value.trim();
+  const output = document.querySelector('#dt-prompt-result');
+  if (!prompt) return;
+  output.textContent = 'DT routing locally…';
+  try {
+    const response = await window.dt.runPrompt({
+      prompt,
+      input: selected ? currentInput() : {},
+      ownerApproved: document.querySelector('#dt-owner-approve').checked
+    });
+    output.textContent = JSON.stringify(response, null, 2);
+  } catch (error) { output.textContent = JSON.stringify({ error: error.message }, null, 2); }
+});
+
+async function refreshAdapterStatus() {
+  const label = document.querySelector('#adapter-summary');
+  try {
+    const status = await window.dt.adapterStatus();
+    const xai = status.xaiProvider || {};
+    const cli = status.grokRemoteCli || {};
+    label.textContent = [
+      'xAI ' + (xai.providerConnectivity || 'UNVERIFIED'),
+      'CLI ' + (cli.commandPath || 'UNVERIFIED'),
+      'PEER ' + (xai.peerConnection || 'NOT_CONNECTED'),
+      'LEASE ' + (xai.standingLease ? 'ACTIVE' : 'NONE')
+    ].join(' · ');
+    label.title = 'Implementation: ' + (xai.implementation || 'UNKNOWN') +
+      '. Core DT runtime does not require an AI provider.';
+  } catch (error) {
+    label.textContent = 'ADAPTER STATUS ERROR';
+    label.title = error.message;
+  }
+}
+
+function renderTerminalTabs() {
+  terminalTabs.replaceChildren(...[...terminalRuntime.sessions.values()].map(session => {
+    const button = document.createElement('button');
+    button.dataset.id = session.id;
+    button.classList.toggle('active', terminalRuntime.selected === session.id);
+    button.textContent = session.name + ' · ' + session.state;
+    button.addEventListener('click', () => selectTerminal(session.id));
+    return button;
+  }));
+}
+
+function selectTerminal(id) {
+  const session = terminalRuntime.sessions.get(id);
+  if (!session) return;
+  terminalRuntime.selected = id;
+  setShellMode('terminals');
+  ensureProcessTab('terminal:' + id, session.name, () => selectTerminal(id));
+  activateProcessTab('terminal:' + id);
+  document.querySelector('#terminal-empty').hidden = true;
+  document.querySelector('#terminal-panel').hidden = false;
+  document.querySelector('#terminal-title').textContent = session.name;
+  document.querySelector('#terminal-meta').textContent = `${session.owner} · PID ${session.pid} · ${session.cwd}`;
+  document.querySelector('#terminal-state').textContent = session.state.toUpperCase();
+  const box = document.querySelector('#terminal-output');
+  box.textContent = terminalRuntime.output.get(id) || '';
+  box.scrollTop = box.scrollHeight;
+  renderTerminalTabs();
+}
+
+
+async function refreshTerminalSessions() {
+  const sessions = await window.dt.listTerminals();
+  for (const session of sessions) terminalRuntime.sessions.set(session.id, session);
+  renderTerminalTabs();
+}
+
+document.querySelector('#terminal-create').addEventListener('click', async () => {
+  const state = document.querySelector('#terminal-state');
+  try {
+    const session = await window.dt.createTerminal({
+      name: document.querySelector('#terminal-name').value.trim() || 'DT shell',
+      owner: document.querySelector('#terminal-owner').value.trim() || 'DT Platform',
+      cwd: document.querySelector('#terminal-cwd').value.trim()
+    });
+    terminalRuntime.sessions.set(session.id, session);
+    terminalRuntime.output.set(session.id, '');
+    document.querySelector('#terminal-name').value = '';
+    selectTerminal(session.id);
+  } catch (error) { state.textContent = 'CREATE FAILED · ' + error.message; }
+});
+
+document.querySelector('#terminal-send').addEventListener('click', async () => {
+  const input = document.querySelector('#terminal-input');
+  if (!terminalRuntime.selected || !input.value.trim()) return;
+  try {
+    await window.dt.sendTerminal(terminalRuntime.selected, input.value);
+    input.value = '';
+  } catch (error) { document.querySelector('#terminal-state').textContent = 'COMMAND FAILED · ' + error.message; }
+});
+
+document.querySelector('#terminal-input').addEventListener('keydown', event => {
+  if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+    event.preventDefault(); document.querySelector('#terminal-send').click();
+  }
+});
+
+document.querySelector('#terminal-close').addEventListener('click', async () => {
+  const id = terminalRuntime.selected;
+  if (!id) return;
+  await window.dt.closeTerminal(id);
+  removeProcessTab('terminal:' + id);
+});
+
+window.dt.onTerminalOutput(data => {
+  terminalRuntime.output.set(data.id, (terminalRuntime.output.get(data.id) || '') + data.text);
+  if (terminalRuntime.selected === data.id) {
+    const box = document.querySelector('#terminal-output');
+    box.textContent = terminalRuntime.output.get(data.id); box.scrollTop = box.scrollHeight;
+  }
+});
+window.dt.onTerminalState(session => {
+  terminalRuntime.sessions.set(session.id, session);
+  if (terminalRuntime.selected === session.id) selectTerminal(session.id);
+  else renderTerminalTabs();
+});
+
+async function authenticatedBoot(){
+  const dialog=document.querySelector('#user-auth-dialog');
+  const status=await window.dt.authStatus();
+  if(status.authenticated){dialog.close();return true;}
+  dialog.showModal();
+  const title=document.querySelector('#auth-title'),note=document.querySelector('#auth-note'),user=document.querySelector('#auth-username'),pass=document.querySelector('#auth-password'),out=document.querySelector('#auth-output'),recoverOpen=document.querySelector('#auth-recover-open');
+  let mode=status.exists?'login':'register';
+  if(status.exists){title.textContent='Sign in to DT';user.value=status.username||'';user.disabled=true;out.textContent='Local profile found. Enter your password.';}else{title.textContent='Create your DT user';recoverOpen.hidden=true;out.textContent='Create a username and password for this device.';}
+  document.querySelector('#auth-primary').onclick=async()=>{try{if(mode==='register'){const created=await window.dt.authRegister({username:user.value,password:pass.value,signInMode:'EVERY_LAUNCH'});document.querySelector('#auth-post-register').hidden=false;document.querySelector('#auth-recovery-code').textContent=created.recoveryCode;out.textContent='Profile created. Save the recovery code, then choose the sign-in behavior.';document.querySelector('#auth-primary').hidden=true;recoverOpen.hidden=true;}else if(mode==='login'){await window.dt.authLogin({username:user.value,password:pass.value});dialog.close();await launchSuite();}else{const recovered=await window.dt.authRecover({username:user.value,recoveryCode:document.querySelector('#auth-recovery').value,newPassword:document.querySelector('#auth-new-password').value});document.querySelector('#auth-post-register').hidden=false;document.querySelector('#auth-recovery-code').textContent=recovered.recoveryCode;out.textContent='Password reset. Save the new recovery code, then choose the sign-in behavior.';document.querySelector('#auth-primary').hidden=true;}}catch(error){out.textContent=error.message;}};
+  recoverOpen.onclick=()=>{mode='recover';title.textContent='Recover DT access';note.textContent='Enter the recovery code and choose a new password.';document.querySelector('#auth-recovery-label').hidden=false;document.querySelector('#auth-new-password-label').hidden=false;document.querySelector('#auth-password-label').hidden=true;recoverOpen.hidden=true;};
+  document.querySelector('#auth-every-launch').onclick=async()=>{await window.dt.authSetMode('EVERY_LAUNCH');dialog.close();await launchSuite();};
+  document.querySelector('#auth-trust-device').onclick=async()=>{await window.dt.authSetMode('TRUST_THIS_DEVICE');dialog.close();await launchSuite();};
+  return false;
+}
+let suiteLaunched=false;
+async function launchSuite(){if(suiteLaunched)return;suiteLaunched=true;await boot();await refreshPeerConnections();await refreshTerminalSessions();await refreshAdapterStatus();await refreshDTRuntime();const view=new URLSearchParams(location.search).get('view');if(view==='terminals')setShellMode('terminals');setInterval(refreshAdapterStatus,5000);setInterval(refreshDTRuntime,5000);setInterval(()=>refreshPeerConnections().catch(()=>{}),5000);}
+authenticatedBoot().then(ok=>{if(ok)return launchSuite();}).catch(error=>{result.textContent=error.stack;});
+const closeoutDialog=document.querySelector('#closeout-dialog');
+document.querySelector('#suite-closeout').addEventListener('click',()=>closeoutDialog.showModal());
+document.querySelector('#closeout-cancel').addEventListener('click',()=>closeoutDialog.close());
+async function performCloseout(decision){const output=document.querySelector('#closeout-output');output.textContent=decision==='export'?'Finalizing capture and exporting…':'Finalizing capture and closing without a session export…';try{if(captureRecorder?.state==='recording')captureRecorder.stop();if(captureSession)await new Promise(resolve=>setTimeout(resolve,350));const done=await window.dt.closeoutSession(decision);output.textContent=done.exported?'Verified export: '+done.exported.path:'Session export discarded; persistent audit preserved.';}catch(error){output.textContent=error.message;}}
+document.querySelector('#closeout-export').addEventListener('click',()=>performCloseout('export'));
+document.querySelector('#closeout-discard').addEventListener('click',()=>performCloseout('discard'));
 
 const adminDialog = document.querySelector('#admin-dialog');
 document.querySelector('#admin-open').addEventListener('click', async () => {

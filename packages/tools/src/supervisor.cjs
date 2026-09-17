@@ -1,7 +1,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
-const { execFileSync, spawn } = require('node:child_process');
+const { execFileSync } = require('node:child_process');
 
 const DEFAULT_PERSISTENT_AGENTS = Object.freeze([
   'agent-supervisor', 'agent-foundry', 'operations-historian',
@@ -82,41 +82,29 @@ class EmbeddedSupervisor {
     return Array.isArray(parsed) ? parsed : [parsed];
   }
   launchAgent(agentId) {
-    const executable = process.env.PORTABLE_EXECUTABLE_FILE || process.execPath;
-    const args = [];
-    if (!this.app.isPackaged && !process.env.PORTABLE_EXECUTABLE_FILE) args.push(this.app.getAppPath());
-    args.push(`--agent=${agentId}`);
-    const child = spawn(executable, args, {
-      detached: true, stdio: 'ignore', windowsHide: false,
-      cwd: path.dirname(executable)
+    const exists = Array.isArray(this.agents) && this.agents.some(agent => agent.id === agentId);
+    if (!exists) throw new Error(`Unknown resident agent: ${agentId}`);
+    this.writeObservation('agent-supervision', {
+      agent: agentId, running: true, status: 'resident-in-shell', pid: process.pid
     });
-    child.unref();
-    this.lastRestartAt.set(agentId, Date.now());
-    return child.pid;
+    return process.pid;
   }
 
   tick() {
     if (!this.tryBecomeLeader()) return;
-    let rows = [];
-    let error = null;
-    try { rows = this.inventory(); }
-    catch (err) { error = err.message; }
-    const commands = rows.map(row => String(row.CommandLine || ''));
+    const defined = new Set((this.agents || []).map(agent => agent.id));
     const states = {};
     for (const agentId of DEFAULT_PERSISTENT_AGENTS) {
-      const running = commands.some(command => command.includes(`--agent=${agentId}`));
+      const running = defined.has(agentId);
       states[agentId] = running;
       const previous = this.lastStates.get(agentId);
       if (previous !== running) {
-        this.writeObservation('agent-supervision', { agent: agentId, running, status: running ? 'observed-running' : 'missing' });
+        this.writeObservation('agent-supervision', {
+          agent: agentId, running,
+          status: running ? 'resident-in-single-shell' : 'definition-missing',
+          pid: running ? process.pid : null
+        });
         this.lastStates.set(agentId, running);
-      }
-      if (!running) {
-        const last = this.lastRestartAt.get(agentId) || 0;
-        if (Date.now() - last >= 30000) {
-          const pid = this.launchAgent(agentId);
-          this.writeObservation('agent-supervision', { agent: agentId, running: false, status: 'restart-requested', pid });
-        }
       }
     }
     const status = {
@@ -124,8 +112,9 @@ class EmbeddedSupervisor {
       supervisor: 'ready',
       leader_pid: process.pid,
       agents: states,
-      inventory_count: rows.length,
-      error,
+      resident_service_count: Object.values(states).filter(Boolean).length,
+      execution_mode: 'SINGLE_SHELL_RESIDENT_LOGICAL_SERVICES',
+      child_agent_windows: false,
       training: 'append-only vault-referenced observations',
       local_only: true
     };
