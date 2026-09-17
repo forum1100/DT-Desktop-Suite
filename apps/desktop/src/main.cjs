@@ -22,6 +22,7 @@ const { ResidentRuntime } = require('../../../packages/core/src/resident-runtime
 const { DTBootstrap } = require('../../../packages/core/src/bootstrap.cjs');
 const { createLocalProcedure } = require('../../../packages/core/src/training.cjs');
 const { createBundle, verifyBundle } = require('../../../packages/core/src/portable.cjs');
+const { readDirtySession, markSessionDirty, clearSessionDirty } = require('../../../packages/core/src/session-recovery.cjs');
 const { appendSeal, createSeal } = require('../../../packages/core/src/provenance.cjs');
 const { createReceipt } = require('../../../packages/core/src/peer-mailbox.cjs');
 const { prepareGrokHandshake, proposalWasConsumed } = require('../../../packages/core/src/grok-handshake.cjs');
@@ -1046,7 +1047,7 @@ Authorize exactly one execution?`,
     let exported=null; if(decision==='export') exported=automaticRecoveryExport('USER_CLOSEOUT_EXPORT');
     else if(decision==='discard') vault.append('session-closeout-discard','dt-desktop',{scope:'ephemeral-session-only',persistentAuditPreserved:true});
     else throw new Error('Closeout decision must be export or discard');
-    cleanCloseout=true; setTimeout(()=>app.quit(),80); return {decision,exported};
+    clearSessionDirty(dataRoot()); cleanCloseout=true; setTimeout(()=>app.quit(),80); return {decision,exported};
   });
   ipcMain.handle('vault:list', () => vault.all());
   ipcMain.handle('vault:export', async () => {
@@ -1194,6 +1195,19 @@ app.whenReady().then(async () => {
   }, { useSystemPicker: false });
   const root = dataRoot();
   vault = new Vault(root);
+  if (!utilityMode) {
+    const priorDirty = readDirtySession(root);
+    if (priorDirty) {
+      try {
+        const recovered = automaticRecoveryExport('PREVIOUS_UNCLEAN_SESSION_DETECTED_ON_STARTUP');
+        vault.append('unclean-session-recovery-export', 'dt-desktop', { priorSession: priorDirty, recovery: recovered });
+        clearSessionDirty(root);
+      } catch (error) {
+        vault.append('unclean-session-recovery-failed', 'dt-desktop', { priorSession: priorDirty, error: String(error.message || error) });
+      }
+    }
+    markSessionDirty(root, { pid: process.pid, version: app.getVersion(), priorUncleanDetected: !!priorDirty, priorSession: priorDirty || null });
+  }
   keys = new KeyAuthority(path.join(root, 'authority'));
   recovery = new RecoveryAuthority(path.join(root, 'authority'), keys, ownerProfile.githubLogin);
   adapters = new AdapterStatusRegistry(root);
@@ -1249,7 +1263,12 @@ app.whenReady().then(async () => {
 });
 
 app.on('before-quit', () => {
-  if (!cleanCloseout) { try { automaticRecoveryExport('UNCLEAN_OR_EXTERNAL_QUIT'); } catch (error) { try { fs.writeFileSync(path.join(dataRoot(),'last-unclean-export-error.txt'),String(error.stack||error),'utf8'); } catch {} } }
+  if (!cleanCloseout) {
+    let exported = false;
+    try { automaticRecoveryExport('UNCLEAN_OR_EXTERNAL_QUIT'); exported = true; }
+    catch (error) { try { fs.writeFileSync(path.join(dataRoot(),'last-unclean-export-error.txt'),String(error.stack||error),'utf8'); } catch {} }
+    if (exported) clearSessionDirty(dataRoot());
+  } else clearSessionDirty(dataRoot());
   isQuitting = true;
   terminals?.closeAll();
   residentRuntime?.stop();
