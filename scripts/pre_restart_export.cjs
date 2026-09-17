@@ -1,0 +1,18 @@
+const fs=require('node:fs');
+const path=require('node:path');
+const { Vault }=require('../packages/core/src/vault.cjs');
+const { createBundle, verifyBundle }=require('../packages/core/src/portable.cjs');
+const home=process.env.USERPROFILE;
+const vaultRoot=path.join(home,'AppData','Roaming','dt-desktop-suite','dt-vault');
+const stamp=new Date().toISOString().replace(/[:.]/g,'-');
+const outRoot=path.join(home,'Documents','DT Exports',`pre-restart-${stamp}`);
+fs.mkdirSync(outRoot,{recursive:true});
+const vault=new Vault(vaultRoot);
+const bundle=createBundle(vault.all(),{application:'DT Desktop Suite',reason:'pre-restart automatic capture deployment'});
+const bundlePath=path.join(outRoot,'DT-Consumer-Vault.json');
+fs.writeFileSync(bundlePath,JSON.stringify(bundle,null,2),'utf8');
+fs.cpSync(vaultRoot,path.join(outRoot,'dt-vault-snapshot'),{recursive:true});
+const verified=verifyBundle(JSON.parse(fs.readFileSync(bundlePath,'utf8')));
+const manifest={schema:'dt-pre-restart-export/1.0',createdAt:new Date().toISOString(),bundlePath,snapshotPath:path.join(outRoot,'dt-vault-snapshot'),recordCount:bundle.recordCount,bundleHash:bundle.bundleHash,verification:verified};
+fs.writeFileSync(path.join(outRoot,'export-manifest.json'),JSON.stringify(manifest,null,2),'utf8');
+console.log(JSON.stringify(manifest,null,2));

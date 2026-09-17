@@ -1,0 +1,11 @@
+const fs=require('node:fs');
+const path=require('node:path');
+const main=path.join(__dirname,'..','apps','desktop','src','main.cjs');
+const renderer=path.join(__dirname,'..','apps','desktop','src','renderer.js');
+let s=fs.readFileSync(main,'utf8');
+s=s.replace(/  session\.defaultSession\.setDisplayMediaRequestHandler\(\(_request, callback\) => \{\r?\n    callback\(\{\}\);\r?\n  \}, \{ useSystemPicker: true \}\);/,`  session.defaultSession.setDisplayMediaRequestHandler(async (_request, callback) => {\n    const sources = await desktopCapturer.getSources({ types: ['screen'], thumbnailSize: { width: 0, height: 0 } });\n    callback(sources[0] ? { video: sources[0] } : {});\n  }, { useSystemPicker: false });`);
+fs.writeFileSync(main,s,'utf8');
+s=fs.readFileSync(renderer,'utf8');
+s=s.replace(/    captureStream = await navigator\.mediaDevices\.getUserMedia\(\{\r?\n      audio: false,\r?\n      video: \{ mandatory: \{ chromeMediaSource: 'desktop', chromeMediaSourceId: sourceId \} \}\r?\n    \}\);/,`    captureStream = automatic\n      ? await navigator.mediaDevices.getDisplayMedia({ audio: false, video: true })\n      : await navigator.mediaDevices.getUserMedia({\n          audio: false,\n          video: { mandatory: { chromeMediaSource: 'desktop', chromeMediaSourceId: sourceId } }\n        });`);
+fs.writeFileSync(renderer,s,'utf8');
+console.log('patched native automatic display capture');

@@ -353,17 +353,27 @@ async function finalizeCapture(status = 'COMPLETED') {
   }
 }
 
-document.querySelector('#capture-start').addEventListener('click', async () => {
-  const task = document.querySelector('#capture-task').value.trim();
-  if (!task) { setCaptureUI(false, 'TASK DESCRIPTION REQUIRED'); return; }
+async function beginCapture({ automatic = false } = {}) {
+  if (captureSession || captureRecorder?.state === 'recording') return false;
+  const taskInput = document.querySelector('#capture-task');
+  if (automatic && !taskInput.value.trim()) taskInput.value = 'DT DESKTOP GOVERNED SESSION';
+  const task = taskInput.value.trim();
+  if (!task) { setCaptureUI(false, 'TASK DESCRIPTION REQUIRED'); return false; }
   try {
-    const sourceId=document.querySelector('#capture-source').value;
+    const sourceSelect=document.querySelector('#capture-source');
+    if (automatic) {
+      const screenOption=[...sourceSelect.options].find(option=>String(option.value).startsWith('screen:'));
+      if(screenOption) sourceSelect.value=screenOption.value;
+    }
+    const sourceId=sourceSelect.value;
     if(!sourceId) throw new Error('Select a screen or window to capture');
-    captureStream = await navigator.mediaDevices.getUserMedia({
-      audio: false,
-      video: { mandatory: { chromeMediaSource: 'desktop', chromeMediaSourceId: sourceId } }
-    });
-    captureSession = await window.dt.startCapture({ task, agentId: selected?.id || null, sourceId });
+    captureStream = automatic
+      ? await navigator.mediaDevices.getDisplayMedia({ audio: false, video: true })
+      : await navigator.mediaDevices.getUserMedia({
+          audio: false,
+          video: { mandatory: { chromeMediaSource: 'desktop', chromeMediaSourceId: sourceId } }
+        });
+    captureSession = await window.dt.startCapture({ task, agentId: selected?.id || null, sourceId, automatic });
     const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
       ? 'video/webm;codecs=vp9' : 'video/webm';
     captureRecorder = new MediaRecorder(captureStream, { mimeType });
@@ -382,9 +392,10 @@ document.querySelector('#capture-start').addEventListener('click', async () => {
     captureRecorder.start(1500);
     document.querySelector('#capture-id').textContent = captureSession.sessionId;
     document.querySelector('#grok-handshake-state').textContent = 'WAITING FOR GROK PROPOSAL';
-    setCaptureUI(true, '● REC · TASK BOUND');
+    setCaptureUI(true, automatic ? '● REC · AUTO · TASK BOUND' : '● REC · TASK BOUND');
     document.querySelector('#grok-command-state').textContent = 'COMMAND CHANNEL OFF';
     refreshPeerConnections().catch(()=>{});
+    return true;
   } catch (error) {
     captureStream?.getTracks().forEach(track => track.stop());
     captureStream = null; captureSession = null; captureRecorder = null;
@@ -392,10 +403,13 @@ document.querySelector('#capture-start').addEventListener('click', async () => {
     document.querySelector('#control-preview').textContent = JSON.stringify({
       captureError: error.message || String(error),
       errorName: error.name || null,
-      nextStep: 'Confirm the Windows screen-picker selection and retry.'
+      nextStep: automatic ? 'Automatic capture failed; use Start Capture to retry.' : 'Confirm the Windows screen-picker selection and retry.'
     }, null, 2);
+    return false;
   }
-});
+}
+
+document.querySelector('#capture-start').addEventListener('click', () => beginCapture());
 
 document.querySelector('#capture-stop').addEventListener('click', () => {
   if (captureRecorder?.state === 'recording') captureRecorder.stop();
@@ -638,6 +652,7 @@ async function boot() {
   updateProviderUI();
   const requested = new URLSearchParams(location.search).get('agent');
   if (requested) choose(agents.find(agent => agent.id === requested) || agents[0]);
+  else await beginCapture({ automatic: true });
   await refreshOperations();
   setInterval(refreshOperations, 2000);
 }

@@ -14,6 +14,7 @@ const { createReceipt } = require('../../../packages/core/src/peer-mailbox.cjs')
 const { prepareGrokHandshake, proposalWasConsumed } = require('../../../packages/core/src/grok-handshake.cjs');
 const { prepareGrokCommand, prismCommandDecision, commandProposalWasConsumed, createCommandReceipt } = require('../../../packages/core/src/grok-command.cjs');
 const { createPeerMessage, verifyPeerMessage } = require('../../../packages/core/src/peer-chat.cjs');
+const { manifest: grokRemoteCliManifest, activationState: grokRemoteCliActivationState } = require('../../../packages/plugins/grok-remote-cli/index.cjs');
 const { listPeerExecutives } = require('../../../packages/auth/src/peers.cjs');
 const { RecoveryAuthority } = require('../../../packages/auth/src/recovery.cjs');
 const { ownerBootstrap, isOwner } = require('../../../packages/auth/src/policy.cjs');
@@ -25,8 +26,10 @@ const { EmbeddedSupervisor } = require('../../../packages/tools/src/supervisor.c
 const { routeTask, executeWorkflow } = require('../../../packages/tools/src/workflow.cjs');
 const { inboxFor, processInbox } = require('../../../packages/tools/src/inbox.cjs');
 const { preflight } = require('../../../packages/safety/src/preflight.cjs');
-const { PROVIDERS, providerDefinition, requestAI } = require('../../../packages/providers/src/index.cjs');
+const { PROVIDERS, providerDefinition, buildRequest, requestAI } = require('../../../packages/providers/src/index.cjs');
 const { listSimulations, replaySimulation } = require('../../../packages/simulations/src/replay.cjs');
+
+if (process.argv.includes('--grok-provider-ping')) app.setPath('userData', path.join(process.env.APPDATA, 'dt-desktop-suite'));
 
 let vault, keys, broker, gateway, recovery, supervisor;
 const suiteStartedAt = Date.now();
@@ -394,6 +397,16 @@ function registerIPC(registry) {
     const peers = connectedPeers();
     return { peers, count: peers.length, chatEnabled: peers.length >= 2, gatewayAuthority: 'DT_PLATFORM' };
   });
+  ipcMain.handle('peer:grok:plugin-status', () => {
+    const login = authenticatedGithubLogin();
+    const bridge = path.join(process.env.USERPROFILE || '', 'Documents', 'TJ_Command_Bridge', 'submit.py');
+    return grokRemoteCliActivationState({
+      peerConnected: connectedPeers().some(peer => peer.executiveId === 'grok-ceo'),
+      activeCapture: activeCaptureSessions.size > 0,
+      ownerVerified: isOwner(ownerProfile, login),
+      bridgeAvailable: fs.existsSync(bridge)
+    });
+  });
   ipcMain.handle('peer:chat:list', () => ({ messages: listLocalPeerMessages(300), peers: connectedPeers() }));
   ipcMain.handle('peer:chat:poll', (_event, request = {}) => {
     const captureSessionId = String(request.captureSessionId || '');
@@ -429,7 +442,7 @@ function registerIPC(registry) {
       schema: 'dt-session-capture/1.0', sessionId, task,
       agentId: request.agentId || null, captureSourceId: request.sourceId || null,
       startedAt: new Date().toISOString(),
-      consent: 'USER_INITIATED_VISIBLE_CAPTURE', status: 'RECORDING', chunks: 0,
+      consent: request.automatic ? 'OWNER_AUTHORIZED_AUTOMATIC_VISIBLE_CAPTURE' : 'USER_INITIATED_VISIBLE_CAPTURE', status: 'RECORDING', chunks: 0,
       manager: 'SESSION_CAPTURE_MANAGER', covertCapturePermitted: false
     };
     fs.writeFileSync(path.join(root, 'manifest.json'), JSON.stringify(manifest, null, 2));
@@ -842,14 +855,15 @@ Authorize exactly one execution?`,
   });
 }
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   session.defaultSession.setPermissionRequestHandler((webContents, permission, callback) => {
     const localWindow = webContents.getURL().startsWith('file:');
     callback(localWindow && (permission === 'display-capture' || permission === 'media'));
   });
-  session.defaultSession.setDisplayMediaRequestHandler((_request, callback) => {
-    callback({});
-  }, { useSystemPicker: true });
+  session.defaultSession.setDisplayMediaRequestHandler(async (_request, callback) => {
+    const sources = await desktopCapturer.getSources({ types: ['screen'], thumbnailSize: { width: 0, height: 0 } });
+    callback(sources[0] ? { video: sources[0] } : {});
+  }, { useSystemPicker: false });
   const root = dataRoot();
   vault = new Vault(root);
   keys = new KeyAuthority(path.join(root, 'authority'));
@@ -861,6 +875,26 @@ app.whenReady().then(() => {
   supervisor = new EmbeddedSupervisor({ app, vault, agents });
   supervisor.start();
   registerIPC(registry);
+  if (process.argv.includes('--grok-provider-ping')) {
+    const nonce='GROK-PING-20260916T2226EDT-COFFEEMAKER3737';
+    const syncRoot='C:\\DT\\GoogleDrive\\My Drive\\GROK_DT_SYNC';
+    const credentialProvider=fs.existsSync(credentialFile('xai'))?'xai':'compatible';
+    const model='grok-4';
+    let responseText=null,httpStatus=null,errorClass=null,errorMessage=null;
+    try {
+      const apiKey=readCredential(credentialProvider);
+      const definition=providerDefinition('xai');
+      const prepared=buildRequest(definition,{apiKey,model,system:'Return exactly PONG and nothing else.',messages:[{role:'user',content:nonce}]});
+      const response=await fetch(prepared.url,{method:'POST',headers:prepared.headers,body:JSON.stringify(prepared.body),signal:AbortSignal.timeout(120000)});
+      httpStatus=response.status; const raw=await response.text(); let data={}; try{data=JSON.parse(raw)}catch{}
+      if(response.ok) responseText=String(data.choices?.[0]?.message?.content||'').trim();
+      else { const e=data.error||{}; errorClass=String(e.type||e.code||'other'); errorMessage=String(e.message||raw||('HTTP '+response.status)).slice(0,1000); }
+    } catch(err){ errorClass='client_error'; errorMessage=err.message||String(err); }
+    const status=responseText==='PONG'?'PONG_RECEIVED':'NOT_CONNECTED';
+    const body=['# COFFEEMAKER PROVIDER PING RETRY RECEIPT','', '- Source: GPT-desktop-root','- Device: CoffeeMaker3737','- Provider adapter: xai via DT Desktop Suite',`- Model sent: ${model}`,`- Nonce: ${nonce}`,`- HTTP status: ${httpStatus??'(none)'}`,`- Provider error class: ${errorClass||'(none)'}`,`- Provider error message: ${errorMessage||'(none)'}`,`- Response: ${responseText||'(none)'}`,`- Status: ${status}`,'- Credential material included: false','- Canonical claimed: false','- HVAC: PARKED',`- Created: ${new Date().toISOString()}`].join('\n');
+    const receiptPath=path.join(syncRoot,'20260917T_CORRECTED__GROK_SYNC__COFFEEMAKER_PROVIDER_PING__RECEIPT.md');
+    fs.writeFileSync(receiptPath,body,'utf8'); console.log(JSON.stringify({receiptPath,status,httpStatus,errorClass,errorMessage,response:responseText,model},null,2)); app.quit(); return;
+  }
   const flag = process.argv.find(arg => arg.startsWith('--agent='));
   createWindow(flag ? flag.slice(8) : null);
   app.on('activate', () => { if (!BrowserWindow.getAllWindows().length) createWindow(); });
