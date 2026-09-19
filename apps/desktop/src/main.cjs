@@ -21,6 +21,8 @@ const { ExperienceLedger } = require('../../../packages/core/src/experience-ledg
 const { ResidentRuntime } = require('../../../packages/core/src/resident-runtime.cjs');
 const { DTBootstrap } = require('../../../packages/core/src/bootstrap.cjs');
 const { createLocalProcedure } = require('../../../packages/core/src/training.cjs');
+const { ObservationLearningIndex } = require('../../../packages/core/src/observation-learning.cjs');
+const { StructuredErrorLog, MaintenanceService } = require('../../../packages/core/src/maintenance.cjs');
 const { createBundle, verifyBundle } = require('../../../packages/core/src/portable.cjs');
 const { readDirtySession, markSessionDirty, clearSessionDirty } = require('../../../packages/core/src/session-recovery.cjs');
 const { appendSeal, createSeal } = require('../../../packages/core/src/provenance.cjs');
@@ -66,7 +68,9 @@ if (!utilityMode) {
   });
 }
 
-let vault, keys, broker, gateway, recovery, supervisor, adapters, terminals, capabilityBus, skillRegistry, localIntelligence, promptRuntime, experience, residentRuntime, bootstrapState, tray;
+let vault, keys, broker, gateway, recovery, supervisor, adapters, terminals, capabilityBus, skillRegistry, observationLearning, errorLog, maintenance, localIntelligence, promptRuntime, experience, residentRuntime, bootstrapState, tray;
+process.on('uncaughtException', error => { try { errorLog?.append(error, { source: 'uncaughtException' }); } catch {} });
+process.on('unhandledRejection', error => { try { errorLog?.append(error instanceof Error ? error : new Error(String(error)), { source: 'unhandledRejection' }); } catch {} });
 let isQuitting = false;
 let localUserAuthenticated = false;
 let cleanCloseout = false;
@@ -536,6 +540,9 @@ function pollPeerChatInbound(captureSessionId) {
 }
 
 function registerIPC(registry) {
+  ipcMain.handle('maintenance:backup', () => maintenance.backup({ trigger: 'desktop-admin' }));
+  ipcMain.handle('maintenance:integrity', () => maintenance.integrity());
+  ipcMain.handle('maintenance:errors', (_event, limit) => maintenance.recentErrors(limit));
   ipcMain.handle('ai-mailbox:status', () => ({
     root: driveStreamingRoot(),
     peers: AI_MAILBOX_PEERS.map(peerId => {
@@ -1222,6 +1229,12 @@ app.whenReady().then(async () => {
     extraRoots: ['C:\DT'].filter(value => fs.existsSync(value))
   });
   skillRegistry = new LearnedSkillRegistry(root);
+  observationLearning = new ObservationLearningIndex({
+    root, observationRoot: path.join(process.env.USERPROFILE || app.getPath('home'), 'Documents', 'TJ_Command_Bridge', 'training', 'observations')
+  });
+  observationLearning.ingest();
+  errorLog = new StructuredErrorLog(root);
+  maintenance = new MaintenanceService({ root, vault, errorLog });
   localIntelligence = new DTLocalIntelligence();
   promptRuntime = new PromptRuntime({ skillRegistry, capabilityBus, localIntelligence, executeSkill, vault });
   terminals = new TerminalRuntime({

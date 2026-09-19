@@ -1074,6 +1074,8 @@ document.querySelector('#admin-open').addEventListener('click', async () => {
     : `Expected forum1100; authenticated: ${status.authenticatedLogin || 'none'}`;
 });
 document.querySelector('#admin-close').addEventListener('click', () => adminDialog.close());
+document.querySelector('#maintenance-backup').addEventListener('click', async () => { const out=document.querySelector('#maintenance-output'); out.textContent='Creating verified backup…'; try { out.textContent=JSON.stringify(await window.dt.maintenanceBackup(),null,2); } catch(error){ out.textContent=error.message; } });
+document.querySelector('#maintenance-integrity').addEventListener('click', async () => { const out=document.querySelector('#maintenance-output'); out.textContent='Checking integrity…'; try { out.textContent=JSON.stringify(await window.dt.maintenanceIntegrity(),null,2); } catch(error){ out.textContent=error.message; } });
 document.querySelector('#owner-setup').addEventListener('click', async () => {
   const output = document.querySelector('#owner-output');
   output.textContent = 'Verifying owner and issuing one-time credentials…';

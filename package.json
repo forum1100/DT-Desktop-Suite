@@ -1,6 +1,6 @@
 {
   "name": "dt-desktop-suite",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "private": true,
   "description": "Local-first provider-neutral DT Platform with individually launchable agent programs",
   "author": "Thomas J. Cutler / Thomas Distel",
@@ -14,7 +14,7 @@
     "agent": "electron . --agent"
   },
   "devDependencies": {
-    "electron": "^38.1.2",
+    "electron": "^44.4.3",
     "electron-builder": "^26.0.12",
     "png-to-ico": "^3.0.2",
     "sharp": "^0.35.4"
