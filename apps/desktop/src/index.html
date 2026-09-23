@@ -19,7 +19,7 @@
       <button id="suite-closeout" type="button">Closeout</button><button id="admin-open" type="button">Owner access</button>
     </div>
   </header>
-  <div id="shell-tabs"><button id="shell-agent-tab" class="active" type="button">DT Programs</button><button id="shell-terminal-tab" type="button">Command shells</button><div id="process-tabs"></div><span id="adapter-summary">ADAPTER STATUS LOADING</span></div>
+  <div id="shell-tabs"><button id="shell-agent-tab" class="active" type="button">DT Programs</button><button id="shell-terminal-tab" type="button">Command Center</button><div id="process-tabs"></div><span id="adapter-summary">ADAPTER STATUS LOADING</span></div>
   <main>
     <aside>
       <h2>Agent Programs</h2>
@@ -29,10 +29,10 @@
     <section id="workspace">
       <div id="agent-shell">
       <section id="dt-prompt-console">
-        <div class="ai-title"><div><p class="brief-label">DT LOCAL INTELLIGENCE</p><h2>Ask DT</h2></div><span id="dt-runtime-state">LOCAL RUNTIME CHECKING</span></div>
-        <textarea id="dt-prompt" rows="4" placeholder="Ask DT to inspect, diagnose, run a learned skill, use a tool, or work with the local system…"></textarea>
+        <div class="ai-title"><div><p class="brief-label">ORION — DT LOCAL INTELLIGENCE</p><h2>Ask Orion</h2></div><span id="dt-runtime-state">LOCAL RUNTIME CHECKING</span></div>
+        <textarea id="dt-prompt" rows="4" placeholder="Ask Orion to inspect, diagnose, run a learned skill, use a tool, consult peer AIs, or work with the local system…"></textarea>
         <div class="provider-row"><button id="dt-prompt-run" type="button">Run locally</button><label class="toggle-label"><input id="dt-owner-approve" type="checkbox"> Owner approval for this run when a learned step requires it</label></div>
-        <pre id="dt-prompt-result">DT routes locally first. Remote AI is not required.</pre>
+        <pre id="dt-prompt-result">Orion routes locally first and consults peer AIs when useful.</pre>
         <small id="dt-capability-summary">Discovering shared tools and storage…</small>
       </section>
       <section id="ai-console">
@@ -101,12 +101,12 @@
       </div>
       </div>
       <section id="terminal-workspace" hidden>
-        <div class="ai-title"><div><p class="brief-label">DT MANAGED COMMAND RUNTIME</p><h2>Hidden child shells · visible as tabs here</h2></div><span id="terminal-state">NO SHELL SELECTED</span></div>
-        <div class="provider-row"><input id="terminal-name" placeholder="Session name"><input id="terminal-owner" value="DT Platform" placeholder="Owner/workstream"><input id="terminal-cwd" value="C:\Users\thoma\Documents\GitHub" placeholder="Working directory"><button id="terminal-create" type="button">+ New shell tab</button></div>
+        <div class="ai-title"><div><p class="brief-label">DT COMMAND CENTER</p><h2>One DT-owned surface for prompts, commands, receipts, and learning</h2></div><span id="terminal-state">NO SHELL SELECTED</span></div>
+        <div class="provider-row"><input id="terminal-name" placeholder="Session name"><input id="terminal-owner" value="DT Platform" placeholder="Owner/workstream"><input id="terminal-cwd" value="C:\Users\thoma\Documents\DT Platform" placeholder="Working directory"><button id="terminal-create" type="button">+ New shell tab</button></div>
         <div id="terminal-tabs"></div>
         <div id="terminal-empty"><h3>No command shell selected</h3><p>DT-owned PowerShell, Node, Python, and command jobs run without separate windows. Create or select a tab to view stdout/stderr and issue commands.</p></div>
-        <div id="terminal-panel" hidden><div class="terminal-head"><div><b id="terminal-title"></b><small id="terminal-meta"></small></div><button id="terminal-close" type="button">Close shell</button></div><pre id="terminal-output"></pre><div class="provider-row"><textarea id="terminal-input" rows="2" placeholder="Enter command for this DT-managed shell"></textarea><button id="terminal-send" type="button">Execute</button></div></div>
-        <small>Single DT shell · subprocess windows hidden · stdout/stderr retained in the command audit · AI not required</small>
+        <div id="terminal-panel" hidden><div class="terminal-head"><div><b id="terminal-title"></b><small id="terminal-meta"></small></div><button id="terminal-close" type="button">Close shell</button></div><pre id="terminal-output"></pre><div class="provider-row"><textarea id="terminal-input" rows="2" placeholder="Talk to DT naturally. Use /shell, $ or run for explicit shell execution."></textarea><button id="terminal-send" type="button">Send to DT</button></div></div>
+        <small>Integrated DT surface · natural language routes through DT Prompt Runtime · explicit shell work uses Terminal Runtime · all interactions enter DT experience/provenance</small>
       </section>
     </section>
   </main>
@@ -131,8 +131,8 @@
   <dialog id="admin-dialog">
     <button id="admin-close" aria-label="Close">×</button>
     <p class="eyebrow">AUTHORITY PLANE</p><h2>Owner administration</h2>
-    <p id="owner-state">Checking GitHub identity…</p>
-    <button id="owner-setup" type="button">Verify forum1100 and initialize</button>
+    <p id="owner-state">Checking local DT owner identity…</p>
+    <button id="owner-setup" type="button">Initialize local DT owner authority</button>
     <hr><label>Single-use recovery ticket<textarea id="recovery-ticket" rows="3"></textarea></label>
     <button id="owner-recover" type="button">Redeem recovery ticket</button>
     <pre id="owner-output">Keys are displayed once. Store them before closing.</pre>

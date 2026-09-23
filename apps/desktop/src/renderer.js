@@ -986,9 +986,18 @@ function selectTerminal(id) {
 
 
 async function refreshTerminalSessions() {
-  const sessions = await window.dt.listTerminals();
+  let sessions = await window.dt.listTerminals();
+  if (!sessions.length) {
+    const session = await window.dt.createTerminal({
+      name: 'DT Command Center', owner: 'DT Platform',
+      cwd: 'C:\Users\thoma\Documents\DT Platform'
+    });
+    sessions = [session];
+    terminalRuntime.output.set(session.id, 'DT Command Center ready. Natural language routes through DT; use /shell for explicit shell execution.\n');
+  }
   for (const session of sessions) terminalRuntime.sessions.set(session.id, session);
   renderTerminalTabs();
+  if (!terminalRuntime.selected && sessions[0]) selectTerminal(sessions[0].id);
 }
 
 document.querySelector('#terminal-create').addEventListener('click', async () => {
@@ -1010,7 +1019,19 @@ document.querySelector('#terminal-send').addEventListener('click', async () => {
   const input = document.querySelector('#terminal-input');
   if (!terminalRuntime.selected || !input.value.trim()) return;
   try {
-    await window.dt.sendTerminal(terminalRuntime.selected, input.value);
+    const response = await window.dt.submitCommandCenter({
+      sessionId: terminalRuntime.selected,
+      text: input.value,
+      input: selected ? currentInput() : {},
+      ownerApproved: document.querySelector('#dt-owner-approve').checked
+    });
+    if (response.route === 'PROMPT') {
+      const prior = terminalRuntime.output.get(terminalRuntime.selected) || '';
+      const rendered = '\n[DT COMMAND CENTER · PROMPT]\n' + JSON.stringify(response.result, null, 2) + '\n';
+      terminalRuntime.output.set(terminalRuntime.selected, prior + rendered);
+      const box = document.querySelector('#terminal-output');
+      box.textContent = terminalRuntime.output.get(terminalRuntime.selected); box.scrollTop = box.scrollHeight;
+    }
     input.value = '';
   } catch (error) { document.querySelector('#terminal-state').textContent = 'COMMAND FAILED · ' + error.message; }
 });
@@ -1056,7 +1077,17 @@ async function authenticatedBoot(){
   return false;
 }
 let suiteLaunched=false;
-async function launchSuite(){if(suiteLaunched)return;suiteLaunched=true;await boot();await refreshPeerConnections();await refreshTerminalSessions();await refreshAdapterStatus();await refreshDTRuntime();const view=new URLSearchParams(location.search).get('view');if(view==='terminals')setShellMode('terminals');setInterval(refreshAdapterStatus,5000);setInterval(refreshDTRuntime,5000);setInterval(()=>refreshPeerConnections().catch(()=>{}),5000);}
+async function ensureCommandCenterSession(){
+  await refreshTerminalSessions();
+  let session=[...terminalRuntime.sessions.values()].find(item=>item.name==='DT Command Center' && item.state==='running');
+  if(!session){
+    session=await window.dt.createTerminal({name:'DT Command Center',owner:'DT Platform',cwd:'C:\\Users\\thoma\\Documents\\DT Platform'});
+    terminalRuntime.sessions.set(session.id,session); terminalRuntime.output.set(session.id,'');
+  }
+  selectTerminal(session.id);
+  return session;
+}
+async function launchSuite(){if(suiteLaunched)return;suiteLaunched=true;await boot();await refreshPeerConnections();await ensureCommandCenterSession();await refreshAdapterStatus();await refreshDTRuntime();const view=new URLSearchParams(location.search).get('view');if(view==='terminals')setShellMode('terminals');setInterval(refreshAdapterStatus,5000);setInterval(refreshDTRuntime,5000);setInterval(()=>refreshPeerConnections().catch(()=>{}),5000);}
 authenticatedBoot().then(ok=>{if(ok)return launchSuite();}).catch(error=>{result.textContent=error.stack;});
 const closeoutDialog=document.querySelector('#closeout-dialog');
 document.querySelector('#suite-closeout').addEventListener('click',()=>closeoutDialog.showModal());
@@ -1070,8 +1101,8 @@ document.querySelector('#admin-open').addEventListener('click', async () => {
   adminDialog.showModal();
   const status = await window.dt.ownerStatus();
   document.querySelector('#owner-state').textContent = status.verified
-    ? `Verified GitHub owner: ${status.authenticatedLogin}`
-    : `Expected forum1100; authenticated: ${status.authenticatedLogin || 'none'}`;
+    ? `Verified local DT owner: ${status.owner}`
+    : 'Local DT owner authentication required';
 });
 document.querySelector('#admin-close').addEventListener('click', () => adminDialog.close());
 document.querySelector('#maintenance-backup').addEventListener('click', async () => { const out=document.querySelector('#maintenance-output'); out.textContent='Creating verified backup…'; try { out.textContent=JSON.stringify(await window.dt.maintenanceBackup(),null,2); } catch(error){ out.textContent=error.message; } });

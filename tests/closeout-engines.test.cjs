@@ -100,3 +100,52 @@ test('qualification completion still requires attributable promotion', () => {
   assert.equal(out.qualificationComplete, true);
   assert.equal(out.selfPromotionPermitted, false);
 });
+
+test('full conversation copier freezes exactly through terminal boundary', () => {
+  const out = runEngine('full-conversation-copier', {
+    records: [
+      {speaker:'user',text:'before'},
+      {speaker:'assistant',text:'reply'},
+      {speaker:'user',text:'DT_CLOSEOUT'},
+      {speaker:'assistant',text:'must not be captured'}
+    ],
+    terminalBoundary:'DT_CLOSEOUT', conversationIdentity:'chat-1', sourceClass:'LIVE_CAPTURE'
+  });
+  assert.equal(out.recordCount, 3);
+  assert.equal(out.records.at(-1).text, 'DT_CLOSEOUT');
+  assert.equal(out.currentCloseoutResponseExcluded, true);
+  assert.match(out.records[0].exact_text_sha256, /^[0-9a-f]{64}$/);
+});
+
+test('continuation cursor preserves parent lineage and exact resume rule', () => {
+  const out = runEngine('continuation-cursor', {
+    terminalBoundary:'DT_CLOSEOUT', lastCapturedSequence:23,
+    parentCloseoutHash:'a'.repeat(64), nextRequiredSource:'canonical export when available'
+  });
+  assert.equal(out.lastCapturedSequence, 23);
+  assert.equal(out.parentCloseoutHash, 'a'.repeat(64));
+  assert.equal(out.nextCaptureRule, 'BEGIN_AFTER_PREVIOUS_TERMINAL_BOUNDARY');
+  assert.equal(out.overwritePriorCursorPermitted, false);
+});
+test('canonical reconciler appends metadata without mutating live capture', () => {
+  const out = runEngine('canonical-reconciler', {
+    liveRecords:[{speaker:'user',text:'hello',exact_text_sha256:'b'.repeat(64)}],
+    canonicalRecords:[{role:'user',text:'hello',conversation_id:'c1',message_id:'m1',node_id:'n1',create_time:'2026-09-01T00:00:00Z'}]
+  });
+  assert.equal(out.status, 'RECONCILED');
+  assert.equal(out.liveRecordsMutated, false);
+  assert.equal(out.canonicalMetadataAppendOnly, true);
+  assert.equal(out.links[0].messageId, 'm1');
+});
+
+test('persistence verifier requires hash and byte readback equality', () => {
+  const good = runEngine('persistence-verifier', {
+    localHash:'c'.repeat(64), readbackHash:'c'.repeat(64), localBytes:42, readbackBytes:42,
+    destination:'archive', artifactId:'VERBATIM_CAUSAL_ARCHIVE.jsonl'
+  });
+  assert.equal(good.status, 'PERSISTENCE_VERIFIED');
+  const bad = runEngine('persistence-verifier', {
+    localHash:'c'.repeat(64), readbackHash:'d'.repeat(64), localBytes:42, readbackBytes:41
+  });
+  assert.equal(bad.status, 'PERSISTENCE_UNVERIFIED');
+});

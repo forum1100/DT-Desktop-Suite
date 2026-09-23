@@ -1,3 +1,4 @@
+const { loadPerceptionContext } = require('./perception-context.cjs');
 const crypto = require('node:crypto');
 const { getPeerExecutive } = require('../../auth/src/peers.cjs');
 
@@ -32,6 +33,7 @@ function createPeerEnvelope(input = {}) {
     captureSessionId: input.captureSessionId,
     capability: String(input.capability).trim(),
     payload: input.payload ?? null,
+    perceptionContext: input.perceptionContext || loadPerceptionContext(),
     parentRequestId: input.parentRequestId || null,
     createdAt: new Date(now).toISOString(),
     expiresAt: new Date(expiresAt).toISOString()

@@ -1,0 +1,23 @@
+{
+  "schema": "orion-campaign/1.0",
+  "name": "Orion",
+  "phase1": {
+    "name": "INTENSIVE_LEARNING",
+    "starts": "2026-09-22T22:29:00-04:00",
+    "ends": "2026-10-22T22:29:00-04:00"
+  },
+  "campaign_ends": "2026-11-26T23:40:00-05:00",
+  "owner_authorization": {
+    "validated_tooling_and_model_improvements": true,
+    "routine_operational_input": true,
+    "routine_browser_prompting": true,
+    "routine_command_and_code_entry": true,
+    "reuse_local_context_without_reasking_user": true,
+    "repeat_prompt_required": false,
+    "rollback_required": true,
+    "provenance_required": true,
+    "hardware_governor_required": true
+  },
+  "browser_context_rule": "A signed-in provider account may preserve account/session state, but a newly opened chat is treated as fresh context unless prior conversation restoration is positively observed.",
+  "continuity_authority": "DT_LOCAL_STATE"
+}

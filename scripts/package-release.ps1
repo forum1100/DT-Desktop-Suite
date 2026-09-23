@@ -23,9 +23,7 @@ $docs = Join-Path $release 'Directions'
 }
 
 Copy-Item (Join-Path $repo 'dist\DT Desktop Suite Setup 0.1.0.exe') (Join-Path $installers 'DT Desktop Suite Setup.exe')
-Copy-Item (Join-Path $repo 'dist-command\DT Command Center Setup 0.1.0.exe') (Join-Path $installers 'DT Command Center Setup.exe')
 Copy-Item (Join-Path $repo 'dist\DT Desktop Suite 0.1.0.exe') (Join-Path $portable 'DT Desktop Suite.exe')
-Copy-Item (Join-Path $repo 'dist-command\DT Command Center Portable 0.1.0.exe') (Join-Path $portable 'DT Command Center.exe')
 Copy-Item (Join-Path $repo 'apps\desktop\assets\icons\*.ico') $icons
 
 $agents = @(
@@ -68,22 +66,19 @@ foreach ($agent in $agents) {
   Set-Content -Path (Join-Path $launchers ($agent.Name + '.cmd')) -Value $line -Encoding ascii
 }
 $suiteLauncher = '@start "" "%~dp0Portable Programs\DT Desktop Suite.exe"'
-$commandLauncher = '@start "" "%~dp0Portable Programs\DT Command Center.exe"'
 Set-Content -Path (Join-Path $release 'OPEN DT DESKTOP SUITE.cmd') -Value $suiteLauncher -Encoding ascii
-Set-Content -Path (Join-Path $release 'OPEN DT COMMAND CENTER.cmd') -Value $commandLauncher -Encoding ascii
 
 $readme = @'
 DT WORKS SUITE — TRANSFER PACKAGE
 
 Fast start:
-1. Open Portable Programs\DT Desktop Suite.exe, or use OPEN DT DESKTOP SUITE.cmd.
+1. Open Portable Programs\DT Desktop Suite.exe, or use OPEN DT DESKTOP SUITE.cmd. The Command Center is built into the DT Desktop Suite.
 2. Select one of thirty-two programs and run local bounded analysis or a registered simulation replay without connecting an AI.
 3. To use an AI, connect your own provider key in the top console.
 4. Export the Consumer Memory Vault before moving computers.
 
 Installers:
 - Installers\DT Desktop Suite Setup.exe
-- Installers\DT Command Center Setup.exe
 
 Security and custody:
 - This package contains no API keys, recovery tickets, vault history, or personal credentials.

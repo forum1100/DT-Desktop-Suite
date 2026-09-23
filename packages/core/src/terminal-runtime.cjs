@@ -38,7 +38,7 @@ class TerminalRuntime {
     if (!name || !owner || !cwd) throw new Error('Name, owner, and working directory are required');
     if (!fs.existsSync(cwd) || !fs.statSync(cwd).isDirectory()) throw new Error('Working directory does not exist');
     const id = crypto.randomUUID();
-    const child = spawn('powershell.exe', ['-NoLogo', '-NoProfile', '-Command', '-'], {
+    const child = spawn('powershell.exe', ['-NoLogo', '-NoProfile', '-NoExit'], {
       cwd,
       windowsHide: true,
       stdio: ['pipe', 'pipe', 'pipe']

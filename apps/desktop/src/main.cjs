@@ -18,7 +18,13 @@ const { DTLocalIntelligence } = require('../../../packages/core/src/local-intell
 const { PromptRuntime } = require('../../../packages/core/src/prompt-runtime.cjs');
 const { runHeadlessCommand } = require('../../../packages/core/src/headless-command.cjs');
 const { ExperienceLedger } = require('../../../packages/core/src/experience-ledger.cjs');
+const { PerceptionMemory } = require('../../../packages/core/src/perception-memory.cjs');
+const { parseJson: parseCouncilJson, advisorySystem, synthesisSystem } = require('../../../packages/core/src/ai-council.cjs');
+const { DESKTOP_STORAGE_POLICY } = require('../../../packages/core/src/storage-policy.cjs');
+const { executeResidentCloseout } = require('../../../packages/core/src/dt-closeout-runtime.cjs');
+const { classifyCommandCenterInput } = require('../../../packages/core/src/command-center-router.cjs');
 const { ResidentRuntime } = require('../../../packages/core/src/resident-runtime.cjs');
+const { OrionImprovementLoop } = require('../../../packages/core/src/orion-improvement-loop.cjs');
 const { DTBootstrap } = require('../../../packages/core/src/bootstrap.cjs');
 const { createLocalProcedure } = require('../../../packages/core/src/training.cjs');
 const { ObservationLearningIndex } = require('../../../packages/core/src/observation-learning.cjs');
@@ -44,9 +50,10 @@ const { routeTask, executeWorkflow } = require('../../../packages/tools/src/work
 const { inboxFor, processInbox } = require('../../../packages/tools/src/inbox.cjs');
 const { preflight } = require('../../../packages/safety/src/preflight.cjs');
 const { PROVIDERS, providerDefinition, buildRequest, requestAI } = require('../../../packages/providers/src/index.cjs');
+const COUNCIL_DEFAULT_MODELS = Object.freeze({ openai:'gpt-5.2', anthropic:'claude-sonnet-4-5', xai:'grok-4', ollama:'llama3.2' });
 const { listSimulations, replaySimulation } = require('../../../packages/simulations/src/replay.cjs');
 
-const utilityMode = process.argv.includes('--grok-provider-ping');
+const utilityMode = process.argv.includes('--grok-provider-ping') || process.argv.includes('--council-smoke-test');
 if (utilityMode) app.setPath('userData', path.join(process.env.APPDATA, 'dt-desktop-suite'));
 
 let mainWindow = null;
@@ -68,12 +75,24 @@ if (!utilityMode) {
   });
 }
 
-let vault, keys, broker, gateway, recovery, supervisor, adapters, terminals, capabilityBus, skillRegistry, observationLearning, errorLog, maintenance, localIntelligence, promptRuntime, experience, residentRuntime, bootstrapState, tray;
+let vault, keys, broker, gateway, recovery, supervisor, adapters, terminals, capabilityBus, skillRegistry, observationLearning, perceptionMemory, errorLog, maintenance, localIntelligence, promptRuntime, experience, residentRuntime, orionImprovement, bootstrapState, tray;
 process.on('uncaughtException', error => { try { errorLog?.append(error, { source: 'uncaughtException' }); } catch {} });
 process.on('unhandledRejection', error => { try { errorLog?.append(error instanceof Error ? error : new Error(String(error)), { source: 'unhandledRejection' }); } catch {} });
 let isQuitting = false;
 let localUserAuthenticated = false;
 let cleanCloseout = false;
+
+function syncBrowserExtension() {
+  const source = app.isPackaged
+    ? path.join(process.resourcesPath, 'browser-extension')
+    : path.resolve(__dirname, '../../../resources/browser-extension');
+  const destination = path.join(process.env.USERPROFILE || app.getPath('home'), 'TJ_Personal_Pro', 'browser-extension');
+  if (!fs.existsSync(source)) return { available:false, source, destination };
+  fs.mkdirSync(path.dirname(destination), { recursive:true });
+  fs.rmSync(destination, { recursive:true, force:true });
+  fs.cpSync(source, destination, { recursive:true });
+  return { available:true, source, destination };
+}
 const suiteStartedAt = Date.now();
 const activeRuns = new Map();
 const activeCaptureSessions = new Set();
@@ -167,6 +186,72 @@ function persistPeerConnection(executiveId, state = {}) {
   return record;
 }
 
+async function runAICouncil(input = {}, callContext = {}) {
+  const task = String(input.task || input.prompt || '').trim();
+  const advisoryOnly = input.advisoryOnly === true;
+  if (!task) throw new Error('AI council task is required');
+  const models = recentProviderModels();
+  const envModels = {
+    openai: process.env.DT_COUNCIL_OPENAI_MODEL,
+    anthropic: process.env.DT_COUNCIL_ANTHROPIC_MODEL,
+    xai: process.env.DT_COUNCIL_XAI_MODEL,
+    ollama: process.env.DT_COUNCIL_OLLAMA_MODEL,
+    compatible: process.env.DT_COUNCIL_COMPATIBLE_MODEL
+  };
+  const candidates = [];
+  for (const provider of ['openai','anthropic','xai','compatible']) {
+    const model = String(envModels[provider] || models[provider] || COUNCIL_DEFAULT_MODELS[provider] || '').trim();
+    if (!model) continue;
+    if (PROVIDERS[provider]?.keyRequired && !fs.existsSync(credentialFile(provider))) continue;
+    if (provider === 'compatible' && !process.env.DT_COUNCIL_COMPATIBLE_BASE_URL) continue;
+    candidates.push({ provider, model });
+  }
+  if (!candidates.length) throw new Error('No configured AI council advisors are currently available');
+  const tools = capabilityBus.list().filter(x => !String(x.id).startsWith('ai.council.'));
+  const skills = skillRegistry.list().filter(x => x.state === 'PROMOTED');
+  const advisoryPrompt = ['User task: ' + task, 'Available DT tools: ' + JSON.stringify(tools), 'Promoted skills: ' + JSON.stringify(skills.map(x=>({id:x.id,name:x.name,description:x.description})))].join('\n');
+  const results = await Promise.allSettled(candidates.map(async ({provider,model}) => {
+    const overrides = provider === 'compatible' ? { baseUrl: process.env.DT_COUNCIL_COMPATIBLE_BASE_URL } : {};
+    const definition = providerDefinition(provider, overrides);
+    const reply = await requestAI(definition, {
+      apiKey: PROVIDERS[provider]?.keyRequired ? readCredential(provider) : null,
+      model, system: advisorySystem(provider), messages:[{role:'user',content:advisoryPrompt}]
+    });
+    let recommendation;
+    try { recommendation = parseCouncilJson(reply.text); }
+    catch { recommendation = { summary:String(reply.text||''), proposedMode:'answer', proposedId:null, input:{}, rationale:'Unstructured advisor response', risks:[], confidence:null, dissent:[] }; }
+    return { provider, model, recommendation, raw:String(reply.text||'') };
+  }));
+  const advisors = results.map((row, index) => row.status === 'fulfilled'
+    ? { ok:true, ...row.value }
+    : { ok:false, provider:candidates[index].provider, model:candidates[index].model, error:String(row.reason?.message || row.reason || 'advisor failed') });
+  const successful = advisors.filter(x => x.ok);
+  if (!successful.length) throw new Error('All available AI council advisors failed');
+  const localStatus = await localIntelligence.status();
+  if (!localStatus.available) throw new Error('DT local council chair is offline');
+  const context = { task, advisoryOnly, advisors: successful.map(x=>({provider:x.provider,model:x.model,recommendation:x.recommendation})), failedAdvisors: advisors.filter(x=>!x.ok) };
+  const synthesisText = await localIntelligence.complete({
+    system: synthesisSystem(tools, skills.map(x=>({id:x.id,name:x.name,description:x.description})), { perception: perceptionMemory?.plannerContext?.() || {} }),
+    prompt: JSON.stringify(context)
+  });
+  const plan = parseCouncilJson(synthesisText);
+  const receipt = { task, advisors, plan, decidedAt:new Date().toISOString(), execution:null };
+  if (advisoryOnly && (plan.mode === 'tool' || plan.mode === 'skill')) {
+    receipt.execution = { suppressed: true, reason: 'ADVISORY_ONLY' };
+  } else if (plan.mode === 'tool') {
+    if (!capabilityBus.has(plan.id) || String(plan.id).startsWith('ai.council.')) throw new Error('Council selected an unavailable or recursive tool');
+    receipt.execution = await capabilityBus.call(plan.id, plan.input || {}, { ownerApproved: callContext.ownerApproved === true });
+  } else if (plan.mode === 'skill') {
+    const skill = skillRegistry.load(plan.id);
+    if (!skill || skill.state !== 'PROMOTED') throw new Error('Council selected an unavailable skill');
+    receipt.execution = await executeSkill(skill, plan.input || {}, localSkillRuntime(callContext.ownerApproved === true));
+  }
+  experience?.append('ai-council-decision', receipt, { surface:'dt-prompt', sourceClass:'DERIVED_MULTI_AI_DECISION' });
+  vault?.append('ai-council-decision', 'dt-ai-council', receipt);
+  await postCouncilBoard({ task, advisors: advisors.map(x=>({provider:x.provider,model:x.model,ok:x.ok,recommendation:x.recommendation||null,error:x.error||null})), plan, execution:receipt.execution });
+  return receipt;
+}
+
 function commandAllowedRoots() {
   const roots = [process.env.USERPROFILE || ''].filter(Boolean);
   const drive = 'G:\My Drive'; if (fs.existsSync(drive)) roots.push(drive);
@@ -202,6 +287,7 @@ function writeAiMailbox(peerId, direction, payload = {}) {
   fs.writeFileSync(temp, JSON.stringify(body, null, 2), 'utf8');
   fs.renameSync(temp, target);
   vault.append('ai-mailbox-write', 'dt-training-bot', { peerId, direction, path: target, sha256: body.sha256 });
+  experience?.append('ai-mailbox-interaction',{peerId,direction,path:target,sha256:body.sha256,payload},{surface:'dt-ai-mailbox',sourceClass:'LIVE_INTERACTION'});
   return { ok: true, peerId, direction, path: target, sha256: body.sha256 };
 }
 function readAiMailbox(peerId, direction = 'inbound') {
@@ -268,6 +354,8 @@ function localSkillRuntime(ownerApproved = false) {
       }
     },
     executeWorkflow: async request => executeWorkflow(request, broker, vault),
+    runCloseout: async request => executeResidentCloseout({ experience, vault, runAgent, executeWorkflow,
+      input: request || {}, home: process.env.USERPROFILE || bootstrapState?.environment?.home }),
     callTool: async (toolId, input) => capabilityBus.call(toolId, input || {}, { ownerApproved }),
     runCommand: async (step, input) => {
       const result = runHeadlessCommand(step, input || {}, {
@@ -297,7 +385,7 @@ function createTray() {
   tray.setToolTip('DT Desktop Suite — resident runtime active');
   tray.setContextMenu(Menu.buildFromTemplate([
     { label: 'Open DT', click: () => createWindow() },
-    { label: 'Command shells', click: () => createWindow(null, 'terminals') },
+    { label: 'Command Center', click: () => createWindow(null, 'terminals') },
     { type: 'separator' },
     { label: 'Quit DT Platform', click: () => { isQuitting = true; app.quit(); } }
   ]));
@@ -345,6 +433,46 @@ function readCredential(provider) {
   return safeStorage.decryptString(fs.readFileSync(file));
 }
 
+function recentProviderModels() {
+  const latest = {};
+  for (const row of (experience?.recent(2000) || [])) {
+    if (row.kind !== 'provider-result') continue;
+    const provider = String(row.data?.provider || ''), model = String(row.data?.model || '');
+    if (provider && model) latest[provider] = model;
+  }
+  for (const row of (vault?.all?.() || [])) {
+    if (row.kind !== 'provider-response') continue;
+    const provider = String(row.data?.provider || ''), model = String(row.data?.model || '');
+    if (provider && model) latest[provider] = model;
+  }
+  return latest;
+}
+
+async function postCouncilBoard(payload) {
+  try {
+    await fetch('http://127.0.0.1:43120/v1/agent-messages', {
+      method: 'POST', headers: {'content-type':'application/json'},
+      body: JSON.stringify({ sender_id:'dt-ai-council', recipient_id:'user', topic:'ai.council',
+        message_type:'council-update', payload, provenance:{origin:'DT Desktop Suite'} })
+    });
+  } catch {}
+}
+
+function councilStatus() {
+  const models = recentProviderModels();
+  const rows = [];
+  for (const provider of ['openai','anthropic','xai','ollama','compatible']) {
+    const envKey = 'DT_COUNCIL_' + provider.toUpperCase() + '_MODEL';
+    const model = String(process.env[envKey] || models[provider] || COUNCIL_DEFAULT_MODELS[provider] || '').trim();
+    const credentialReady = PROVIDERS[provider]?.keyRequired ? fs.existsSync(credentialFile(provider)) : true;
+    const baseUrlReady = provider !== 'compatible' || Boolean(process.env.DT_COUNCIL_COMPATIBLE_BASE_URL);
+    rows.push({ provider, model: model || null, credentialReady, baseUrlReady,
+      eligible: Boolean(model && credentialReady && baseUrlReady) });
+  }
+  return { available: rows.some(x=>x.eligible), advisors: rows, localChair: true,
+    authority: 'DT_LOCAL_EXECUTION_ONLY', updatedAt:new Date().toISOString() };
+}
+
 function provenanceKeys() {
   if (!safeStorage.isEncryptionAvailable()) throw new Error('OS encryption unavailable for provenance key');
   const root = path.join(dataRoot(), 'credentials');
@@ -390,6 +518,7 @@ function authenticatedGithubLogin() {
 }
 
 const DT_GITHUB_REPO = 'forum1100/DT-Desktop-Suite';
+const GITHUB_TRANSPORT_ENABLED = process.env.DT_ENABLE_GITHUB_TRANSPORT === '1';
 const GROK_INBOUND_PATH = 'runtime/peer-mailbox/inbound/grok-ceo';
 const GROK_OUTBOUND_PATH = 'runtime/peer-mailbox/outbound/grok-ceo';
 const PEER_CHAT_INBOUND_PATH = 'runtime/peer-chat/inbound';
@@ -410,6 +539,7 @@ function readGithubMailboxFile(executable, repoPath) {
 }
 
 function findGrokProposalsForCapture(captureSessionId, capability = null) {
+  if (!GITHUB_TRANSPORT_ENABLED) throw new Error('GitHub transport is disabled. DT is running local-first. Set DT_ENABLE_GITHUB_TRANSPORT=1 to opt in.');
   const executable = githubCliExecutable();
   if (!executable) throw new Error('GitHub CLI is required for temporary Grok mailbox transport');
   const listing = JSON.parse(ghApi(executable, [`repos/${DT_GITHUB_REPO}/contents/${GROK_INBOUND_PATH}?ref=main`]));
@@ -429,6 +559,7 @@ function findGrokProposalForCapture(captureSessionId, capability = null) {
 }
 
 function publishGrokReceipt(receipt, purpose = 'peer') {
+  if (!GITHUB_TRANSPORT_ENABLED) throw new Error('GitHub transport is disabled. DT is running local-first. Set DT_ENABLE_GITHUB_TRANSPORT=1 to opt in.');
   const executable = githubCliExecutable();
   if (!executable) throw new Error('GitHub CLI is required to return the Grok receipt');
   const name = `${receipt.proposalHash}.receipt.json`;
@@ -505,6 +636,7 @@ function listLocalPeerMessages(limit = 200) {
 }
 
 function publishPeerChatMessage(message) {
+  if (!GITHUB_TRANSPORT_ENABLED) throw new Error('GitHub transport is disabled. DT is running local-first. Set DT_ENABLE_GITHUB_TRANSPORT=1 to opt in.');
   const executable = githubCliExecutable();
   if (!executable) throw new Error('GitHub CLI is required for temporary peer-chat transport');
   const repoPath = `${PEER_CHAT_OUTBOUND_PATH}/${message.to}/${message.messageHash}.json`;
@@ -517,6 +649,7 @@ function publishPeerChatMessage(message) {
 }
 
 function pollPeerChatInbound(captureSessionId) {
+  if (!GITHUB_TRANSPORT_ENABLED) throw new Error('GitHub transport is disabled. DT is running local-first. Set DT_ENABLE_GITHUB_TRANSPORT=1 to opt in.');
   const executable = githubCliExecutable();
   if (!executable) throw new Error('GitHub CLI is required for temporary peer-chat transport');
   const connected = connectedPeers();
@@ -532,6 +665,7 @@ function pollPeerChatInbound(captureSessionId) {
       if (!verifyPeerMessage(message) || message.from !== peer.executiveId || !connectedIds.has(message.to)) continue;
       if (message.captureSessionId !== captureSessionId || ingested.has(message.messageHash)) continue;
       appendLocalPeerMessage(message); ingested.add(message.messageHash); received.push(message);
+      experience?.append('peer-ai-message',{direction:'inbound',message},{surface:'dt-peer-chat',sourceClass:'LIVE_INTERACTION'});
       vault.append('peer-message-ingested', 'dt-peer-chat', { messageHash: message.messageHash,
         from: message.from, to: message.to, captureSessionId, transport: 'github-temporary-mailbox' });
     }
@@ -581,6 +715,10 @@ function registerIPC(registry) {
 
   ipcMain.handle('bootstrap:status', () => bootstrapState);
   ipcMain.handle('capabilities:list', () => capabilityBus.list());
+  ipcMain.handle('perception:status', () => ({ recent: perceptionMemory.recent(40), derived: perceptionMemory.derivedRecent(8) }));
+  ipcMain.handle('perception:ingest-artifact', (_event, request={}) => perceptionMemory.ingestArtifact(request.path, request.sourceClass || 'HUMAN_AUTHORED_REFLECTION'));
+  ipcMain.handle('perception:ingest-directory', (_event, request={}) => perceptionMemory.ingestDirectory(request.path, request.sourceClass || 'HUMAN_AUTHORED_REFLECTION'));
+
   ipcMain.handle('runtime:status', async () => ({
     resident: residentRuntime?.status() || { running: false },
     localModel: await localIntelligence.status(),
@@ -683,6 +821,32 @@ function registerIPC(registry) {
   ipcMain.handle('terminal:create', (_event, input) => terminals.create(input || {}));
   ipcMain.handle('terminal:send', (_event, id, command) => terminals.send(id, command));
   ipcMain.handle('terminal:close', (_event, id) => terminals.close(id));
+  ipcMain.handle('command-center:submit', async (_event, request = {}) => {
+    const text = String(request.text || '').trim();
+    const decision = classifyCommandCenterInput(text);
+    if (decision.route === 'EMPTY') throw new Error('Command Center input is empty');
+    experience.append('command-center-input', { text, route: decision.route, reason: decision.reason },
+      { surface: 'dt-command-center', sessionId: request.sessionId || null });
+    if (decision.route === 'SHELL') {
+      if (!request.sessionId) throw new Error('Select or create the DT Command Center shell first');
+      const submitted = terminals.send(request.sessionId, decision.payload);
+      experience.append('command-center-route', { route: 'SHELL', commandId: submitted.commandId,
+        reason: decision.reason }, { surface: 'dt-command-center', sessionId: request.sessionId });
+      return { route: 'SHELL', reason: decision.reason, ...submitted };
+    }
+    try {
+      const result = await promptRuntime.handle({ prompt: decision.payload, input: request.input || {},
+        runtime: localSkillRuntime(request.ownerApproved === true) });
+      experience.append('command-center-result', { route: 'PROMPT', prompt: decision.payload, result },
+        { surface: 'dt-command-center' });
+      return { route: 'PROMPT', reason: decision.reason, result };
+    } catch (error) {
+      const failure = { source: 'command-center', prompt: decision.payload, error: String(error.stack || error) };
+      experience.append('command-center-failure', failure, { surface: 'dt-command-center' });
+      residentRuntime?.submitIncident(failure);
+      throw error;
+    }
+  });
 
   ipcMain.handle('hub:status', () => ({ ...gateway.status(), port: gateway.port }));
   ipcMain.handle('agents:list', () => registry.list().map(agent => ({
@@ -722,6 +886,7 @@ function registerIPC(registry) {
     if (!ids.has(request.from) || !ids.has(request.to)) throw new Error('Both peer-chat participants must be connected');
     const message = createPeerMessage({ from: request.from, to: request.to, text: request.text, captureSessionId });
     appendLocalPeerMessage(message);
+    experience?.append('peer-ai-message',{direction:'outbound',message},{surface:'dt-peer-chat',sourceClass:'LIVE_INTERACTION'});
     const published = publishPeerChatMessage(message);
     vault.append('peer-message-sent', 'dt-peer-chat', { messageHash: message.messageHash,
       from: message.from, to: message.to, captureSessionId, published, executionAuthority: false, mouseAuthority: false });
@@ -1049,13 +1214,20 @@ Authorize exactly one execution?`,
     const replacement=createLocalUser({username:record.username,password:request.newPassword,signInMode:'EVERY_LAUNCH'}); replacement.record.id=record.id; replacement.record.createdAt=record.createdAt; saveLocalUser(replacement.record); localUserAuthenticated=true;
     vault.append('local-user-recovered','dt-auth',{username:record.username}); return {status:localUserStatus(),recoveryCode:replacement.recoveryCode};
   });
-  ipcMain.handle('session:closeout', (_event, decision) => {
+  ipcMain.handle('session:closeout', (_event, decision = 'save') => {
     if(!localUserStatus().authenticated) throw new Error('Sign in required');
-    let exported=null; if(decision==='export') exported=automaticRecoveryExport('USER_CLOSEOUT_EXPORT');
-    else if(decision==='discard') vault.append('session-closeout-discard','dt-desktop',{scope:'ephemeral-session-only',persistentAuditPreserved:true});
-    else throw new Error('Closeout decision must be export or discard');
-    clearSessionDirty(dataRoot()); cleanCloseout=true; setTimeout(()=>app.quit(),80); return {decision,exported};
+    const mode=String(decision||'save').toLowerCase();
+    if(!['save','checkpoint','export'].includes(mode)) throw new Error('Desktop closeout supports save, checkpoint, or export; persistent DT data is never discarded on close.');
+    let exported=null;
+    if(mode==='export') exported=automaticRecoveryExport('USER_REQUESTED_DESKTOP_EXPORT');
+    vault.append('desktop-session-checkpoint','dt-desktop',{mode,persistence:'DURABLE_HOME_SERVER',dataDeletionPerformed:false});
+    clearSessionDirty(dataRoot()); cleanCloseout=true; setTimeout(()=>app.quit(),80);
+    return {decision:mode,exported,persistence:'DURABLE_HOME_SERVER',dataDeletionPerformed:false};
   });
+  ipcMain.handle('storage:policy', () => DESKTOP_STORAGE_POLICY);
+  ipcMain.handle('tokenizer:status', () => perceptionMemory.tokenizerStatus());
+  ipcMain.handle('tokenizer:train-candidate', (_event, request={}) => perceptionMemory.trainTokenizerGeneration(request.texts||[], request.options||{}));
+  ipcMain.handle('tokenizer:promote', (_event, request={}) => perceptionMemory.promoteTokenizer(request.path));
   ipcMain.handle('vault:list', () => vault.all());
   ipcMain.handle('vault:export', async () => {
     const bundle = createBundle(vault.all(), { application: 'DT Desktop Suite' });
@@ -1112,27 +1284,30 @@ Authorize exactly one execution?`,
     return issued;
   });
   ipcMain.handle('owner:status', () => {
-    const login = authenticatedGithubLogin();
-    return { owner: ownerProfile.githubLogin, authenticatedLogin: login, verified: isOwner(ownerProfile, login) };
+    const local = localUserStatus();
+    return { owner: local.username || 'local-dt-owner', authenticatedLogin: null, verified: local.authenticated, authoritySource: 'LOCAL_DT_USER', githubTransportEnabled: GITHUB_TRANSPORT_ENABLED };
   });
   ipcMain.handle('owner:setup', () => {
-    const login = authenticatedGithubLogin();
-    if (!isOwner(ownerProfile, login)) throw new Error('Authenticate GitHub CLI as forum1100 first');
+    const local = localUserStatus();
+    if (!local.authenticated) throw new Error('Authenticate the local DT user first');
+    const login = ownerProfile.githubLogin;
     const priorOwner = keys.load().find(row => row.label === `owner:${ownerProfile.githubLogin}` && !row.revokedAt);
     const priorRecovery = recovery.load();
     const adminKey = priorOwner ? null : ownerBootstrap(keys, ownerProfile);
     const recoveryTickets = priorRecovery.length ? [] : recovery.issuePair();
     vault.append('owner-setup', 'dt-hub', {
-      githubLogin: login,
+      authoritySource: 'LOCAL_DT_USER', localUsername: local.username, ownerIdentity: login,
       adminKeyId: adminKey?.id || priorOwner?.id,
       recoveryTicketIds: recoveryTickets.map(item => item.id)
     });
     return { verified: true, adminKey, recoveryTickets, shownOnce: true };
   });
   ipcMain.handle('owner:recover', (_event, ticket) => {
-    const login = authenticatedGithubLogin();
+    const local = localUserStatus();
+    if (!local.authenticated) throw new Error('Authenticate the local DT user first');
+    const login = ownerProfile.githubLogin;
     const restored = recovery.redeem(ticket, login);
-    vault.append('owner-recovered', 'dt-hub', { githubLogin: login, adminKeyId: restored.id });
+    vault.append('owner-recovered', 'dt-hub', { authoritySource: 'LOCAL_DT_USER', localUsername: local.username, ownerIdentity: login, adminKeyId: restored.id });
     return { verified: true, adminKey: restored, shownOnce: true };
   });
   ipcMain.handle('provider:list', () => Object.entries(PROVIDERS).map(([id, item]) => {
@@ -1158,6 +1333,7 @@ Authorize exactly one execution?`,
   });
   ipcMain.handle('provider:ask', async (_event, request) => {
     const { provider, model, baseUrl, prompt, agentId, input, captureSessionId } = request;
+    experience.append('provider-prompt',{provider,model,prompt:String(prompt||''),agentId:agentId||null,input:input||{},captureSessionId},{surface:'dt-provider-peer',sourceClass:'LIVE_INTERACTION'});
     if (!String(prompt || '').trim()) throw new Error('Question required');
     if (!activeCaptureSessions.has(String(captureSessionId || ''))) {
       throw new Error('Active user-visible DT task capture is required for connected AI work');
@@ -1187,6 +1363,7 @@ Authorize exactly one execution?`,
       provider, model, prompt: prompt.trim(), response: response.text, safety,
       captureSessionId, executiveStanding: 'PEER', gatewayAuthority: 'DT_PLATFORM'
     });
+    experience.append('provider-result',{provider,model,agentId:agentId||null,response:response.text,safety,receiptId:receipt.id,captureSessionId},{surface:'dt-provider-peer',sourceClass:'LIVE_INTERACTION'});
     return { text: response.text, safety, receipt };
   });
 }
@@ -1202,16 +1379,13 @@ app.whenReady().then(async () => {
   }, { useSystemPicker: false });
   const root = dataRoot();
   vault = new Vault(root);
+  const browserExtension = syncBrowserExtension();
+  vault.append('browser-extension-sync', 'dt-browser', browserExtension);
   if (!utilityMode) {
     const priorDirty = readDirtySession(root);
     if (priorDirty) {
-      try {
-        const recovered = automaticRecoveryExport('PREVIOUS_UNCLEAN_SESSION_DETECTED_ON_STARTUP');
-        vault.append('unclean-session-recovery-export', 'dt-desktop', { priorSession: priorDirty, recovery: recovered });
-        clearSessionDirty(root);
-      } catch (error) {
-        vault.append('unclean-session-recovery-failed', 'dt-desktop', { priorSession: priorDirty, error: String(error.message || error) });
-      }
+      vault.append('unclean-session-detected', 'dt-desktop', { priorSession: priorDirty, persistence:'DURABLE_HOME_SERVER', dataLossAssumed:false });
+      clearSessionDirty(root);
     }
     markSessionDirty(root, { pid: process.pid, version: app.getVersion(), priorUncleanDetected: !!priorDirty, priorSession: priorDirty || null });
   }
@@ -1221,11 +1395,18 @@ app.whenReady().then(async () => {
   seedRecoveredAdapterEvidence();
   bootstrapState = new DTBootstrap(root).run();
   experience = new ExperienceLedger(root);
+  perceptionMemory = new PerceptionMemory(root);
   residentRuntime = new ResidentRuntime({ root, vault, experience, maxWorkers: 3 });
+  experience.setObserver(event => {
+    const point = perceptionMemory.observe(event);
+    if (perceptionMemory.pending === 0) residentRuntime.submitExperience(experience.recent(64));
+    return point;
+  });
   if (!utilityMode) residentRuntime.start();
   capabilityBus = new CapabilityBus({ vault });
   registerCoreCapabilities(capabilityBus, {
     environment: bootstrapState.environment, runHeadlessCommand, experience, residentRuntime,
+    runAICouncil, councilStatus, getSkills: () => skillRegistry?.list?.() || [],
     extraRoots: ['C:\DT'].filter(value => fs.existsSync(value))
   });
   skillRegistry = new LearnedSkillRegistry(root);
@@ -1236,7 +1417,24 @@ app.whenReady().then(async () => {
   errorLog = new StructuredErrorLog(root);
   maintenance = new MaintenanceService({ root, vault, errorLog });
   localIntelligence = new DTLocalIntelligence();
-  promptRuntime = new PromptRuntime({ skillRegistry, capabilityBus, localIntelligence, executeSkill, vault });
+  const campaignFile = path.resolve(__dirname, '../../../runtime/orion-campaign.json');
+  let campaign = {};
+  try { campaign = JSON.parse(fs.readFileSync(campaignFile, 'utf8')); } catch {}
+  const home = process.env.USERPROFILE || app.getPath('home');
+  const campaignRoots = [home, 'G:\\My Drive', 'C:\\DT', path.join(home, 'Documents', 'TJ Personal Pro')]
+    .filter(value => fs.existsSync(value));
+  const repoRoot = process.env.DT_REPO_ROOT || path.join(home, 'Documents', 'GitHub', 'DT-Desktop-Suite');
+  orionImprovement = new OrionImprovementLoop({
+    root, repoRoot, localIntelligence, runAICouncil, vault, experience,
+    historyRoots: campaignRoots,
+    campaignEnd: campaign.campaign_ends || '2026-11-26T23:40:00-05:00',
+    autoPromote: campaign.owner_authorization?.validated_tooling_and_model_improvements === true
+  });
+  capabilityBus.register({ id:'orion.improvement.status', description:'Read Orion improvement campaign, hardware, history, and promotion state.', risk:'READ_ONLY' }, async () => orionImprovement.writeStatus());
+  capabilityBus.register({ id:'orion.improvement.run_once', description:'Run one hardware-governed Orion improvement/idea-realization cycle.', risk:'LOCAL_MUTATION' }, async () => orionImprovement.cycle());
+  capabilityBus.register({ id:'orion.improvement.refresh_history', description:'Refresh Orion historical closeout, Spark, and saved-idea corpus index.', risk:'READ_ONLY' }, async () => orionImprovement.refreshHistory());
+  if (!utilityMode) orionImprovement.start();
+  promptRuntime = new PromptRuntime({ skillRegistry, capabilityBus, localIntelligence, executeSkill, vault, experience, perceptionMemory });
   terminals = new TerminalRuntime({
     auditRoot: path.join(app.getPath('userData'), 'command-center'), vault, experience, residentRuntime,
     emit: (channel, data) => { if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send(channel, data); }
@@ -1270,20 +1468,26 @@ app.whenReady().then(async () => {
     adapters.record('xai-provider',{adapter:'xai',implementationComplete:true,status,httpStatus,outcomeVerified:status==='PONG_RECEIVED',evidencePath:receiptPath});
     console.log(JSON.stringify({receiptPath,status,httpStatus,errorClass,errorMessage,response:responseText,model},null,2)); app.quit(); return;
   }
+  if (process.argv.includes('--council-smoke-test')) {
+    try {
+      const result = await runAICouncil({ task: 'Assess whether the DT AI Council is operational. Do not propose or execute changes; return answer or defer only.', advisoryOnly: true }, { ownerApproved: false });
+      console.log(JSON.stringify({ status:'COUNCIL_SMOKE_OK', localChair: await localIntelligence.status(), advisors: result.advisors.map(x=>({provider:x.provider,model:x.model,ok:x.ok,error:x.error||null})), plan: result.plan, execution: result.execution }, null, 2));
+    } catch (error) {
+      console.log(JSON.stringify({ status:'COUNCIL_SMOKE_FAILED', error:String(error.message||error), localChair: await localIntelligence.status(), council:councilStatus() }, null, 2));
+    }
+    app.quit(); return;
+  }
   createTray();
   createWindow(pendingAgentSelection, pendingShellView);
   app.on('activate', () => { if (!BrowserWindow.getAllWindows().length) createWindow(); });
 });
 
 app.on('before-quit', () => {
-  if (!cleanCloseout) {
-    let exported = false;
-    try { automaticRecoveryExport('UNCLEAN_OR_EXTERNAL_QUIT'); exported = true; }
-    catch (error) { try { fs.writeFileSync(path.join(dataRoot(),'last-unclean-export-error.txt'),String(error.stack||error),'utf8'); } catch {} }
-    if (exported) clearSessionDirty(dataRoot());
-  } else clearSessionDirty(dataRoot());
+  try { vault?.append('desktop-shutdown','dt-desktop',{cleanCloseout,persistence:'DURABLE_HOME_SERVER',dataDeletionPerformed:false}); } catch {}
+  clearSessionDirty(dataRoot());
   isQuitting = true;
   terminals?.closeAll();
+  orionImprovement?.stop();
   residentRuntime?.stop();
   supervisor?.stop();
   gateway?.stop();

@@ -72,10 +72,34 @@ const briefs = {
     input: 'Identify the source identity and desktop role, declare lifecycle state, supply evidence, mark each gate PASS/FAIL/PENDING, and preserve blocking residuals.'
   },
   'dt-closeout': {
-    thesis: 'Closeout preserves the fullest causal record available while refusing to promote partial capture into canonical history.',
+    thesis: 'Closeout is a fixed resident workflow: copier, lineage, reconciliation, custody, persistence verification, and completion gating.',
     equation: 'Closeout = discovery -> verbatim archive || derived model -> divergence/governance -> index -> verified export -> completion gate',
     observed: 'A live capture may preserve useful records yet remain PARTIAL until reconciled against canonical export.',
     input: 'Name the conversation and terminal boundary, then provide canonical sources, live capture, gaps, destination, and approval.'
+  },
+  'full-conversation-copier': {
+    thesis: 'A closeout begins by freezing the observable causal record exactly at the terminal user boundary.',
+    equation: 'Delta = ordered exact records + per-record SHA-256 + gaps + parent hash + terminal boundary',
+    observed: 'A later summary cannot substitute for the frozen live record.',
+    input: 'Provide ordered live records, terminal boundary, parent closeout hash, conversation identity when known, and source class.'
+  },
+  'canonical-reconciler': {
+    thesis: 'Canonical metadata may enrich a live capture but must never overwrite it.',
+    equation: 'Reconciliation = role + exact text + local order + neighboring hashes -> canonical IDs/timestamps/branch links',
+    observed: 'Provider exports can supply identifiers absent from live capture while omitting tool-visible evidence.',
+    input: 'Provide the frozen live records and canonical records; unmatched records remain explicit gaps.'
+  },
+  'continuation-cursor': {
+    thesis: 'Every closeout must state exactly where the next closeout resumes.',
+    equation: 'Next start = assistant record immediately after prior DT_CLOSEOUT terminal boundary',
+    observed: 'Without a cursor, repeated closeouts duplicate or skip causal history.',
+    input: 'Provide terminal boundary, last captured sequence, parent hash, and next required source.'
+  },
+  'persistence-verifier': {
+    thesis: 'Persistence is proven by destination readback, not by a successful write call.',
+    equation: 'Verified = local SHA-256 == readback SHA-256 && local bytes == readback bytes',
+    observed: 'A file may exist but be truncated, stale, or written to the wrong lineage.',
+    input: 'Provide local/readback hashes and byte counts, destination, and artifact identity.'
   },
   evaluation: {
     thesis: 'A model or agent should be judged by preserved observable behavior, not by its self-description or the evaluator\'s desired conclusion.',
@@ -154,6 +178,12 @@ const briefs = {
     equation: 'Pressure index = constraint count / max(1, resources + institutions)',
     observed: 'A proposed intervention can relieve one bottleneck while creating another elsewhere in the topology.',
     input: 'Describe the boundary, horizon, resources, constraints, institutions, intervention, and rival future.'
+  },
+  tokenizer: {
+    thesis: 'DT needs a stable reversible vocabulary of its own while preserving compatibility measurements as separate provenance.',
+    equation: 'Tokenizer generation = frozen special tokens + reversible base units + versioned merges + config hash',
+    observed: 'Changing token IDs underneath a trained model corrupts checkpoint compatibility, while heuristic token estimates corrupt measurement history.',
+    input: 'Choose native or archive-compatibility mode, provide text when counting, and preserve tokenizer/config hashes with model checkpoints.'
   },
   memory: {
     thesis: 'Continuity requires consumer-owned records whose history survives later reinterpretation.',

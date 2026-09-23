@@ -27,6 +27,7 @@ function stableHash(value) {
 class ExperienceLedger {
   constructor(root) {
     this.root = path.join(root, 'experience');
+    this.observer = null;
     this.file = path.join(this.root, 'events.jsonl');
     fs.mkdirSync(this.root, { recursive: true });
   }
@@ -38,12 +39,15 @@ class ExperienceLedger {
     };
     localPayload.hash = stableHash(localPayload);
     fs.appendFileSync(this.file, JSON.stringify(localPayload) + '\n', 'utf8');
+    try { this.observer?.(localPayload); } catch {}
     return {
       local: localPayload,
       externalSafe: redactSecrets(localPayload),
       externalSafeHash: stableHash(redactSecrets(localPayload))
     };
   }
+
+  setObserver(observer) { this.observer = typeof observer === 'function' ? observer : null; return this; }
 
   recent(limit = 200) {
     if (!fs.existsSync(this.file)) return [];

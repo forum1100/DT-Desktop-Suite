@@ -1,4 +1,5 @@
 const { closeoutEngines } = require('./closeout-engines.cjs');
+const { DTNativeTokenizer, archiveCompatibilityContract } = require('../../core/src/dt-tokenizer.cjs');
 
 function items(value) {
   if (Array.isArray(value)) return value.filter(Boolean);
@@ -250,7 +251,10 @@ function librarian(input) {
   if (/propulsion|thrust|impulse|energy/.test(text)) routes.push('propulsion');
   if (/civilization|institution|resource|collapse/.test(text)) routes.push('civilization');
   if (/hallucin|unsupported|certainty/.test(text)) routes.push('hallucination');
-  if (/closeout|dt_closeout|full[- ]chat|conversation capture|live capture|direct enumerator|terminal boundary/.test(text)) routes.push('dt-closeout');
+  if (/closeout|dt_closeout|full[- ]chat|conversation capture|live capture|direct enumerator|terminal boundary/.test(text)) {
+    routes.push('dt-closeout','full-conversation-copier','continuation-cursor','persistence-verifier');
+  }
+  if (/canonical reconciliation|canonical metadata|provider export|canonical records/.test(text)) routes.push('canonical-reconciler');
   if (/source discovery|canonical source|source gap|candidate source/.test(text)) routes.push('source-discovery');
   if (/verbatim|source-faithful|ordered turn|chronolog|reassembl/.test(text)) routes.push('verbatim-archive');
   if (/ingest|deduplicat|stage source|content hash/.test(text)) routes.push('ingestion-spark');
@@ -422,6 +426,20 @@ function prediction(input) {
   };
 }
 
+function tokenizer(input) {
+  const mode=String(input.mode||'native').toLowerCase();
+  if(mode==='archive'||mode==='archive-compatibility') return {mode:'ARCHIVE_COMPATIBILITY',...archiveCompatibilityContract()};
+  const t=new DTNativeTokenizer(); const text=String(input.text||'');
+  const checkpointHash=String(input.modelCheckpointHash||'').trim();
+  const suppliedConfig=String(input.tokenizerConfigHash||'').trim();
+  const config=t.config();
+  return {mode:'DT_NATIVE',version:config.version,configHash:config.configHash,tokenCount:t.count(text),
+    tokenSequenceHash:require('node:crypto').createHash('sha256').update(JSON.stringify(t.encode(text))).digest('hex'),
+    reversible:t.decode(t.encode(text))===text,modelCheckpointHash:checkpointHash||null,
+    compatibilityStatus:suppliedConfig ? (suppliedConfig===config.configHash?'MATCH':'MISMATCH') : 'CHECK_REQUIRED_WHEN_MODEL_BOUND',
+    vocabularyMutationPerformed:false};
+}
+
 function memory(input) {
   return {
     recordType: input.recordType || null,
@@ -436,7 +454,7 @@ const engines = {
   ...closeoutEngines,
   librarian, evaluation, releaseGate, artifactRegistry, creditLedger, adversarialTest, hallucination, evidence, branchRetest,
   equation, prediction, prism, propulsion,
-  civilization, memory, telemetry,
+  civilization, memory, tokenizer, telemetry,
   'branch-retest': branchRetest,
   'release-gate': releaseGate,
   'artifact-registry': artifactRegistry,

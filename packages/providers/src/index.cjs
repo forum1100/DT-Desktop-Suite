@@ -1,3 +1,4 @@
+const { loadPerceptionContext } = require('../../core/src/perception-context.cjs');
 const PROVIDERS = Object.freeze({
   openai: { label: 'OpenAI', baseUrl: 'https://api.openai.com/v1', protocol: 'openai', keyRequired: true },
   anthropic: { label: 'Claude / Anthropic', baseUrl: 'https://api.anthropic.com/v1', protocol: 'anthropic', keyRequired: true },
@@ -16,7 +17,9 @@ function providerDefinition(id, overrides = {}) {
   return definition;
 }
 
-function buildRequest(definition, { apiKey, model, system, messages }) {
+function buildRequest(definition, { apiKey, model, system, messages, perceptionContext }) {
+  const perception = perceptionContext || loadPerceptionContext();
+  const enrichedSystem = [system, 'DT CURRENT PERCEPTION CONTEXT:', JSON.stringify(perception)].filter(Boolean).join('\n');
   if (definition.keyRequired && !apiKey) throw new Error('Provider key required');
   if (!model) throw new Error('Model required');
   const headers = { 'content-type': 'application/json' };
@@ -25,14 +28,14 @@ function buildRequest(definition, { apiKey, model, system, messages }) {
     return {
       url: definition.baseUrl + '/messages',
       headers,
-      body: { model, max_tokens: 2048, system, messages: messages.filter(m => m.role !== 'system') }
+      body: { model, max_tokens: 2048, system: enrichedSystem, messages: messages.filter(m => m.role !== 'system') }
     };
   }
   if (apiKey) headers.authorization = 'Bearer ' + apiKey;
   return {
     url: definition.baseUrl + '/chat/completions',
     headers,
-    body: { model, messages: system ? [{ role: 'system', content: system }, ...messages] : messages }
+    body: { model, messages: [{ role: 'system', content: enrichedSystem }, ...messages.filter(m => m.role !== 'system')] }
   };
 }
 

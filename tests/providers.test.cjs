@@ -16,6 +16,7 @@ test('OpenAI-compatible request receives DT system context', () => {
   });
   assert.equal(request.headers.authorization, 'Bearer fixture-key');
   assert.equal(request.body.messages[0].role, 'system');
+  assert.match(request.body.messages[0].content, /DT CURRENT PERCEPTION CONTEXT:/);
   assert.equal(request.body.messages[1].content, 'question');
 });
 
@@ -27,7 +28,9 @@ test('Anthropic request separates system from messages', () => {
     system: 'preserve provenance',
     messages: [{ role: 'user', content: 'question' }]
   });
-  assert.equal(request.body.system, 'preserve provenance');
+  assert.ok(request.body.system.startsWith('preserve provenance\n'));
+  assert.match(request.body.system, /DT CURRENT PERCEPTION CONTEXT:/);
+  assert.match(request.body.system, /dt-perception-context\/1\.0/);
   assert.equal(request.body.messages.length, 1);
   assert.equal(request.headers['anthropic-version'], '2023-06-01');
 });

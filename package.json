@@ -1,16 +1,14 @@
 {
   "name": "dt-desktop-suite",
-  "version": "0.3.0",
+  "version": "0.3.8",
   "private": true,
   "description": "Local-first provider-neutral DT Platform with individually launchable agent programs",
   "author": "Thomas J. Cutler / Thomas Distel",
   "main": "apps/desktop/src/main.cjs",
   "scripts": {
     "start": "electron .",
-    "start:command": "electron apps/command-center/src/main.cjs",
     "test": "node --test tests/*.test.cjs",
     "build:win": "electron-builder --win nsis portable",
-    "build:command": "electron-builder --config electron-builder.command.json --win nsis portable",
     "agent": "electron . --agent"
   },
   "devDependencies": {
@@ -25,11 +23,19 @@
     "files": [
       "apps/**/*",
       "packages/**/*",
+      "resources/**/*",
+      "runtime/orion-campaign.json",
       "package.json"
     ],
     "directories": {
       "output": "dist"
     },
+    "extraResources": [
+      {
+        "from": "resources/browser-extension",
+        "to": "browser-extension"
+      }
+    ],
     "win": {
       "icon": "apps/desktop/assets/icons/suite.ico",
       "target": [

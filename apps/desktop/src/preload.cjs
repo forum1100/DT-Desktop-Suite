@@ -63,6 +63,7 @@ contextBridge.exposeInMainWorld('dt', {
   listTerminals: () => ipcRenderer.invoke('terminal:list'),
   createTerminal: input => ipcRenderer.invoke('terminal:create', input),
   sendTerminal: (id, command) => ipcRenderer.invoke('terminal:send', id, command),
+  submitCommandCenter: request => ipcRenderer.invoke('command-center:submit', request),
   closeTerminal: id => ipcRenderer.invoke('terminal:close', id),
   onTerminalOutput: callback => ipcRenderer.on('terminal:output', (_event, data) => callback(data)),
   onTerminalState: callback => ipcRenderer.on('terminal:state', (_event, data) => callback(data))

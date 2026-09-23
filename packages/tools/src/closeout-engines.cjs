@@ -208,11 +208,84 @@ function qualificationManager(input) {
   };
 }
 
+
+function parseRecords(value) {
+  if (Array.isArray(value)) return value;
+  if (!present(value)) return [];
+  try { const parsed = JSON.parse(String(value)); return Array.isArray(parsed) ? parsed : []; } catch { return []; }
+}
+function exactTextHash(text) {
+  return crypto.createHash('sha256').update(String(text ?? ''), 'utf8').digest('hex');
+}
+function fullConversationCopier(input) {
+  const source = parseRecords(input.records);
+  const boundary = String(input.terminalBoundary || 'DT_CLOSEOUT').trim();
+  let boundaryIndex = -1;
+  for (let i=source.length-1;i>=0;i--) {
+    const role=String(source[i].speaker||source[i].role||'').toLowerCase();
+    if (role==='user' && String(source[i].text||'').trim()===boundary) { boundaryIndex=i; break; }
+  }
+  const frozen = (boundaryIndex >= 0 ? source.slice(0,boundaryIndex+1) : source).map((row,index)=>({
+    ...row,
+    local_sequence: row.local_sequence ?? row.localSequence ?? index + 1,
+    source_class: row.source_class || row.sourceClass || input.sourceClass || 'LIVE_CAPTURE',
+    exact_text_sha256: exactTextHash(row.text || '')
+  }));
+  const gaps=[];
+  if (boundaryIndex < 0) gaps.push('TERMINAL_BOUNDARY_NOT_FOUND');
+  if (!input.conversationIdentity) gaps.push('CANONICAL_CONVERSATION_IDENTITY_UNAVAILABLE');
+  return {
+    schema:'dt-full-conversation-copier/1.0', terminalBoundary:boundary,
+    parentCloseoutHash:input.parentCloseoutHash||null, records:frozen,
+    recordCount:frozen.length, lastCapturedSequence:frozen.at(-1)?.local_sequence||0,
+    gaps, sourceClass:input.sourceClass||'LIVE_CAPTURE',
+    boundaryFound:boundaryIndex>=0, currentCloseoutResponseExcluded:true,
+    summarySubstitutionPermitted:false, status:gaps.length?'PARTIAL':'FROZEN_LIVE_CAPTURE'
+  };
+}
+function canonicalReconciler(input) {
+  const live=parseRecords(input.liveRecords), canonical=parseRecords(input.canonicalRecords);
+  const used=new Set(), links=[], unmatchedLive=[];
+  for (const row of live) {
+    const role=String(row.speaker||row.role||''); const text=String(row.text||'');
+    const idx=canonical.findIndex((c,i)=>!used.has(i)&&String(c.speaker||c.role||'')===role&&String(c.text||'')===text);
+    if(idx<0){unmatchedLive.push(row.exact_text_sha256||exactTextHash(text));continue;}
+    used.add(idx); const c=canonical[idx]; links.push({liveHash:row.exact_text_sha256||exactTextHash(text),canonicalIndex:idx,
+      conversationId:c.conversation_id||c.conversationId||null,nodeId:c.node_id||c.nodeId||null,
+      messageId:c.message_id||c.messageId||null,createTime:c.create_time||c.createTime||null});
+  }
+  const unmatchedCanonical=canonical.map((c,i)=>used.has(i)?null:(c.message_id||c.messageId||exactTextHash(c.text||''))).filter(Boolean);
+  return {schema:'dt-canonical-reconciliation/1.0',links,unmatchedLive,unmatchedCanonical,
+    liveRecordsMutated:false,canonicalMetadataAppendOnly:true,
+    status:canonical.length&&unmatchedLive.length===0?'RECONCILED':'PARTIAL_RECONCILIATION'};
+}
+
 const CLOSEOUT_PHASES = Object.freeze([
-  'SOURCE_DISCOVERY', 'VERBATIM_ARCHIVE', 'DERIVED_MODEL',
-  'DIVERGENCE_REVIEW', 'BRANCH_GOVERNANCE', 'TEMPORAL_INDEX',
-  'VERIFIED_EXPORT', 'COMPLETION_GATE', 'LIBRARIAN_CUSTODY'
+  'FULL_CONVERSATION_COPY', 'SOURCE_DISCOVERY', 'VERBATIM_ARCHIVE', 'DERIVED_MODEL',
+  'DIVERGENCE_REVIEW', 'BRANCH_GOVERNANCE', 'TEMPORAL_INDEX', 'CANONICAL_RECONCILIATION',
+  'CONTINUATION_CURSOR', 'VERIFIED_EXPORT', 'PERSISTENCE_READBACK', 'COMPLETION_GATE', 'LIBRARIAN_CUSTODY'
 ]);
+
+function continuationCursor(input) {
+  return {
+    schema:'dt-closeout-continuation-cursor/1.0',
+    parentCloseoutHash:input.parentCloseoutHash||null,
+    terminalBoundary:input.terminalBoundary||'DT_CLOSEOUT',
+    lastCapturedSequence:Number(input.lastCapturedSequence||0),
+    nextRequiredSource:input.nextRequiredSource||'Continue from assistant response immediately after the terminal DT_CLOSEOUT user turn.',
+    nextCaptureRule:'BEGIN_AFTER_PREVIOUS_TERMINAL_BOUNDARY', overwritePriorCursorPermitted:false
+  };
+}
+function persistenceVerifier(input) {
+  const localHash=String(input.localHash||'').toLowerCase(), readbackHash=String(input.readbackHash||'').toLowerCase();
+  const localBytes=Number(input.localBytes), readbackBytes=Number(input.readbackBytes);
+  const hashMatch=/^[0-9a-f]{64}$/.test(localHash)&&localHash===readbackHash;
+  const byteMatch=Number.isFinite(localBytes)&&localBytes>=0&&localBytes===readbackBytes;
+  return {schema:'dt-closeout-persistence-verifier/1.0',artifactId:input.artifactId||null,destination:input.destination||null,
+    localHash,readbackHash,localBytes,readbackBytes,hashMatch,byteMatch,
+    status:hashMatch&&byteMatch?'PERSISTENCE_VERIFIED':'PERSISTENCE_UNVERIFIED',writeCallEqualsPersistence:false};
+}
+
 function dtCloseout(input) {
   const canonicalSources = list(input.canonicalSources);
   const gaps = list(input.sourceGaps);
@@ -332,6 +405,10 @@ const closeoutEngines = {
   'agent-foundry': agentFoundry,
   'qualification-manager': qualificationManager,
   'dt-closeout': dtCloseout,
+  'full-conversation-copier': fullConversationCopier,
+  'canonical-reconciler': canonicalReconciler,
+  'continuation-cursor': continuationCursor,
+  'persistence-verifier': persistenceVerifier,
   'desktop-control': desktopControl,
   'agent-supervisor': agentSupervisor,
   'operations-historian': operationsHistorian,

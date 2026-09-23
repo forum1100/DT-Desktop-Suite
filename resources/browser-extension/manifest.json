@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "DT Browser Perception Bridge",
+  "version": "0.1.1",
+  "description": "Provider-aware DT_CLOSEOUT orchestration and full readable-page capture for ChatGPT, Grok, and Gemini.",
+  "permissions": ["storage"],
+  "background": {"service_worker": "background.js"},
+  "host_permissions": [
+    "https://chatgpt.com/*",
+    "https://grok.com/*",
+    "https://gemini.google.com/*",
+    "http://127.0.0.1:43120/*"
+  ],
+  "content_scripts": [{
+    "matches": ["https://chatgpt.com/*", "https://grok.com/*", "https://gemini.google.com/*"],
+    "js": ["content.js"],
+    "run_at": "document_idle"
+  }],
+  "action": {"default_title": "DT Browser Perception Bridge"},
+  "browser_specific_settings": {
+    "gecko": {"id": "dt-browser-perception@distel.local", "strict_min_version": "121.0"}
+  }
+}

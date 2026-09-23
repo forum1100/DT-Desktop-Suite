@@ -1,5 +1,8 @@
 const fs = require('node:fs');
 const path = require('node:path');
+const { buildSetupGuide } = require('./ai-setup-guide.cjs');
+const { findMatches } = require('./orion-capability.cjs');
+const { evaluateInteraction } = require('./accessibility-lab.cjs');
 
 function underRoots(target, roots) {
   const resolved = path.resolve(String(target || ''));
@@ -76,6 +79,76 @@ function registerCoreCapabilities(bus, context = {}) {
       });
     }
     return result;
+  });
+
+  bus.register({
+    id: 'ai.setup_guide',
+    description: 'Generate provider-neutral setup instructions and a copy/paste bootstrap prompt for connecting an AI assistant to DT.',
+    risk: 'READ_ONLY',
+    hardwareClass: 'computer'
+  }, async input => buildSetupGuide({
+    provider: input?.provider || 'other',
+    deviceId: input?.deviceId || context.deviceId || null,
+    cliPath: input?.cliPath || context.cliPath || 'DT Command Center / DT governed CLI',
+    capabilities: bus.list().map(item => item.id)
+  }));
+
+  bus.register({
+    id: 'orion.capability.audit',
+    description: 'Ask Orion whether DT already possesses a requested capability; explain how to use it or consult AI peers when absent.',
+    risk: 'READ_ONLY', hardwareClass: 'computer'
+  }, async input => {
+    const question = String(input?.capability || input?.question || input?.task || '').trim();
+    if (!question) throw new Error('Capability question required');
+    const skills = typeof context.getSkills === 'function' ? context.getSkills() : [];
+    const matches = findMatches(question, bus.list(), skills);
+    const best = matches[0] || null;
+    const possessed = Boolean(best && best.score >= 0.34);
+    if (possessed) return { identity:'Orion', possessed:true, match:best, howToUse:best.kind==='tool' ? '/tool '+best.id+' { ... }' : 'Ask Orion naturally; route to promoted skill '+best.id, matches };
+    const council = typeof context.runAICouncil === 'function' ? await context.runAICouncil({ advisoryOnly:true, task:'Orion capability gap: '+question+'. Design and implement this from scratch for DT Desktop. Return architecture, implementation path, tests, risks, and integration points.' }, {}) : null;
+    return { identity:'Orion', possessed:false, matches, consultedPeers:Boolean(council), council };
+  });
+
+  bus.register({
+    id: 'accessibility.evaluate_interaction',
+    description: 'Generate synthetic accessibility scenarios and measurable success criteria for interacting with Orion without prompt-engineering knowledge.',
+    risk: 'READ_ONLY', hardwareClass: 'computer'
+  }, async input => evaluateInteraction(input || {}));
+  bus.register({
+    id: 'ai.council.decide_and_act',
+    description: 'Consult available configured AI peers, have the resident DT model synthesize their recommendations, and enact the selected bounded DT tool or promoted skill.',
+    risk: 'DYNAMIC', hardwareClass: 'computer'
+  }, async (input, callContext) => {
+    if (typeof context.runAICouncil !== 'function') throw new Error('DT AI Council runtime is unavailable');
+    return context.runAICouncil(input || {}, callContext || {});
+  });
+
+  bus.register({
+    id: 'ai.council.status',
+    description: 'Read currently eligible council advisors and recent council decision state.',
+    risk: 'READ_ONLY', hardwareClass: 'computer'
+  }, async () => typeof context.councilStatus === 'function' ? context.councilStatus() : { available:false });
+
+  bus.register({
+    id: 'browser.closeout.run_all',
+    description: 'Open ChatGPT, Grok, and Gemini sequentially and run one DT_CLOSEOUT task in each through the DT Browser Perception Bridge.',
+    risk: 'LOCAL_MUTATION', hardwareClass: 'computer'
+  }, async input => {
+    const response = await fetch('http://127.0.0.1:43120/v1/browser/closeout/run-all', {
+      method: 'POST', headers: {'content-type': 'application/json'},
+      body: JSON.stringify({task: String(input?.task || '')})
+    });
+    if (!response.ok) throw new Error('TJ Personal Pro browser closeout request failed: ' + response.status);
+    return response.json();
+  });
+
+  bus.register({
+    id: 'browser.closeout.status', description: 'Read the current sequential browser DT_CLOSEOUT queue and provider job.',
+    risk: 'READ_ONLY', hardwareClass: 'computer'
+  }, async () => {
+    const response = await fetch('http://127.0.0.1:43120/v1/browser/closeout/state');
+    if (!response.ok) throw new Error('TJ Personal Pro browser closeout status failed: ' + response.status);
+    return response.json();
   });
 
   bus.register({
